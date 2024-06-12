@@ -1,21 +1,16 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::*;
+use bevy_mod_stylebuilder::StyleTuple;
 
 use crate::{
-    // effect_target::{EffectTarget, EntityEffect},
-    cx::Cx,
-    node_span::NodeSpan,
-    view::View,
+    cx::Cx, effects::EntityEffect, node_span::NodeSpan, style::ApplyStylesEffect, view::View,
     view_tuple::ViewTuple,
 };
 
 /// A view which generates an entity bundle.
 #[derive(Default)]
-pub struct Element<B: Bundle + Default = NodeBundle, C: ViewTuple = ()>
-// where
-//     Self: EffectTarget,
-{
+pub struct Element<B: Bundle + Default = NodeBundle, C: ViewTuple = ()> {
     /// Debug name for this element.
     debug_name: String,
 
@@ -26,7 +21,8 @@ pub struct Element<B: Bundle + Default = NodeBundle, C: ViewTuple = ()>
     children: C,
 
     /// List of effects to be added to the element.
-    // effects: Vec<Box<dyn EntityEffect>>,
+    effects: Vec<Box<dyn EntityEffect<State = ()>>>,
+
     marker: PhantomData<B>,
 }
 
@@ -37,7 +33,7 @@ impl<B: Bundle + Default> Element<B, ()> {
             debug_name: String::new(),
             display: None,
             children: (),
-            // effects: Vec::new(),
+            effects: Vec::new(),
             marker: PhantomData,
         }
     }
@@ -48,7 +44,7 @@ impl<B: Bundle + Default> Element<B, ()> {
             debug_name: String::new(),
             display: Some(node),
             children: (),
-            // effects: Vec::new(),
+            effects: Vec::new(),
             marker: PhantomData,
         }
     }
@@ -67,8 +63,20 @@ impl<B: Bundle + Default, C: ViewTuple> Element<B, C> {
             children,
             debug_name: self.debug_name,
             display: self.display,
+            effects: self.effects,
             marker: PhantomData,
         }
+    }
+
+    /// Add an effect to this element.
+    pub fn add_effect(&mut self, effect: Box<dyn EntityEffect<State = ()>>) {
+        self.effects.push(effect);
+    }
+
+    /// Apply a set of styles to the element
+    pub fn style<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
+        self.add_effect(Box::new(ApplyStylesEffect { styles }));
+        self
     }
 
     // pub fn insert_computed_ref<
@@ -92,9 +100,6 @@ impl<B: Bundle + Default, C: ViewTuple> Element<B, C> {
 }
 
 // impl<B: Bundle + Default> EffectTarget for Element<B> {
-//     fn add_effect(&mut self, effect: Box<dyn EntityEffect>) {
-//         self.effects.push(effect);
-//     }
 // }
 
 impl<B: Bundle + Default, C: ViewTuple> View for Element<B, C> {
@@ -131,13 +136,12 @@ impl<B: Bundle + Default, C: ViewTuple> View for Element<B, C> {
         };
 
         // Insert components from effects.
-        // if !self.effects.is_empty() {
-        //     let mut tracking = TrackingScope::new(world.change_tick());
-        //     for effect in self.effects.iter_mut() {
-        //         effect.start(view_entity, display, world, &mut tracking);
-        //     }
-        //     world.entity_mut(view_entity).insert(tracking);
-        // }
+        if !self.effects.is_empty() {
+            for effect in self.effects.iter() {
+                // TODO: Where to store deps/memos? Can't store on 'self'.
+                effect.apply(cx, display);
+            }
+        }
 
         // Build child nodes.
         let children = self.children.build_spans(cx);
@@ -149,6 +153,13 @@ impl<B: Bundle + Default, C: ViewTuple> View for Element<B, C> {
     }
 
     fn rebuild(&self, cx: &mut crate::cx::Cx, state: &mut Self::State) -> bool {
+        if !self.effects.is_empty() {
+            for effect in self.effects.iter() {
+                // TODO: Where to store deps/memos? Can't store on 'self'.
+                effect.apply(cx, state.0);
+            }
+        }
+
         if self.children.rebuild_spans(cx, &mut state.1) {
             let nodes = self.children.span_nodes(&state.1);
             cx.world_mut()

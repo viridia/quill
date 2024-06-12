@@ -13,12 +13,12 @@ pub trait View: Sync + Send + 'static {
 
     /// Construct and patch the tree of UiNodes produced by this view.
     /// This may also spawn child entities representing nested components.
-    fn build(&self, bc: &mut Cx) -> Self::State;
+    fn build(&self, cx: &mut Cx) -> Self::State;
 
     /// Update the internal state of this view, re-creating any UiNodes.
     /// Returns true if the output changed, that is, if `nodes()` would return a different value
     /// than it did before the rebuild.
-    fn rebuild(&self, bc: &mut Cx, state: &mut Self::State) -> bool;
+    fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool;
 
     /// Instructs the view to attach any child entities to the parent entity. This is called
     /// whenever we know that one or more child entities have changed.
@@ -97,16 +97,6 @@ pub struct ViewCell(pub Arc<Mutex<dyn AnyViewState>>);
 // where
 //     Self: Sized,
 // {
-//     /// Assign a human-readable debug name to the generated display node.
-//     fn named(self, name: &str) -> ViewNamed<Self> {
-//         ViewNamed::new(self, name)
-//     }
-
-//     /// Apply styles to this view.
-//     fn styled<S: StyleTuple>(self, styles: S) -> ViewStyled<Self> {
-//         ViewStyled::new(self, styles)
-//     }
-
 //     /// Inserts a default instance of the specified component or bundle to the display entity.
 //     /// This insertion occurs only once per output entity. The entity takes ownership of the
 //     /// bundle.

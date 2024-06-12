@@ -1,9 +1,14 @@
 # Next
 
-- Effects
+- Effects w/deps
+- style_effect
+- Change create_entity to hook
 - StyleBuilder integration
 - Hooks
+- Conditionals
+- For loops
 - Component Library
+- Re-enable pointer events in StyleBuilder.
 
 # Challenges to overcome:
 

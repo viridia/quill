@@ -1,6 +1,8 @@
 mod cx;
+mod effects;
 mod element;
 mod node_span;
+mod style;
 mod text_view;
 mod tracking_scope;
 mod view;

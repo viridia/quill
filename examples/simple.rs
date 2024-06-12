@@ -10,8 +10,8 @@ use bevy::{
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
 };
+use bevy_mod_stylebuilder::*;
 use quill::{Element, QuillPlugin, ViewRoot};
-// use bevy_mod_stylebuilder::*;
 // use bevy_reactor::*;
 // use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
 
@@ -42,9 +42,19 @@ struct Shape;
 
 const X_EXTENT: f32 = 14.5;
 
+fn style_test(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .flex_direction(FlexDirection::Row)
+        .border_color(palettes::css::LIME)
+        .border(3)
+        .padding(3);
+}
+
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
-        Element::<NodeBundle>::new().children(("Hello, ", "world!")),
+        Element::<NodeBundle>::new()
+            .style(style_test)
+            .children(("Hello, ", "world!")),
     ));
     //     commands.spawn(ViewRoot::new(
     //         Element::<NodeBundle>::new()

@@ -27,9 +27,6 @@ pub trait ViewTuple: Send + Sync + 'static {
     /// Update the child views.
     fn rebuild_spans(&self, cx: &mut Cx, state: &mut Self::State) -> bool;
 
-    /// Assemble the child views.
-    // fn assemble_spans(&self, cx: &mut Cx, state: &mut Self::State) -> NodeSpan;
-
     /// Despawn the child views.
     fn raze_spans(&self, world: &mut World, state: &mut Self::State);
 }
@@ -53,10 +50,6 @@ impl<A: View> ViewTuple for A {
         self.rebuild(cx, state)
     }
 
-    // fn assemble_spans(&self, cx: &mut Cx, state: &mut Self::State) -> NodeSpan {
-    //     self.assemble(cx, state)
-    // }
-
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
         self.raze(world, state)
     }
@@ -79,10 +72,6 @@ impl ViewTuple for () {
     fn rebuild_spans(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
         false
     }
-
-    // fn assemble_spans(&self, cx: &mut Cx, state: &mut Self::State) -> NodeSpan {
-    //     self.assemble(cx, state)
-    // }
 
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {}
 }
