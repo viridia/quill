@@ -1,0 +1,19 @@
+[package]
+name = "quill"
+version = "0.1.0"
+edition = "2021"
+
+# [workspace]
+# members = ["crates/*"]
+
+[workspace.dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy.git", version = "0.14.0-dev" }
+
+[dependencies]
+bevy = { workspace = true }
+impl-trait-for-tuples = "0.2.2"
+smallvec = "1.13.2"
+
+# [dev-dependencies]
+# cots_orbit_camera = { path = "crates/cots_orbit_camera" }
+# cots_terrain = { path = "crates/cots_terrain" }
