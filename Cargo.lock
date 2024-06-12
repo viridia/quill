@@ -725,6 +725,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_stylebuilder"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "impl-trait-for-tuples",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.14.0-dev"
 source = "git+https://github.com/bevyengine/bevy.git#2ccdae74896756dde535011388498b918f9c27d4"
@@ -2944,6 +2952,7 @@ name = "quill"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_mod_stylebuilder",
  "impl-trait-for-tuples",
  "smallvec",
 ]

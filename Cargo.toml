@@ -3,14 +3,16 @@ name = "quill"
 version = "0.1.0"
 edition = "2021"
 
-# [workspace]
-# members = ["crates/*"]
+[workspace]
+members = ["crates/*"]
 
 [workspace.dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git", version = "0.14.0-dev" }
+bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
 
 [dependencies]
 bevy = { workspace = true }
+bevy_mod_stylebuilder = { workspace = true }
 impl-trait-for-tuples = "0.2.2"
 smallvec = "1.13.2"
 

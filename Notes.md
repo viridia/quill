@@ -1,3 +1,10 @@
+# Next
+
+- Effects
+- StyleBuilder integration
+- Hooks
+- Component Library
+
 # Challenges to overcome:
 
 - dependency injection doesn't auto-track

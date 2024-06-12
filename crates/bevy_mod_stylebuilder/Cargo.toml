@@ -1,0 +1,10 @@
+[package]
+name = "bevy_mod_stylebuilder"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bevy = { workspace = true }
+# bevy_mod_picking = { workspace = true }
+impl-trait-for-tuples = "0.2.2"
