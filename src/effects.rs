@@ -73,6 +73,9 @@ pub trait EffectTuple: Send + Sync {
     /// Apply the effects to the target.
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State;
 
+    /// Re-apply the effects to the target.
+    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State);
+
     // Append a new effect to the tuple.
     fn append_effect<E: EntityEffect>(self, effect: E) -> <Self as AppendEffect<E>>::Result
     where
@@ -89,9 +92,9 @@ impl<E: EntityEffect> EffectTuple for E {
         self.apply(cx, target)
     }
 
-    // fn append<E1: EntityEffect>(self, effect: E1) -> <(E, E1) as ConcatTuple<E>>::Result {
-    //     (self, effect)
-    // }
+    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
+        self.reapply(cx, target, state)
+    }
 }
 
 #[allow(unused)]
@@ -99,6 +102,7 @@ impl EffectTuple for () {
     type State = ();
 
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {}
+    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {}
 }
 
 #[impl_for_tuples(1, 16)]
@@ -108,6 +112,10 @@ impl EffectTuple for Tuple {
 
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
         for_tuples!((#( self.Tuple.apply(cx, target) ),*))
+    }
+
+    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
+        for_tuples!(#( self.Tuple.reapply(cx, target, &mut state.Tuple);)*)
     }
 }
 
@@ -136,7 +144,6 @@ mod tests {
     impl<T: EffectTuple> EffectList<T> {
         fn append<E: EntityEffect>(self, effect: E) -> EffectList<<T as AppendEffect<E>>::Result>
         where
-            Self: Sized,
             T: AppendEffect<E>,
         {
             let effects = self.0.append_effect(effect);
