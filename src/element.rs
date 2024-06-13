@@ -156,7 +156,7 @@ impl<B: Bundle + Default, C: ViewTuple> View for Element<B, C> {
         if !self.effects.is_empty() {
             for effect in self.effects.iter() {
                 // TODO: Where to store deps/memos? Can't store on 'self'.
-                effect.apply(cx, state.0);
+                // effect.reapply(cx, state.0, _);
             }
         }
 
