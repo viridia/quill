@@ -7,7 +7,7 @@ use crate::{
     cx::Cx,
     effects::{self, AppendEffect, EffectTuple, EntityEffect},
     node_span::NodeSpan,
-    style::ApplyStylesEffect,
+    style::ApplyStaticStylesEffect,
     view::View,
     view_tuple::ViewTuple,
 };
@@ -93,11 +93,11 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
     pub fn style<S: StyleTuple + 'static>(
         self,
         styles: S,
-    ) -> Element<B, C, <E as AppendEffect<ApplyStylesEffect<S>>>::Result>
+    ) -> Element<B, C, <E as AppendEffect<ApplyStaticStylesEffect<S>>>::Result>
     where
-        E: AppendEffect<ApplyStylesEffect<S>>,
+        E: AppendEffect<ApplyStaticStylesEffect<S>>,
     {
-        self.add_effect(ApplyStylesEffect { styles })
+        self.add_effect(ApplyStaticStylesEffect { styles })
     }
 
     // pub fn insert_computed_ref<

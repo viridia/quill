@@ -38,18 +38,22 @@ impl<A: View> ViewTuple for A {
         1
     }
 
+    #[inline(always)]
     fn span_nodes(&self, state: &Self::State) -> NodeSpan {
         self.nodes(state)
     }
 
+    #[inline(always)]
     fn build_spans(&self, cx: &mut Cx) -> Self::State {
         self.build(cx)
     }
 
+    #[inline(always)]
     fn rebuild_spans(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
         self.rebuild(cx, state)
     }
 
+    #[inline(always)]
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
         self.raze(world, state)
     }
@@ -59,20 +63,25 @@ impl<A: View> ViewTuple for A {
 impl ViewTuple for () {
     type State = ();
 
+    #[inline(always)]
     fn len(&self) -> usize {
         0
     }
 
+    #[inline(always)]
     fn span_nodes(&self, state: &Self::State) -> NodeSpan {
         NodeSpan::Empty
     }
 
+    #[inline(always)]
     fn build_spans(&self, cx: &mut Cx) -> Self::State {}
 
+    #[inline(always)]
     fn rebuild_spans(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
         false
     }
 
+    #[inline(always)]
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {}
 }
 
@@ -81,6 +90,7 @@ impl ViewTuple for () {
 impl ViewTuple for Tuple {
     for_tuples!( type State = ( #( Tuple::State ),* ); );
 
+    #[inline(always)]
     fn len(&self) -> usize {
         for_tuples!((#( 1 )+*))
     }

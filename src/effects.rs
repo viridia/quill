@@ -34,6 +34,7 @@ pub trait AppendEffect<T> {
 impl<T: EntityEffect> AppendEffect<T> for () {
     type Result = (T,);
 
+    #[inline(always)]
     fn append(self, tail: T) -> Self::Result {
         (tail,)
     }
@@ -42,6 +43,7 @@ impl<T: EntityEffect> AppendEffect<T> for () {
 impl<H1: EntityEffect, T: EntityEffect> AppendEffect<T> for (H1,) {
     type Result = (H1, T);
 
+    #[inline(always)]
     fn append(self, tail: T) -> Self::Result {
         (self.0, tail)
     }
@@ -50,6 +52,7 @@ impl<H1: EntityEffect, T: EntityEffect> AppendEffect<T> for (H1,) {
 impl<H1: EntityEffect, H2: EntityEffect, T: EntityEffect> AppendEffect<T> for (H1, H2) {
     type Result = (H1, H2, T);
 
+    #[inline(always)]
     fn append(self, tail: T) -> Self::Result {
         (self.0, self.1, tail)
     }
@@ -60,8 +63,20 @@ impl<H1: EntityEffect, H2: EntityEffect, H3: EntityEffect, T: EntityEffect> Appe
 {
     type Result = (H1, H2, H3, T);
 
+    #[inline(always)]
     fn append(self, tail: T) -> Self::Result {
         (self.0, self.1, self.2, tail)
+    }
+}
+
+impl<H1: EntityEffect, H2: EntityEffect, H3: EntityEffect, H4: EntityEffect, T: EntityEffect>
+    AppendEffect<T> for (H1, H2, H3, H4)
+{
+    type Result = (H1, H2, H3, H4, T);
+
+    #[inline(always)]
+    fn append(self, tail: T) -> Self::Result {
+        (self.0, self.1, self.2, self.3, tail)
     }
 }
 
@@ -88,10 +103,12 @@ pub trait EffectTuple: Send + Sync {
 impl<E: EntityEffect> EffectTuple for E {
     type State = E::State;
 
+    #[inline(always)]
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
         self.apply(cx, target)
     }
 
+    #[inline(always)]
     fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
         self.reapply(cx, target, state)
     }
@@ -101,7 +118,10 @@ impl<E: EntityEffect> EffectTuple for E {
 impl EffectTuple for () {
     type State = ();
 
+    #[inline(always)]
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {}
+
+    #[inline(always)]
     fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {}
 }
 
@@ -128,7 +148,7 @@ mod tests {
     impl EntityEffect for TestEffect {
         type State = ();
 
-        fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {}
+        fn apply(&self, _cx: &mut Cx, _target: Entity) -> Self::State {}
     }
 
     struct TestEffect2;
@@ -136,12 +156,13 @@ mod tests {
     impl EntityEffect for TestEffect2 {
         type State = ();
 
-        fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {}
+        fn apply(&self, _cx: &mut Cx, _target: Entity) -> Self::State {}
     }
 
     struct EffectList<T: EffectTuple>(T);
 
     impl<T: EffectTuple> EffectList<T> {
+        #[allow(unused)]
         fn append<E: EntityEffect>(self, effect: E) -> EffectList<<T as AppendEffect<E>>::Result>
         where
             T: AppendEffect<E>,
@@ -153,9 +174,8 @@ mod tests {
 
     #[test]
     fn test_append() {
+        // Compilation test
         let effects = EffectList((TestEffect,));
-        let effects2 = EffectList(effects.0.append(TestEffect2));
-        let effects = (TestEffect, TestEffect2);
-        let _effects = effects.append(TestEffect2);
+        let _effects2 = EffectList(effects.0.append(TestEffect2));
     }
 }
