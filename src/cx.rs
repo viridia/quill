@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use bevy::prelude::{Entity, World};
+use bevy::prelude::{Entity, Resource, World};
 
 use crate::tracking_scope::TrackingScope;
 
@@ -48,5 +48,18 @@ impl<'p, 'w> Cx<'p, 'w> {
         let entity = self.world_mut().spawn_empty().id();
         self.tracking.borrow_mut().add_owned(entity);
         entity
+    }
+
+    /// Return a reference to the resource of the given type. Calling this function
+    /// adds the resource as a dependency of the current presenter invocation.
+    pub fn use_resource<T: Resource>(&self) -> &T {
+        self.tracking.borrow_mut().track_resource::<T>(self.world);
+        self.world.resource::<T>()
+    }
+
+    /// Return a reference to the resource of the given type. Calling this function
+    /// does not add the resource as a dependency of the current presenter invocation.
+    pub fn use_resource_untracked<T: Resource>(&self) -> &T {
+        self.world.resource::<T>()
     }
 }

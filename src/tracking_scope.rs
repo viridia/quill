@@ -18,7 +18,7 @@ pub struct TrackingScope {
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
-    tick: Tick,
+    pub(crate) tick: Tick,
 
     /// List of cleanup functions to call when the scope is dropped.
     #[allow(clippy::type_complexity)]
@@ -84,7 +84,7 @@ impl TrackingScope {
 
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
-    fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
+    pub(crate) fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
         self.components_changed(world, tick) || self.resources_changed(world, tick)
     }
 

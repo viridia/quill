@@ -2,6 +2,7 @@ mod cx;
 mod effects;
 mod element;
 mod node_span;
+// mod presenter;
 mod style;
 mod text_view;
 mod tracking_scope;
@@ -19,7 +20,7 @@ pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, create_views);
+        app.add_systems(Update, (build_views, rebuild_views));
         // Add your plugin logic here
         // For example, you can add systems, resources, or other plugins to the app
 

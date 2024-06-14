@@ -11,16 +11,7 @@ use bevy::{
     },
 };
 use bevy_mod_stylebuilder::*;
-use quill::{Element, QuillPlugin, ViewRoot};
-// use bevy_reactor::*;
-// use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
-
-// fn style_test(ss: &mut StyleBuilder) {
-//     ss.display(Display::Flex)
-//         .flex_direction(FlexDirection::Row)
-//         .border(3)
-//         .padding(3);
-// }
+use quill::{Cx, Element, QuillPlugin, View, ViewFactory};
 
 fn main() {
     App::new()
@@ -51,11 +42,12 @@ fn style_test(ss: &mut StyleBuilder) {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewRoot::new(
+    commands.spawn(
         Element::<NodeBundle>::new()
             .style(style_test)
-            .children(("Hello, ", "world!")),
-    ));
+            .children(("Hello, ", "world!", NestedView))
+            .to_root(),
+    );
     //     commands.spawn(ViewRoot::new(
     //         Element::<NodeBundle>::new()
     //             .style(style_test)
@@ -112,14 +104,13 @@ fn setup_view_root(mut commands: Commands) {
 
 struct NestedView;
 
-// impl ViewTemplate for NestedView {
-//     fn create(&self, _cx: &mut Cx) -> impl IntoView {
-//         text_computed(|cx| {
-//             let counter = cx.use_resource::<Counter>();
-//             format!("{}", counter.count)
-//         })
-//     }
-// }
+impl ViewFactory for NestedView {
+    type View = String;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let counter = cx.use_resource::<Counter>();
+        format!("{}", counter.count)
+    }
+}
 
 #[derive(Resource, Default)]
 pub struct Counter {
