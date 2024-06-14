@@ -1,9 +1,5 @@
 use crate::{cx::Cx, tracking_scope::TrackingScope, NodeSpan};
-use bevy::{
-    hierarchy::BuildWorldChildren,
-    prelude::{Added, Component, Entity, World},
-    utils::HashSet,
-};
+use bevy::prelude::{Added, Component, Entity, World};
 use std::sync::{Arc, Mutex};
 
 #[allow(unused)]
@@ -306,8 +302,8 @@ pub trait ViewFactory {
     fn create(&self, cx: &mut Cx) -> Self::View;
 }
 
-impl<VT: ViewFactory + Send + Sync + 'static> View for VT {
-    type State = (VT::View, <VT::View as View>::State);
+impl<Factory: ViewFactory + Send + Sync + 'static> View for Factory {
+    type State = (Factory::View, <Factory::View as View>::State);
 
     fn nodes(&self, state: &Self::State) -> NodeSpan {
         state.0.nodes(&state.1)
@@ -514,8 +510,8 @@ pub(crate) fn build_views(world: &mut World) {
 }
 
 pub(crate) fn rebuild_views(world: &mut World) {
-    let mut divergence_ct: usize = 0;
-    let mut prev_change_ct: usize = 0;
+    // let mut divergence_ct: usize = 0;
+    // let mut prev_change_ct: usize = 0;
     let this_run = world.change_tick();
 
     // let mut v = HashSet::new();

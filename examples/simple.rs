@@ -11,7 +11,7 @@ use bevy::{
     },
 };
 use bevy_mod_stylebuilder::*;
-use quill::{Cx, Element, QuillPlugin, View, ViewFactory};
+use quill::{Cond, Cx, Element, QuillPlugin, View, ViewFactory};
 
 fn main() {
     App::new()
@@ -45,7 +45,7 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn(
         Element::<NodeBundle>::new()
             .style(style_test)
-            .children(("Hello, ", "world!", NestedView))
+            .children(("Hello, ", "world!", NestedView, EvenOdd))
             .to_root(),
     );
     //     commands.spawn(ViewRoot::new(
@@ -109,6 +109,16 @@ impl ViewFactory for NestedView {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let counter = cx.use_resource::<Counter>();
         format!("{}", counter.count)
+    }
+}
+
+struct EvenOdd;
+
+impl ViewFactory for EvenOdd {
+    type View = Cond<&'static str, &'static str>;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let counter = cx.use_resource::<Counter>();
+        Cond::new(counter.count & 1 == 0, "[Even]", "[Odd]")
     }
 }
 

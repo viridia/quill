@@ -1,8 +1,8 @@
+mod cond;
 mod cx;
 mod effects;
 mod element;
 mod node_span;
-// mod presenter;
 mod style;
 mod text_view;
 mod tracking_scope;
@@ -10,10 +10,10 @@ mod view;
 mod view_tuple;
 
 use bevy::app::{App, Plugin, Update};
+pub use cond::Cond;
 pub use cx::Cx;
 pub use element::*;
 pub use node_span::*;
-// pub use text_view::*;
 pub use view::*;
 
 pub struct QuillPlugin;
