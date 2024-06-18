@@ -1,3 +1,4 @@
+#![feature(impl_trait_in_assoc_type)]
 //! Example of a simple UI layout
 
 use std::f32::consts::PI;
@@ -105,7 +106,7 @@ fn setup_view_root(mut commands: Commands) {
 struct NestedView;
 
 impl ViewFactory for NestedView {
-    type View = String;
+    type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let counter = cx.use_resource::<Counter>();
         format!("{}", counter.count)
@@ -115,10 +116,11 @@ impl ViewFactory for NestedView {
 struct EvenOdd;
 
 impl ViewFactory for EvenOdd {
-    type View = Cond<&'static str, &'static str>;
+    type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let counter = cx.use_resource::<Counter>();
         Cond::new(counter.count & 1 == 0, "[Even]", "[Odd]")
+        // Element::new().children(Cond::new(counter.count & 1 == 0, "[Even]", "[Odd]"))
     }
 }
 

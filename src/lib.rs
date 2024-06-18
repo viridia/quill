@@ -1,7 +1,9 @@
+#![feature(impl_trait_in_assoc_type, associated_type_defaults)]
 mod cond;
 mod cx;
 mod effects;
 mod element;
+mod memoize;
 mod node_span;
 mod style;
 mod text_view;
