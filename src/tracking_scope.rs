@@ -1,3 +1,5 @@
+use std::sync::atomic::AtomicBool;
+
 use bevy::{
     ecs::component::{ComponentId, Tick},
     prelude::*,
@@ -15,6 +17,10 @@ pub struct TrackingScope {
 
     /// Set of resources that we are currently subscribed to.
     resource_deps: HashSet<ComponentId>,
+
+    /// Allows a tracking scope to be explictly marked as changed for reasons other than
+    /// a component or resource dependency mutation.
+    changed: AtomicBool,
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
@@ -42,6 +48,7 @@ impl TrackingScope {
             owned: Vec::new(),
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
+            changed: AtomicBool::new(false),
             tick,
             cleanups: Vec::new(),
         }
@@ -82,13 +89,21 @@ impl TrackingScope {
         self.component_deps.insert((entity, component));
     }
 
+    /// Mark the scope as changed for reasons other than a component or resource dependency.
+    pub(crate) fn set_changed(&self) {
+        self.changed
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
     pub(crate) fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
-        self.components_changed(world, tick) || self.resources_changed(world, tick)
+        self.components_changed(world, tick)
+            || self.resources_changed(world, tick)
+            || self.changed.load(std::sync::atomic::Ordering::Relaxed)
     }
 
-    fn components_changed(&self, world: &World, tick: Tick) -> bool {
+    pub(crate) fn components_changed(&self, world: &World, tick: Tick) -> bool {
         self.component_deps.iter().any(|(e, c)| {
             world.get_entity(*e).map_or(false, |e| {
                 e.get_change_ticks_by_id(*c)
@@ -113,6 +128,10 @@ impl TrackingScope {
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
         self.cleanups = std::mem::take(&mut other.cleanups);
+        self.changed.store(
+            other.changed.load(std::sync::atomic::Ordering::Relaxed),
+            std::sync::atomic::Ordering::Relaxed,
+        );
     }
 }
 

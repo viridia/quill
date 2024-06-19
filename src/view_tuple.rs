@@ -19,7 +19,7 @@ pub trait ViewTuple: Send + Sync + 'static {
     }
 
     /// Return the output nodes for all spans.
-    fn span_nodes(&self, state: &Self::State) -> NodeSpan;
+    fn span_nodes(&self, world: &World, state: &Self::State) -> NodeSpan;
 
     /// Build the child views.
     fn build_spans(&self, cx: &mut Cx) -> Self::State;
@@ -29,6 +29,9 @@ pub trait ViewTuple: Send + Sync + 'static {
 
     /// Despawn the child views.
     fn raze_spans(&self, world: &mut World, state: &mut Self::State);
+
+    /// Call `attach_descendants` on all child views.
+    fn attach_descendants(&self, world: &mut World, state: &mut Self::State) -> bool;
 }
 
 impl<A: View> ViewTuple for A {
@@ -39,8 +42,8 @@ impl<A: View> ViewTuple for A {
     }
 
     #[inline(always)]
-    fn span_nodes(&self, state: &Self::State) -> NodeSpan {
-        self.nodes(state)
+    fn span_nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
+        self.nodes(world, state)
     }
 
     #[inline(always)]
@@ -57,6 +60,11 @@ impl<A: View> ViewTuple for A {
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
         self.raze(world, state)
     }
+
+    #[inline(always)]
+    fn attach_descendants(&self, world: &mut World, state: &mut Self::State) -> bool {
+        self.attach_children(world, state)
+    }
 }
 
 #[allow(unused)]
@@ -69,7 +77,7 @@ impl ViewTuple for () {
     }
 
     #[inline(always)]
-    fn span_nodes(&self, state: &Self::State) -> NodeSpan {
+    fn span_nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
         NodeSpan::Empty
     }
 
@@ -83,6 +91,11 @@ impl ViewTuple for () {
 
     #[inline(always)]
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {}
+
+    #[inline(always)]
+    fn attach_descendants(&self, world: &mut World, state: &mut Self::State) -> bool {
+        false
+    }
 }
 
 #[impl_for_tuples(1, 16)]
@@ -96,9 +109,9 @@ impl ViewTuple for Tuple {
     }
 
     #[rustfmt::skip]
-    fn span_nodes(&self, state: &Self::State) -> NodeSpan {
+    fn span_nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
         NodeSpan::Fragment(Box::new([
-            for_tuples!(#( self.Tuple.nodes(&state.Tuple) ),*)
+            for_tuples!(#( self.Tuple.nodes(world, &state.Tuple) ),*)
         ]))
     }
 
@@ -114,5 +127,11 @@ impl ViewTuple for Tuple {
 
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
         for_tuples!(#( self.Tuple.raze(world, &mut state.Tuple); )*)
+    }
+
+    fn attach_descendants(&self, world: &mut World, state: &mut Self::State) -> bool {
+        let mut changed = false;
+        for_tuples!(#( changed |= self.Tuple.attach_children(world, &mut state.Tuple); )*);
+        changed
     }
 }

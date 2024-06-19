@@ -1,15 +1,26 @@
 use crate::{cx::Cx, tracking_scope::TrackingScope, NodeSpan};
-use bevy::prelude::{Added, Component, Entity, World};
+use bevy::{
+    hierarchy::Parent,
+    log::info,
+    prelude::{Added, Component, Entity, With, World},
+    utils::hashbrown::HashSet,
+};
 use std::sync::{Arc, Mutex};
 
 #[allow(unused)]
-/// An object which produces one or more display nodes.
+/// An object which produces one or more display nodes. The `View` is itself immutable and
+/// stateless, but it can produce a mutable state object which is updated when the view is rebuilt.
+/// This state object must be managed externally, and is passed to the `View` methods as a
+/// parameter.
+///
+/// Views also produce outputs in the form of display nodes, which are entities in the ECS world.
+/// These can be Bevy UI elements, effects, or other entities that are part of the view hierarchy.
 pub trait View: Sync + Send + 'static {
     /// The external state for this View.
     type State: Send + Sync;
 
     /// Return the span of entities produced by this View.
-    fn nodes(&self, state: &Self::State) -> NodeSpan;
+    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan;
 
     /// Construct and patch the tree of UiNodes produced by this view.
     /// This may also spawn child entities representing nested components.
@@ -20,32 +31,46 @@ pub trait View: Sync + Send + 'static {
     /// than it did before the rebuild.
     fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool;
 
-    /// Instructs the view to attach any child entities to the parent entity. This is called
-    /// whenever we know that one or more child entities have changed.
-    fn attach_children(&self, cx: &mut Cx, state: &mut Self::State) {}
+    /// Instructs the view to attach any child entities to their parent entity. This is called
+    /// whenever we know that one or more child entities have changed their outputs. It also
+    /// does the same thing recursively for any child views of this view, but only within
+    /// the current template.
+    ///
+    /// This function normally returns false, which means that there is nothing more to be done.
+    /// However, some view implementations are just thin wrappers around other views, in which
+    /// case they should return true to indicate that the parent of this view should also re-attach
+    /// its children.
+    fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
+        false
+    }
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
     fn raze(&self, world: &mut World, state: &mut Self::State);
 
     // / Build a ViewRoot from this view.
-    fn to_root(self) -> (ViewStateHolder<Self>, ViewThunk, ViewRoot)
+    fn to_root(self) -> (ViewStateCell<Self>, ViewThunk, ViewRoot)
     where
         Self: Sized,
     {
-        let holder = ViewStateHolder::new(self);
+        let holder = ViewStateCell::new(self);
         let thunk = holder.create_thunk();
         (holder, thunk, ViewRoot)
     }
 }
 
-/// Combination of a [`View`] and it's built state.
-pub struct ViewState<S, V: View<State = S>> {
+/// Marker on a [`View`] entity to indicate that it's output [`NodeSpan`] has changed, and that
+/// the parent needs to re-attach it's children.
+#[derive(Component)]
+pub struct OutputChanged;
+
+/// Combination of a [`View`] and it's built state, stored as a trait object within a component.
+pub struct ViewState<V: View> {
     pub(crate) view: V,
-    pub(crate) state: Option<S>,
+    pub(crate) state: Option<V::State>,
 }
 
-impl<S, V: View<State = S>> ViewState<S, V> {
+impl<V: View> ViewState<V> {
     fn rebuild(&mut self, cx: &mut Cx) -> bool {
         if let Some(state) = self.state.as_mut() {
             self.view.rebuild(cx, state)
@@ -55,12 +80,26 @@ impl<S, V: View<State = S>> ViewState<S, V> {
             true
         }
     }
+
+    fn raze(&mut self, world: &mut World) {
+        if let Some(state) = self.state.as_mut() {
+            self.view.raze(world, state);
+        }
+    }
+
+    fn attach_children(&mut self, world: &mut World) -> bool {
+        if let Some(state) = self.state.as_mut() {
+            self.view.attach_children(world, state)
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Component)]
-pub struct ViewStateHolder<V: View>(pub Arc<Mutex<ViewState<V::State, V>>>);
+pub struct ViewStateCell<V: View>(pub Arc<Mutex<ViewState<V>>>);
 
-impl<V: View> ViewStateHolder<V> {
+impl<V: View> ViewStateCell<V> {
     pub fn new(view: V) -> Self {
         Self(Arc::new(Mutex::new(ViewState { view, state: None })))
     }
@@ -89,15 +128,19 @@ pub trait AnyViewAdapter: Sync + Send + 'static {
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
     fn raze(&self, world: &mut World, entity: Entity);
+
+    /// Instructs the view to attach any child entities to the parent entity. This is called
+    /// whenever we know that one or more child entities have changed.
+    fn attach_children(&self, world: &mut World, entity: Entity) -> bool;
 }
 
 impl<V: View> AnyViewAdapter for ViewAdapter<V> {
     fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan {
-        match world.entity(entity).get::<ViewStateHolder<V>>() {
+        match world.entity(entity).get::<ViewStateCell<V>>() {
             Some(view_cell) => {
                 let vstate = view_cell.0.lock().unwrap();
                 match &vstate.state {
-                    Some(state) => vstate.view.nodes(state),
+                    Some(state) => vstate.view.nodes(world, state),
                     None => NodeSpan::Empty,
                 }
             }
@@ -110,7 +153,7 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
         if let Some(view_cell) = cx
             .world_mut()
             .entity_mut(entity)
-            .get_mut::<ViewStateHolder<V>>()
+            .get_mut::<ViewStateCell<V>>()
         {
             let inner = view_cell.0.clone();
             let mut vstate = inner.lock().unwrap();
@@ -121,17 +164,24 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
     }
 
     fn raze(&self, world: &mut World, entity: Entity) {
-        if let Some(view_cell) = world.entity_mut(entity).take::<ViewStateHolder<V>>() {
-            let mut vstate = view_cell.0.lock().unwrap();
-            if let Some(mut state) = vstate.state.take() {
-                vstate.view.raze(world, &mut state);
-            }
+        if let Some(vsh) = world.entity_mut(entity).take::<ViewStateCell<V>>() {
+            vsh.0.lock().unwrap().raze(world);
+        }
+    }
+
+    fn attach_children(&self, world: &mut World, entity: Entity) -> bool {
+        if let Some(view_cell) = world.entity(entity).get::<ViewStateCell<V>>() {
+            let vs = view_cell.0.clone();
+            let mut inner = vs.lock().unwrap();
+            inner.attach_children(world)
+        } else {
+            false
         }
     }
 }
 
 #[derive(Component)]
-pub struct ViewThunk(&'static dyn AnyViewAdapter);
+pub struct ViewThunk(pub(crate) &'static dyn AnyViewAdapter);
 
 /// An ECS component which holds a reference to the root of a view hierarchy.
 #[derive(Component)]
@@ -140,145 +190,8 @@ pub struct ViewRoot;
 /// A reference to a [`View`] which can be passed around as a parameter.
 // pub struct ViewHandle(pub(crate) Arc<Mutex<dyn AnyViewState>>);
 
-// impl ViewHandle {
-/// Construct a new [`ViewRef`] from a [`View`].
-// pub fn new(view: impl View) -> Self {
-//     Self(Arc::new(Mutex::new(ViewState { view, state: None })))
-// }
-
-// /// Given a view template, construct a new view. This creates an entity to hold the view
-// /// and the view handle, and then calls [`View::build`] on the view. The resuling entity
-// /// is part of the template invocation hierarchy, it is not a display node.
-// pub fn spawn(view: &ViewHandle, parent: Entity, world: &mut World) -> Entity {
-//     todo!("spawn view");
-//     // let mut child_ent = world.spawn(ViewCell(view.0.clone()));
-//     // child_ent.set_parent(parent);
-//     // let id = child_ent.id();
-//     // view.0.lock().unwrap().build(child_ent.id(), world);
-//     // id
-// }
-
-/// Returns the display nodes produced by this `View`.
-//     pub fn nodes(&self) -> NodeSpan {
-//         self.0.lock().unwrap().nodes()
-//     }
-
-//     /// Destroy the view, including the display nodes, and all descendant views.
-//     pub fn raze(&self, world: &mut World) {
-//         self.0.lock().unwrap().raze(world);
-//     }
-// }
-
-// impl Clone for ViewHandle {
-//     fn clone(&self) -> Self {
-//         Self(self.0.clone())
-//     }
-// }
-
-// impl Default for ViewHandle {
-//     fn default() -> Self {
-//         Self(Arc::new(Mutex::new(EmptyView)))
-//     }
-// }
-
 /// View which renders nothing.
 pub struct EmptyView;
-
-// #[allow(unused_variables)]
-// impl AnyViewState for EmptyView {
-//     fn nodes(&self) -> NodeSpan {
-//         NodeSpan::Empty
-//     }
-
-//     fn rebuild(&mut self, cx: &mut Cx) -> bool {
-//         false
-//     }
-
-//     fn raze(&mut self, world: &mut World) {}
-
-//     // fn owner(&self) -> Option<Entity> {
-//     //     None
-//     // }
-// }
-
-/// Trait that defines a factory object that can construct a [`View`] from a reactive context.
-/// View factories are themselves views, when they are built or rebuild they call `create()` to
-/// create a new, temporary [`View`] which is then immediately invoked. Note that the view
-/// is not memoized, and shares the same reactive context as the caller; this means that when
-/// the root view is rebuilt, the entire tree will be rebuilt as well.
-pub trait ViewFactory {
-    type View: View;
-
-    /// Create the view for the control.
-    fn create(&self, cx: &mut Cx) -> Self::View;
-}
-
-impl<Factory: ViewFactory + Send + Sync + 'static> View for Factory {
-    type State = (Factory::View, <Factory::View as View>::State);
-
-    fn nodes(&self, state: &Self::State) -> NodeSpan {
-        state.0.nodes(&state.1)
-    }
-
-    fn build(&self, cx: &mut Cx) -> Self::State {
-        let view = self.create(cx);
-        let state = view.build(cx);
-        (view, state)
-    }
-
-    fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
-        state.0 = self.create(cx);
-        state.0.rebuild(cx, &mut state.1)
-    }
-
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
-        state.0.raze(world, &mut state.1)
-    }
-}
-
-// This doesn't work. ViewTemplates can't be Views, not directly. They need to be transformed
-// into views so that they can be wrapped in an Arc. This means that ViewTuple has to take
-// an IntoView. This means we need something like an IntoViewTuple.
-//
-// The basic issue is that unlike in bevy_reactor, create() gets called multiple times -
-// that is, each time the parent view is rebuild, The ViewTemplate might be different, and in
-// fact might be a different instance.
-//
-
-// impl<VT: ViewTemplate + Send + Sync + 'static> View for ViewTemplateView<VT> {
-//     type State = (Entity, NodeSpan);
-
-//     fn nodes(&self, state: &Self::State) -> NodeSpan {
-//         state.1.clone()
-//     }
-
-//     fn build(&self, cx: &mut Cx) -> Self::State {
-//         let tick = cx.world_mut().change_tick();
-//         let owner = cx.world_mut().spawn_empty().id();
-//         let mut scope = TrackingScope::new(tick);
-//         let mut cxi = Cx::new(cx.world_mut(), owner, &mut scope);
-//         let view = self.view.create(&mut cxi);
-//         let state = view.build(&mut cxi);
-//         let nodes = view.nodes(&state);
-//         // Need to insert a view cell with the view state into the entity.
-//         cx.world_mut().entity_mut(owner).insert(scope);
-//         (owner, nodes)
-//     }
-
-//     fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
-//         // Note: This doesn't rebuild the content of the view, only syncs the `NodeSpan`s
-//         // that have already been generated. The rebuilding of the view happens asynchronously via
-//         // the tracking scope update.
-//         // TODO: This doesn't work because the view might have different parameters; we'd want to
-//         // update the view state props.
-//         let vc = cx.world_mut().entity(state.0).get::<ViewCell>().unwrap();
-//         let nodes = vc.0.lock().unwrap().nodes();
-//         if nodes != state.1 {
-//             state.1 = nodes;
-//             return true;
-//         }
-//         false
-//     }
 
 //     fn raze(&self, world: &mut World, state: &mut Self::State) {
 //         let vc = world.entity(state.0).get::<ViewCell>().unwrap();
@@ -287,114 +200,6 @@ impl<Factory: ViewFactory + Send + Sync + 'static> View for Factory {
 //         view.raze(world);
 //         world.entity_mut(state.0).remove_parent();
 //         world.entity_mut(state.0).despawn();
-//     }
-// }
-
-// / Holds a [`ViewTemplate`], and the entity and output nodes created by the [`View`] produced
-// / by the factory.
-// pub struct ViewTemplateState<VT: ViewTemplate, V: View> {
-//     /// A reference to the generating template.
-//     template: Arc<VT>,
-
-//     /// A reference to the view.
-//     view: V,
-
-//     /// The view's state.
-//     state: V::State,
-
-//     /// The entity that holds the tracking context for the view.
-//     owner: Entity,
-// }
-
-// impl<V: View, VT: ViewTemplate + Send + Sync + 'static> AnyViewState for ViewTemplateState<VT, V> {
-//     fn nodes(&self) -> NodeSpan {
-//         self.view.nodes(&self.state)
-//     }
-
-//     fn rebuild(&mut self, cx: &mut Cx) -> bool {
-//         let view = self.template.create(cx);
-//         todo!();
-//         // unsafe { view.rebuild(cx, &mut self.state) }
-//     }
-
-//     fn raze(&mut self, world: &mut World) {
-//         self.view.raze(world, &mut self.state)
-//     }
-
-//     fn owner(&self) -> Option<Entity> {
-//         Some(self.owner)
-//     }
-// }
-
-// impl<W: ViewTemplate> ViewTemplateState<W> {
-//     /// Construct a new `WidgetInstance`.
-//     pub fn new(template: W) -> Self {
-//         Self {
-//             template,
-//             template_entity: None,
-//             state: None,
-//             nodes: NodeSpan::Empty,
-//         }
-//     }
-// }
-
-// impl<VT: ViewTemplate + Send + Sync + 'static> AnyViewState for ViewTemplateState<VT> {
-//     fn nodes(&self) -> NodeSpan {
-//         self.nodes.clone()
-//     }
-
-//     fn rebuild(&mut self, cx: &mut Cx) -> bool {
-//         match self.template_entity {
-//             Some(entity) => {
-//                 let mut entt = cx.world_mut().get_entity_mut(entity).unwrap();
-//                 let mut scope = entt.get_mut::<TrackingScope>().unwrap();
-//                 // let mut cxi = Cx::new(cx.world_mut(), entity, &mut scope);
-//                 // let state = self.state.as_mut().unwrap();
-//                 // let view = self.template.create(&mut cxi);
-//                 // view.rebuild(&mut cx, &mut state.state);
-//                 true
-//             }
-//             None => {
-//                 // Entity does not exist
-//                 let tick = cx.world_mut().change_tick();
-//                 let template_entity = cx.world_mut().spawn_empty().id();
-//                 self.template_entity = Some(template_entity);
-//                 let mut scope = TrackingScope::new(tick);
-//                 let mut cxi = Cx::new(cx.world_mut(), template_entity, &mut scope);
-//                 let view = self.template.create(&mut cxi);
-//                 let state = view.build(&mut cxi);
-//                 cx.world_mut().entity_mut(template_entity).insert(scope);
-//                 self.state = Some(Box::new(ViewState {
-//                     view,
-//                     state: Some(state),
-//                 }));
-//                 // self.nodes = self.template.create(&mut cx).nodes(&());
-//                 true
-//             }
-//         }
-//         // let mut view = self.template.create(cx);
-//         // let changed = view.rebuild(cx, &mut self.state);
-//         // self.nodes = view.nodes(&self.state);
-//         // changed
-//     }
-
-//     fn raze(&mut self, world: &mut World) {
-//         // self.nodes.raze(world);
-//         assert!(self.state.is_some());
-//         match self.state {
-//             Some(ref mut state) => {
-//                 state.raze(world);
-//             }
-//             None => {}
-//         }
-//         self.state = None;
-//         // let mut entt = world.entity_mut(self.output_entity.unwrap());
-//         // if let Some(handle) = entt.get_mut::<ViewCell>() {
-//         //     // Despawn the inner view.
-//         //     handle.0.clone().lock().unwrap().raze(entt.id(), world);
-//         // };
-//         // self.output_entity = None;
-//         // world.despawn_owned_recursive(view_entity);
 //     }
 // }
 
@@ -431,6 +236,10 @@ pub(crate) fn rebuild_views(world: &mut World) {
             }
         })
         .collect::<Vec<_>>();
+
+    // if !changed.is_empty() {
+    //     println!("# Changed views: {:?}", changed.len());
+    // }
     // for (e, scope) in q.iter(world) {
     //     if scope.dependencies_changed(world, this_run) {
     //         v.insert(e);
@@ -460,7 +269,12 @@ pub(crate) fn rebuild_views(world: &mut World) {
         // Run the reaction
         let (_, _, view_cell) = scopes.get_mut(world, *scope_entity).unwrap();
         let mut next_scope = TrackingScope::new(this_run);
-        view_cell.0.rebuild(world, *scope_entity, &mut next_scope);
+        let output_changed = view_cell.0.rebuild(world, *scope_entity, &mut next_scope);
+        if output_changed {
+            #[cfg(feature = "verbose")]
+            info!("View output changed: {}", *scope_entity);
+            world.entity_mut(*scope_entity).insert(OutputChanged);
+        }
 
         // Replace deps and cleanups in the current scope with the next scope.
         let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
@@ -500,49 +314,51 @@ pub(crate) fn rebuild_views(world: &mut World) {
     //     }
     //     prev_change_ct = change_ct;
 
-    //     // phase 2
-    //     if change_ct > 0 {
-    //         for e in v.drain() {
-    //             let mut entt = world.entity_mut(e);
-    //             // Clear tracking lists for presenters to be re-rendered.
-    //             if let Some(mut tracked_resources) = entt.get_mut::<TrackedResources>() {
-    //                 tracked_resources.data.clear();
-    //             }
-    //             if let Some(mut tracked_components) = entt.get_mut::<TrackedComponents>() {
-    //                 tracked_components.data.clear();
-    //             }
+    // let mut child_nodes_changed =
+    //     world.query_filtered::<(Entity, &mut TrackingScope, &ViewThunk), With<ChildNodesChanged>>();
+    // let changed = child_nodes_changed
+    //     .iter(world)
+    //     .map(|(e, _, _)| e)
+    //     .collect::<Vec<_>>();
+    // for e in changed.iter() {
+    //     #[cfg(feature = "verbose")]
+    //     info!("Child node change detected: {}", *e);
 
-    //             // Clone the ViewHandle so we can call build() on it.
-    //             let Some(view_handle) = entt.get_mut::<ViewHandle>() else {
-    //                 continue;
-    //             };
-    //             let inner = view_handle.inner.clone();
-    //             let mut ec = BuildContext::new(world, e);
-    //             inner.lock().unwrap().build(&mut ec, e);
-    //         }
-    //     } else {
-    //         break;
-    //     }
+    //     let (_, _, thunk) = child_nodes_changed.get_mut(world, *e).unwrap();
+    //     thunk.0.attach_children(world, *e);
+    //     world.entity_mut(*e).remove::<ChildNodesChanged>();
     // }
+}
 
-    // // phase 3
-    // loop {
-    //     let mut qf = world.query_filtered::<Entity, With<PresenterGraphChanged>>();
-    //     let changed_entities: Vec<Entity> = qf.iter(world).collect();
-    //     if changed_entities.is_empty() {
-    //         break;
-    //     }
-    //     // println!("Entities changed: {}", changed_entities.len());
-    //     for e in changed_entities {
-    //         // println!("PresenterGraphChanged {:?}", e);
-    //         let mut ent = world.entity_mut(e);
-    //         ent.remove::<PresenterGraphChanged>();
-    //         let Some(view_handle) = world.get_mut::<ViewHandle>(e) else {
-    //             continue;
-    //         };
-    //         let inner = view_handle.inner.clone();
-    //         let mut bc = BuildContext::new(world, e);
-    //         inner.lock().unwrap().attach(&mut bc, e);
-    //     }
-    // }
+pub(crate) fn reattach_children(world: &mut World) {
+    let mut changed_views = Vec::<Entity>::new();
+    let mut work_queue = HashSet::<Entity>::new();
+    let mut changed_views_query = world.query_filtered::<Entity, With<OutputChanged>>();
+    for view_entity in changed_views_query.iter(world) {
+        changed_views.push(view_entity);
+        if let Some(parent) = world.entity(view_entity).get::<Parent>() {
+            work_queue.insert(parent.get());
+        }
+    }
+
+    for view_entity in changed_views.drain(..) {
+        world.entity_mut(view_entity).remove::<OutputChanged>();
+    }
+
+    while !work_queue.is_empty() {
+        let entity = *work_queue.iter().next().unwrap();
+        work_queue.remove(&entity);
+
+        if let Some(thunk) = world.entity(entity).get::<ViewThunk>() {
+            if thunk.0.attach_children(world, entity) {
+                if let Some(parent) = world.entity(entity).get::<Parent>() {
+                    work_queue.insert(parent.get());
+                }
+            }
+        }
+
+        if work_queue.is_empty() {
+            break;
+        }
+    }
 }

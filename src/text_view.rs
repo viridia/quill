@@ -1,5 +1,6 @@
 use bevy::{
     hierarchy::BuildWorldChildren,
+    log::info,
     prelude::{default, Entity, World},
     text::{Text, TextSection, TextStyle},
     ui::node_bundles::TextBundle,
@@ -10,7 +11,7 @@ use crate::{cx::Cx, NodeSpan, View};
 impl View for String {
     type State = Entity;
 
-    fn nodes(&self, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
         NodeSpan::Node(*state)
     }
 
@@ -23,6 +24,9 @@ impl View for String {
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
+        #[cfg(feature = "verbose")]
+        info!("Razing String View: {}", *state);
+
         // Delete the text node.
         world.entity_mut(*state).remove_parent();
         world.entity_mut(*state).despawn();
@@ -32,7 +36,7 @@ impl View for String {
 impl<'a: 'static> View for &'a str {
     type State = Entity;
 
-    fn nodes(&self, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
         NodeSpan::Node(*state)
     }
 
@@ -45,6 +49,9 @@ impl<'a: 'static> View for &'a str {
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
+        #[cfg(feature = "verbose")]
+        info!("Razing &str View: {}", *state);
+
         // Delete the text node.
         world.entity_mut(*state).remove_parent();
         world.entity_mut(*state).despawn();

@@ -6,6 +6,11 @@ edition = "2021"
 [workspace]
 members = ["crates/*"]
 
+[features]
+# default = ["verbose"]
+# Enable verbose logging
+verbose = []
+
 [workspace.dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git", version = "0.14.0-dev" }
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }

@@ -29,10 +29,10 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     /// Union of true and false states.
     type State = CondState<Pos::State, Neg::State>;
 
-    fn nodes(&self, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
         match state {
-            Self::State::True(ref true_state) => self.pos.nodes(true_state),
-            Self::State::False(ref false_state) => self.neg.nodes(false_state),
+            Self::State::True(ref true_state) => self.pos.nodes(world, true_state),
+            Self::State::False(ref false_state) => self.neg.nodes(world, false_state),
         }
     }
 
@@ -55,7 +55,6 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
                 _ => {
                     // Despawn old state and construct new state
                     self.raze(cx.world_mut(), state);
-                    // bc.mark_changed_shape();
                     *state = Self::State::True(self.pos.build(cx));
                     true
                 }
@@ -70,7 +69,6 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
                 _ => {
                     // Despawn old state and construct new state
                     self.raze(cx.world_mut(), state);
-                    // cx.mark_changed_shape();
                     *state = Self::State::False(self.neg.build(cx));
                     true
                 }
@@ -78,14 +76,22 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
         }
     }
 
-    fn attach_children(&self, cx: &mut Cx, state: &mut Self::State) {
+    fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
         match state {
-            Self::State::True(ref mut true_state) => self.pos.attach_children(cx, true_state),
-            Self::State::False(ref mut false_state) => self.neg.attach_children(cx, false_state),
+            Self::State::True(ref mut true_state) => self.pos.attach_children(world, true_state),
+            Self::State::False(ref mut false_state) => self.neg.attach_children(world, false_state),
         }
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
+        // match state {
+        //     Self::State::True(_) => {
+        //         println!("Razing Cond: True");
+        //     }
+        //     Self::State::False(_) => {
+        //         println!("Razing Cond: False");
+        //     }
+        // }
         match state {
             Self::State::True(ref mut true_state) => self.pos.raze(world, true_state),
             Self::State::False(ref mut false_state) => self.neg.raze(world, false_state),

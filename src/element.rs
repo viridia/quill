@@ -126,7 +126,7 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
 impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Element<B, C, E> {
     type State = (Entity, C::State, E::State);
 
-    fn nodes(&self, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
         NodeSpan::Node(state.0)
     }
 
@@ -161,7 +161,7 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
 
         // Build child nodes.
         let children = self.children.build_spans(cx);
-        let nodes = self.children.span_nodes(&children);
+        let nodes = self.children.span_nodes(cx.world(), &children);
         cx.world_mut()
             .entity_mut(display)
             .replace_children(&nodes.to_vec());
@@ -171,15 +171,16 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
     fn rebuild(&self, cx: &mut crate::cx::Cx, state: &mut Self::State) -> bool {
         effects::EffectTuple::reapply(&self.effects, cx, state.0, &mut state.2);
         if self.children.rebuild_spans(cx, &mut state.1) {
-            let nodes = self.children.span_nodes(&state.1);
-            cx.world_mut()
-                .entity_mut(state.0)
-                .replace_children(&nodes.to_vec());
+            self.attach_children(cx.world_mut(), state);
         }
+        // Note that we always return false, since the Element entity doesn't change.
         false
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
+        #[cfg(feature = "verbose")]
+        info!("Razing element: {}", state.0);
+
         // assert!(state.is_some());
         // self.raze_children(world);
 
@@ -193,17 +194,11 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
         // world.despawn_owned_recursive(view_entity);
     }
 
-    // fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {
-    //     self.attach_children(world);
-    //     true
-    // }
+    fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
+        assert!(world.get_entity(state.0).is_some());
+        self.children.attach_descendants(world, &mut state.1);
+        let nodes = self.children.span_nodes(world, &state.1);
+        world.entity_mut(state.0).replace_children(&nodes.to_vec());
+        false
+    }
 }
-
-// impl<B: Bundle + Default, C: ViewTuple> IntoView for Element<B, C> {
-//     fn into_view(self) -> Arc<Mutex<dyn AnyViewState>> {
-//         Arc::new(Mutex::new(ViewState {
-//             view: self,
-//             state: None,
-//         }))
-//     }
-// }

@@ -38,6 +38,11 @@ impl<'p, 'w> Cx<'p, 'w> {
         self.world
     }
 
+    /// Returns the id of the entity that owns the tracking scope.
+    pub fn owner(&self) -> Entity {
+        self.owner
+    }
+
     /// Spawn an empty [`Entity`]. The caller is responsible for despawning the entity.
     pub fn create_entity_untracked(&mut self) -> Entity {
         self.world_mut().spawn_empty().id()

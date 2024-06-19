@@ -14,13 +14,13 @@
       "args": ["--example", "simple"],
       "problemMatcher": ["$rustc"],
       "label": "rust: cargo run --example simple",
+      // "env": {
+      //   "RUST_BACKTRACE": "1"
+      // },
       "group": {
         "kind": "build",
         "isDefault": true
       }
-      // "env": {
-      //   "RUST_BACKTRACE": "1"
-      // }
     }
   ]
 }
