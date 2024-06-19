@@ -1,9 +1,7 @@
 # Next
 
-- Better names for ViewStateHolder.
+- Dynamic styles are next!
 - Write tests for:
-  - changing props of a nested view.
-  - updating a nested view internally.
   - passing children as params (and dealing with memoization)
 - Finish scope tracing.
 - Effects w/deps

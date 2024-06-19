@@ -1,4 +1,8 @@
-use crate::{cx::Cx, tracking_scope::TrackingScope, NodeSpan};
+use crate::{
+    cx::Cx,
+    tracking_scope::{TrackingScope, TrackingScopeTracing},
+    NodeSpan,
+};
 use bevy::{
     hierarchy::Parent,
     log::info,
@@ -247,16 +251,17 @@ pub(crate) fn rebuild_views(world: &mut World) {
     // }
 
     // Record the changed entities for debugging purposes.
-    // if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
-    //     // Check for empty first to avoid setting mutation flag.
-    //     if !tracing.0.is_empty() {
-    //         tracing.0.clear();
-    //     }
-    //     if !changed.is_empty() {
-    //         tracing.0.extend(changed.iter().copied());
-    //     }
-    // }
+    if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
+        // Check for empty first to avoid setting mutation flag.
+        if !tracing.0.is_empty() {
+            tracing.0.clear();
+        }
+        if !changed.is_empty() {
+            tracing.0.extend(changed.iter().copied());
+        }
+    }
 
+    // TODO: Run this in a loop and check for convergence.
     for scope_entity in changed.iter() {
         // println!("Rebuilding view {:?}", scope_entity);
         // Call registered cleanup functions
@@ -281,12 +286,6 @@ pub(crate) fn rebuild_views(world: &mut World) {
         scope.take_deps(&mut next_scope);
         scope.tick = this_run;
     }
-
-    // // force build every view that just got spawned
-    // let mut qf = world.query_filtered::<Entity, Added<ViewHandle>>();
-    // for e in qf.iter(world) {
-    //     v.insert(e);
-    // }
 
     // loop {
     //     // This is inside a loop because rendering may trigger further changes.
@@ -313,21 +312,6 @@ pub(crate) fn rebuild_views(world: &mut World) {
     //         }
     //     }
     //     prev_change_ct = change_ct;
-
-    // let mut child_nodes_changed =
-    //     world.query_filtered::<(Entity, &mut TrackingScope, &ViewThunk), With<ChildNodesChanged>>();
-    // let changed = child_nodes_changed
-    //     .iter(world)
-    //     .map(|(e, _, _)| e)
-    //     .collect::<Vec<_>>();
-    // for e in changed.iter() {
-    //     #[cfg(feature = "verbose")]
-    //     info!("Child node change detected: {}", *e);
-
-    //     let (_, _, thunk) = child_nodes_changed.get_mut(world, *e).unwrap();
-    //     thunk.0.attach_children(world, *e);
-    //     world.entity_mut(*e).remove::<ChildNodesChanged>();
-    // }
 }
 
 pub(crate) fn reattach_children(world: &mut World) {
