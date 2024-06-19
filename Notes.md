@@ -1,6 +1,7 @@
 # Next
 
-- Dynamic styles are next!
+- Mutable
+- Button
 - Write tests for:
   - passing children as params (and dealing with memoization)
 - Finish scope tracing.
