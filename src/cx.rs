@@ -1,8 +1,12 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, marker::PhantomData};
 
-use bevy::prelude::{Entity, Resource, World};
+use bevy::{
+    hierarchy::BuildWorldChildren,
+    prelude::{Entity, Resource, World},
+};
 
-use crate::tracking_scope::TrackingScope;
+use crate::{mutable::Mutable, MutableCell, WriteMutable};
+use crate::{tracking_scope::TrackingScope, ReadMutable};
 
 /// A context parameter that is passed to views and callbacks. It contains the reactive
 /// tracking scope, which is used to manage reactive dependencies, as well as a reference to
@@ -55,6 +59,26 @@ impl<'p, 'w> Cx<'p, 'w> {
         entity
     }
 
+    /// Create a new [`Mutable`] in this context.
+    pub fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Send + Sync + 'static,
+    {
+        let owner = self.owner();
+        let cell = self
+            .world_mut()
+            .spawn(MutableCell::<T>(init))
+            .set_parent(owner)
+            .id();
+        let component = self.world_mut().init_component::<MutableCell<T>>();
+        self.tracking.borrow_mut().add_owned(cell);
+        Mutable {
+            cell,
+            component,
+            marker: PhantomData,
+        }
+    }
+
     /// Return a reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource<T: Resource>(&self) -> &T {
@@ -66,5 +90,63 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// does not add the resource as a dependency of the current presenter invocation.
     pub fn use_resource_untracked<T: Resource>(&self) -> &T {
         self.world.resource::<T>()
+    }
+}
+
+impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
+    where
+        T: Send + Sync + Copy + 'static,
+    {
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell, mutable.component);
+        self.world.read_mutable(mutable)
+    }
+
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
+    where
+        T: Send + Sync + Clone + 'static,
+    {
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell, mutable.component);
+        self.world.read_mutable_clone(mutable)
+    }
+
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
+    where
+        T: Send + Sync + 'static,
+    {
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell, mutable.component);
+        self.world.read_mutable_as_ref(mutable)
+    }
+
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
+    where
+        T: Send + Sync + 'static,
+    {
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell, mutable.component);
+        self.world.read_mutable_map(mutable, f)
+    }
+}
+
+impl<'p, 'w> WriteMutable for Cx<'p, 'w> {
+    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Copy + PartialEq + 'static,
+    {
+        self.world.write_mutable(mutable, value);
+    }
+
+    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Clone + PartialEq + 'static,
+    {
+        self.world.write_mutable_clone(mutable, value);
     }
 }

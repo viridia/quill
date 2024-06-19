@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_signals::Cx;
 use quill::*;
 
 fn style_spacer(ss: &mut StyleBuilder) {
@@ -12,7 +11,9 @@ fn style_spacer(ss: &mut StyleBuilder) {
 pub struct Spacer;
 
 impl ViewTemplate for Spacer {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut Cx) -> Self::View {
         Element::<NodeBundle>::new().style(style_spacer)
     }
 }

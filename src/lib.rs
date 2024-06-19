@@ -3,6 +3,7 @@ mod cond;
 mod cx;
 mod effects;
 mod element;
+mod mutable;
 mod node_span;
 mod style;
 mod text_view;
@@ -18,7 +19,9 @@ use bevy::{
 pub use cond::Cond;
 pub use cx::Cx;
 pub use element::*;
+pub use mutable::*;
 pub use node_span::*;
+pub use tracking_scope::TrackingScope;
 pub use view::*;
 pub use view_template::ViewTemplate;
 

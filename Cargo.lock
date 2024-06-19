@@ -2750,6 +2750,8 @@ name = "obsidian_ui_quill"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_mod_stylebuilder",
+ "quill",
 ]
 
 [[package]]

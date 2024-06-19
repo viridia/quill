@@ -1,3 +1,5 @@
+#![feature(impl_trait_in_assoc_type, associated_type_defaults)]
+
 /// Module containing standard color definitions.
 #[allow(missing_docs)]
 pub mod colors;
@@ -6,7 +8,7 @@ pub mod colors;
 pub mod controls;
 
 /// Module containing utilities for creating custom window cursors.
-pub mod cursor;
+// pub mod cursor;
 
 // / Utilities for tabbing between widgets.
 // pub mod focus;
