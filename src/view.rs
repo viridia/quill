@@ -5,11 +5,13 @@ use crate::{
 };
 use bevy::{
     hierarchy::Parent,
-    log::info,
     prelude::{Added, Component, Entity, With, World},
     utils::hashbrown::HashSet,
 };
 use std::sync::{Arc, Mutex};
+
+#[cfg(feature = "verbose")]
+use bevy::log::info;
 
 #[allow(unused)]
 /// An object which produces one or more display nodes. The `View` is itself immutable and

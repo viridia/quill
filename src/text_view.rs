@@ -1,10 +1,12 @@
 use bevy::{
     hierarchy::BuildWorldChildren,
-    log::info,
     prelude::{default, Entity, World},
     text::{Text, TextSection, TextStyle},
     ui::node_bundles::TextBundle,
 };
+
+#[cfg(feature = "verbose")]
+use bevy::log::info;
 
 use crate::{cx::Cx, NodeSpan, View};
 

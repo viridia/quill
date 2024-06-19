@@ -1,13 +1,13 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::*;
-use bevy_mod_stylebuilder::StyleTuple;
+use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 
 use crate::{
     cx::Cx,
     effects::{self, AppendEffect, EffectTuple, EntityEffect},
     node_span::NodeSpan,
-    style::ApplyStaticStylesEffect,
+    style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
     view::View,
     view_tuple::ViewTuple,
 };
@@ -98,6 +98,21 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         E: AppendEffect<ApplyStaticStylesEffect<S>>,
     {
         self.add_effect(ApplyStaticStylesEffect { styles })
+    }
+
+    /// Apply a set of styles to the element
+    pub fn style_effect<
+        S: Fn(D, &mut StyleBuilder) + Send + Sync,
+        D: PartialEq + Clone + Send + Sync,
+    >(
+        self,
+        style_fn: S,
+        deps: D,
+    ) -> Element<B, C, <E as AppendEffect<ApplyDynamicStylesEffect<S, D>>>::Result>
+    where
+        E: AppendEffect<ApplyDynamicStylesEffect<S, D>>,
+    {
+        self.add_effect(ApplyDynamicStylesEffect { style_fn, deps })
     }
 
     // pub fn insert_computed_ref<

@@ -25,12 +25,12 @@ impl<S: StyleTuple> EntityEffect for ApplyStaticStylesEffect<S> {
 /// Applies dynamic styles which are computed reactively. The `deps` field is used to determine
 /// whether the styles need to be recomputed; if the deps have not changed since the previous
 /// update cycle, then the styles are not recomputed.
-pub struct ApplyDynamicStylesEffect<F: Fn(&mut StyleBuilder), D: PartialEq + Clone> {
+pub struct ApplyDynamicStylesEffect<F: Fn(D, &mut StyleBuilder), D: PartialEq + Clone> {
     pub(crate) style_fn: F,
     pub(crate) deps: D,
 }
 
-impl<F: Fn(&mut StyleBuilder) + Send + Sync, D: PartialEq + Clone + Send + Sync> EntityEffect
+impl<F: Fn(D, &mut StyleBuilder) + Send + Sync, D: PartialEq + Clone + Send + Sync> EntityEffect
     for ApplyDynamicStylesEffect<F, D>
 {
     type State = D;
@@ -41,7 +41,7 @@ impl<F: Fn(&mut StyleBuilder) + Send + Sync, D: PartialEq + Clone + Send + Sync>
             style.clone_from(s);
         }
         let mut sb = StyleBuilder::new(&mut target, style);
-        (self.style_fn)(&mut sb);
+        (self.style_fn)(self.deps.clone(), &mut sb);
         sb.finish();
         self.deps.clone()
     }

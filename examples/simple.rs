@@ -42,6 +42,7 @@ fn setup_view_root(mut commands: Commands) {
                 EvenOdd,
                 " ",
                 Nested,
+                DynamicStyle,
             ))
             .to_root(),
     );
@@ -149,6 +150,28 @@ impl ViewTemplate for NestedInner {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
         Cond::new(self.count & 1 == 0, "[Evenish]", "[Oddish]")
+    }
+}
+
+#[derive(Clone, PartialEq)]
+struct DynamicStyle;
+
+impl ViewTemplate for DynamicStyle {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let counter = cx.use_resource::<Counter>();
+        Element::<NodeBundle>::new()
+            .style_effect(
+                |ct, ss| {
+                    if ct {
+                        ss.border_color(palettes::css::RED).border(3);
+                    } else {
+                        ss.border_color(palettes::css::LIME).border(3);
+                    }
+                },
+                counter.count & 1 == 0,
+            )
+            .children("Style")
     }
 }
 

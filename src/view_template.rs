@@ -1,10 +1,12 @@
 use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, NodeSpan, View, ViewThunk};
 use bevy::{
     hierarchy::BuildWorldChildren,
-    log::info,
     prelude::{Component, Entity, World},
 };
 use std::sync::{Arc, Mutex};
+
+#[cfg(feature = "verbose")]
+use bevy::log::info;
 
 /// Trait that defines a template object that can construct a [`View`] from a reactive context.
 /// View templates are themselves views, when they are built or rebuild they call `create()` to

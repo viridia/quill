@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 bevy = { workspace = true }
+bevy_mod_stylebuilder = { workspace = true }
+quill = { workspace = true }
 # bevy_mod_picking = { workspace = true }
