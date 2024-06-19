@@ -1,0 +1,1015 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="256"
+   height="32"
+   viewBox="0 0 67.73333 8.4666662"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
+   sodipodi:docname="checkerboard.svg"
+   inkscape:export-filename="../textures/checkerboard.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#000000"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="4.7572176"
+     inkscape:cx="77.986763"
+     inkscape:cy="35.104554"
+     inkscape:window-width="1488"
+     inkscape:window-height="866"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid132"
+       originx="0"
+       originy="0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#bebebe;stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round;fill-opacity:1"
+       id="rect348"
+       width="2.1166666"
+       height="2.1166666"
+       x="0"
+       y="0"
+       ry="0"
+       inkscape:export-filename="../textures/rect348.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
+    <rect
+       style="fill:#4b4b4b;fill-opacity:1;stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round"
+       id="rect348-7"
+       width="2.1166666"
+       height="2.1166666"
+       x="1.748403e-07"
+       y="2.1166666"
+       ry="0"
+       inkscape:transform-center-x="-0.47274655"
+       inkscape:transform-center-y="-0.27808621" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect348"
+       id="use1060"
+       transform="translate(2.1166668,2.1166667)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect348-7"
+       inkscape:transform-center-x="-0.47274655"
+       inkscape:transform-center-y="-0.27808621"
+       id="use1062"
+       transform="translate(2.1166665,-2.1166666)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect348"
+       id="use1064"
+       transform="translate(-1.748403e-7,4.2333335)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect348-7"
+       inkscape:transform-center-x="-0.47274655"
+       inkscape:transform-center-y="-0.27808621"
+       id="use1066"
+       transform="translate(-1.748403e-7,4.2333335)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect348"
+       id="use1068"
+       transform="translate(2.1166667,6.3500001)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect348-7"
+       inkscape:transform-center-x="-0.47274655"
+       inkscape:transform-center-y="-0.27808621"
+       id="use1070"
+       transform="translate(2.1166664,2.1166668)" />
+    <g
+       id="g1096">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1072"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1074"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1076"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1078"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1080"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1082"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1084"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1086"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1114"
+       transform="translate(4.2333331)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1098"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1100"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1102"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1104"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1106"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1108"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1110"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1112"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1132"
+       transform="translate(8.4666668)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1116"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1118"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1120"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1122"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1124"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1126"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1128"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1130"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1150"
+       transform="translate(12.7)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1134"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1136"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1138"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1140"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1142"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1144"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1146"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1148"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1168"
+       transform="translate(16.933334)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1152"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1154"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1156"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1158"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1160"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1162"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1164"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1166"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1186"
+       transform="translate(21.166667)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1170"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1172"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1174"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1176"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1178"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1180"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1182"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1184"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1204"
+       transform="translate(25.400001)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1188"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1190"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1192"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1194"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1196"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1198"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1200"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1202"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1222"
+       transform="translate(29.633333)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1206"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1208"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1210"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1212"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1214"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1216"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1218"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1220"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1240"
+       transform="translate(33.866667)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1224"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1226"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1228"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1230"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1232"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1234"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1236"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1238"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1258"
+       transform="translate(38.1)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1242"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1244"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1246"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1248"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1250"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1252"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1254"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1256"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1276"
+       transform="translate(42.333334)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1260"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1262"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1264"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1266"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1268"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1270"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1272"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1274"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1294"
+       transform="translate(46.566667)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1278"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1280"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1282"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1284"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1286"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1288"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1290"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1292"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1312"
+       transform="translate(50.800001)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1296"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1298"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1300"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1302"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1304"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1306"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1308"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1310"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1330"
+       transform="translate(55.033333)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1314"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1316"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1318"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1320"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1322"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1324"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1326"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1328"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+    <g
+       id="g1348"
+       transform="translate(59.266667)">
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1332"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1334"
+         transform="translate(4.2333333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1336"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1338"
+         transform="translate(4.2333332,4.2333335)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1340"
+         transform="translate(6.3500002,2.1166669)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1342"
+         transform="translate(6.3499999,-2.1166664)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348"
+         id="use1344"
+         transform="translate(6.3500001,6.3500003)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect348-7"
+         inkscape:transform-center-x="-0.47274655"
+         inkscape:transform-center-y="-0.27808621"
+         id="use1346"
+         transform="translate(6.3499998,2.116667)" />
+    </g>
+  </g>
+</svg>

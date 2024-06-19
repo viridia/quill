@@ -1,0 +1,6 @@
+(
+    texture: "./button.png",
+    tile_size: (16, 16),
+    rows: 3,
+    columns: 3,
+)
