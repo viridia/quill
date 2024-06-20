@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Options for rendering rounded corners.
 #[allow(missing_docs)]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub enum RoundedCorners {
     None,
     #[default]

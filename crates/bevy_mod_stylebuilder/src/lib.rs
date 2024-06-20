@@ -85,6 +85,16 @@ pub struct StyleHandle {
     pub style: Option<Arc<dyn StyleTuple>>,
 }
 
+impl PartialEq for StyleHandle {
+    fn eq(&self, other: &Self) -> bool {
+        match (&self.style, &other.style) {
+            (Some(s1), Some(s2)) => Arc::ptr_eq(s1, s2),
+            (None, None) => true,
+            _ => false,
+        }
+    }
+}
+
 impl StyleHandle {
     /// Construct a new style handle.
     pub fn new<S: StyleTuple + 'static>(style: S) -> Self {

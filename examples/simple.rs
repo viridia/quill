@@ -100,6 +100,7 @@ fn setup_view_root(mut commands: Commands) {
     //     ));
 }
 
+/// Example of a view template that displays a string.
 #[derive(Clone, PartialEq)]
 struct ChildViewExample;
 
@@ -107,11 +108,11 @@ impl ViewTemplate for ChildViewExample {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let counter = cx.use_resource::<Counter>();
-        // println!("NestedView::create() counter={}", counter.count);
         format!("{}", counter.count)
     }
 }
 
+/// Example of a `Cond` view.
 #[derive(Clone, PartialEq)]
 struct EvenOdd;
 
@@ -119,12 +120,11 @@ impl ViewTemplate for EvenOdd {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let counter = cx.use_resource::<Counter>();
-        // println!("EvenOdd::create() counter={}", counter.count);
         Cond::new(counter.count & 1 == 0, "[Even]", "[Odd]")
-        // Element::<NodeBundle>::new().children(Cond::new(counter.count & 1 == 0, "[Even]", "[Odd]"))
     }
 }
 
+/// Example of a view template that invokes another view template.
 #[derive(Clone, PartialEq)]
 struct Nested;
 
@@ -135,9 +135,6 @@ impl ViewTemplate for Nested {
         NestedInner {
             count: counter.count,
         }
-        // Element::<NodeBundle>::new().children(NestedInner {
-        //     count: counter.count,
-        // })
     }
 }
 
@@ -149,7 +146,7 @@ struct NestedInner {
 impl ViewTemplate for NestedInner {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
-        Cond::new(self.count & 1 == 0, "[Evenish]", "[Oddish]")
+        Cond::new(self.count & 1 == 0, "[E]", "[O]")
     }
 }
 

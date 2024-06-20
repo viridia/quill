@@ -2,10 +2,10 @@ use std::{cell::RefCell, marker::PhantomData};
 
 use bevy::{
     hierarchy::BuildWorldChildren,
-    prelude::{Entity, Resource, World},
+    prelude::{Component, Entity, Resource, World},
 };
 
-use crate::{mutable::Mutable, MutableCell, WriteMutable};
+use crate::{mutable::Mutable, tracking_scope::HookState, MutableCell, WriteMutable};
 use crate::{tracking_scope::TrackingScope, ReadMutable};
 
 /// A context parameter that is passed to views and callbacks. It contains the reactive
@@ -54,9 +54,20 @@ impl<'p, 'w> Cx<'p, 'w> {
 
     /// Spawn an empty [`Entity`]. The entity will be despawned when the tracking scope is dropped.
     pub fn create_entity(&mut self) -> Entity {
-        let entity = self.world_mut().spawn_empty().id();
-        self.tracking.borrow_mut().add_owned(entity);
-        entity
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::CreateEntity(entity)) => entity,
+            Some(_) => {
+                panic!("Expected create_entity() hook, found something else");
+            }
+            None => {
+                let entity = self.world_mut().spawn_empty().id();
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::CreateEntity(entity));
+                entity
+            }
+        }
     }
 
     /// Create a new [`Mutable`] in this context.
@@ -64,18 +75,35 @@ impl<'p, 'w> Cx<'p, 'w> {
     where
         T: Send + Sync + 'static,
     {
-        let owner = self.owner();
-        let cell = self
-            .world_mut()
-            .spawn(MutableCell::<T>(init))
-            .set_parent(owner)
-            .id();
-        let component = self.world_mut().init_component::<MutableCell<T>>();
-        self.tracking.borrow_mut().add_owned(cell);
-        Mutable {
-            cell,
-            component,
-            marker: PhantomData,
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::CreateMutable(cell, component)) => Mutable {
+                cell,
+                component,
+                marker: PhantomData,
+            },
+
+            Some(_) => {
+                panic!("Expected create_mutable() hook, found something else");
+            }
+            None => {
+                let owner = self.owner();
+                let cell = self
+                    .world_mut()
+                    .spawn(MutableCell::<T>(init))
+                    .set_parent(owner)
+                    .id();
+                let component = self.world_mut().init_component::<MutableCell<T>>();
+                // self.tracking.borrow_mut().add_owned(cell);
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::CreateMutable(cell, component));
+                Mutable {
+                    cell,
+                    component,
+                    marker: PhantomData,
+                }
+            }
         }
     }
 
@@ -90,6 +118,29 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// does not add the resource as a dependency of the current presenter invocation.
     pub fn use_resource_untracked<T: Resource>(&self) -> &T {
         self.world.resource::<T>()
+    }
+
+    /// Return a reference to the Component `C` on the given entity.
+    pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        match self.world.get_entity(entity) {
+            Some(c) => {
+                self.tracking
+                    .borrow_mut()
+                    .track_component::<C>(entity, self.world);
+                c.get::<C>()
+            }
+            None => None,
+        }
+    }
+
+    /// Return a reference to the Component `C` on the given entity. This version does not
+    /// add the component to the tracking scope, and is intended for components that update
+    /// frequently.
+    pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
+        match self.world.get_entity(entity) {
+            Some(c) => c.get::<C>(),
+            None => None,
+        }
     }
 }
 

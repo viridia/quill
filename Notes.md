@@ -1,18 +1,19 @@
 # Next
 
-- Mutable
-- Asset source
+- How to handle children params: we need to stash the state somewhere.
+- How to handle the 'disabled' property in Button - we want to access lazily so that we don't have
+  to rebind event handlers.
+- Asset source for obsidian
+- Button:disabled is not dynamic
 - Button
 - Write tests for:
   - passing children as params (and dealing with memoization)
 - Finish scope tracing.
 - Effects w/deps
-  - style_effect
   - insert effect
   - entity mutation effect
 - Change create_entity to hook
   - Need for scope to track hook order.
-- Hooks
 - For loops
 - Component Library
 - Re-enable pointer events in StyleBuilder.
@@ -72,14 +73,10 @@ render will still unconditionally render all children, because we can't compare 
 not unless we make all views partialeq, which would be onerous because such as comparison would
 have to walk the whole hierarchy.
 
-# Problems with attach_children:
+OK so child lists, next problem: we can't simply box the ViewTuple like we did with views, because
+we need to externalize the state. That is, we want to store the child array's state along with
+the button's state, or somehoe attached to it so that they both are stored together and have the
+same lifetime.
 
-The problem is what happens when you have the following hierarchy:
-
-- View Templates A, B and C where B is a child of A and C is a child of B.
-- C changes its output
-- B is a simple view that merely returns output of C.
-- In this case, A needs to be notified so that it can re-attach its children.
-
-The boolean result from C.rebuild() doesn't help here, because C is being changed
-independently from B.
+Also, we want to convert the children to a portable format early, in case we need to pass them
+down multiple levels.

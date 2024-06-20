@@ -8,19 +8,39 @@ members = ["crates/*"]
 
 [features]
 # default = ["verbose"]
-# Enable verbose logging
-verbose = []
+verbose = [] # Enable verbose logging
 
 [workspace.dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git", version = "0.14.0-dev" }
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
+bevy_mod_picking = { git = "https://github.com/tychedelia/bevy_mod_picking" }
 
 [dependencies]
 bevy = { workspace = true }
 bevy_mod_stylebuilder = { workspace = true }
+bevy_mod_picking = { workspace = true }
 impl-trait-for-tuples = "0.2.2"
 smallvec = "1.13.2"
 
-# [dev-dependencies]
-# cots_orbit_camera = { path = "crates/cots_orbit_camera" }
-# cots_terrain = { path = "crates/cots_terrain" }
+[dev-dependencies]
+obsidian_ui_quill = { path = "crates/obsidian_ui_quill" }
+# obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
+# bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
+# bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
+
+# Patches to get bevy_mod_picking working with bevy 0.14.0
+[patch.crates-io]
+bevy_mod_picking = { git = "https://github.com/tychedelia/bevy_mod_picking" }
+bevy_eventlistener = { git = "https://github.com/tychedelia/bevy_eventlistener" }
+bevy_picking_core = { git = "https://github.com/tychedelia/bevy_mod_picking" }
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }
+
+[patch."https://github.com/tychedelia/bevy_mod_picking"]
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+bevy_eventlistener = { git = "https://github.com/tychedelia/bevy_eventlistener" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }
+
+[patch."https://github.com/tychedelia/bevy_eventlistener"]
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }

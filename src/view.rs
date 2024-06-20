@@ -274,8 +274,9 @@ pub(crate) fn rebuild_views(world: &mut World) {
         }
 
         // Run the reaction
-        let (_, _, view_cell) = scopes.get_mut(world, *scope_entity).unwrap();
+        let (_, mut scope, view_cell) = scopes.get_mut(world, *scope_entity).unwrap();
         let mut next_scope = TrackingScope::new(this_run);
+        next_scope.take_hooks(scope.as_mut());
         let output_changed = view_cell.0.rebuild(world, *scope_entity, &mut next_scope);
         if output_changed {
             #[cfg(feature = "verbose")]

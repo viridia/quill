@@ -6,6 +6,7 @@ use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use crate::{
     cx::Cx,
     effects::{self, AppendEffect, EffectTuple, EntityEffect},
+    insert::{ConditionalInsertBundleEffect, InsertBundleEffect},
     node_span::NodeSpan,
     style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
     view::View,
@@ -100,7 +101,12 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         self.add_effect(ApplyStaticStylesEffect { styles })
     }
 
-    /// Apply a set of styles to the element
+    /// Apply a set of dynamic styles to the element. This will be re-run whenever the
+    /// dependencies change.
+    ///
+    /// Arguments:
+    /// - style_fn: A function which computes the styles based on the dependencies.
+    /// - deps: The dependencies which trigger a recompute of the styles.
     pub fn style_effect<
         S: Fn(D, &mut StyleBuilder) + Send + Sync,
         D: PartialEq + Clone + Send + Sync,
@@ -115,28 +121,43 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         self.add_effect(ApplyDynamicStylesEffect { style_fn, deps })
     }
 
-    // pub fn insert_computed_ref<
-    //     T: Component,
-    //     F1: Send + Sync + 'static + FnMut() -> T,
-    //     F2: Send + Sync + 'static + FnMut(&mut Re, &mut T),
-    // >(
-    //     mut self,
-    //     init: F1,
-    //     update: F2,
-    // ) -> Self {
-    //     self.producers.push(Arc::new(Mutex::new(BundleComputedRef {
-    //         target: None,
-    //         init,
-    //         update,
-    //         tracker: None,
-    //         marker: PhantomData,
-    //     })));
-    //     self
-    // }
-}
+    /// Insert a bundle into the target entity. This will be re-run whenever the dependencies
+    /// change.
+    ///
+    /// Arguments:
+    /// - bundle_gen: A function which computes the bundle based on the dependencies.
+    /// - deps: The dependencies which trigger a recompute of the bundle.
+    pub fn insert<B2: Bundle, S: Fn(D) -> B2 + Send + Sync, D: PartialEq + Clone + Send + Sync>(
+        self,
+        bundle_gen: S,
+        deps: D,
+    ) -> Element<B, C, <E as AppendEffect<InsertBundleEffect<B2, S, D>>>::Result>
+    where
+        E: AppendEffect<InsertBundleEffect<B2, S, D>>,
+    {
+        self.add_effect(InsertBundleEffect {
+            factory: bundle_gen,
+            deps,
+        })
+    }
 
-// impl<B: Bundle + Default> EffectTarget for Element<B> {
-// }
+    /// Insert a bundle into the target entity. This will only be run once, when the entity
+    /// is first built.
+    ///
+    /// Arguments:
+    /// - condition: if true, the bundle will be inserted.
+    /// - factory: A function which computes the bundle based on the dependencies.
+    pub fn insert_if<B2: Bundle, S: Fn() -> B2 + Send + Sync>(
+        self,
+        condition: bool,
+        factory: S,
+    ) -> Element<B, C, <E as AppendEffect<ConditionalInsertBundleEffect<B2, S>>>::Result>
+    where
+        E: AppendEffect<ConditionalInsertBundleEffect<B2, S>>,
+    {
+        self.add_effect(ConditionalInsertBundleEffect { condition, factory })
+    }
+}
 
 impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Element<B, C, E> {
     type State = (Entity, C::State, E::State);

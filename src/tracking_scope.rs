@@ -6,11 +6,21 @@ use bevy::{
     utils::HashSet,
 };
 
+/// Tracks the sequence of hook calls within a reaction.
+#[derive(Clone, Copy)]
+pub(crate) enum HookState {
+    CreateEntity(Entity),
+    CreateMutable(Entity, ComponentId),
+}
+
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
 pub struct TrackingScope {
     /// List of entities that are owned by this scope.
-    pub(crate) owned: Vec<Entity>,
+    hook_states: Vec<HookState>,
+
+    /// During rebuilds, the index of the hook that is currently being processed.
+    next_hook_index: usize,
 
     /// Set of components that we are currently subscribed to.
     component_deps: HashSet<(Entity, ComponentId)>,
@@ -45,7 +55,8 @@ impl TrackingScope {
     /// Create a new tracking scope.
     pub fn new(tick: Tick) -> Self {
         Self {
-            owned: Vec::new(),
+            hook_states: Vec::new(),
+            next_hook_index: 0,
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
             changed: AtomicBool::new(false),
@@ -54,9 +65,35 @@ impl TrackingScope {
         }
     }
 
-    pub(crate) fn add_owned(&mut self, owned: Entity) {
-        self.owned.push(owned);
+    pub(crate) fn push_hook(&mut self, hook: HookState) {
+        assert!(self.next_hook_index == self.hook_states.len());
+        self.hook_states.push(hook);
+        self.next_hook_index += 1;
     }
+
+    pub(crate) fn next_hook(&mut self) -> Option<HookState> {
+        if self.next_hook_index < self.hook_states.len() {
+            let hook = self.hook_states[self.next_hook_index];
+            self.next_hook_index += 1;
+            Some(hook)
+        } else {
+            None
+        }
+    }
+
+    // pub(crate) fn add_owned(&mut self, owned: Entity) {
+    //     if self.next_hook_index < self.hook_states.len() {
+    //         match &self.hook_states[self.next_hook_index] {
+    //             HookState::CreateEntity(entity) => {
+    //                 assert!(*entity == owned, "Hook state mismatch");
+    //             }
+    //             _ => panic!("Expected CreateEntity hook"),
+    //         }
+    //     } else {
+    //         self.hook_states.push(HookState::CreateEntity(owned));
+    //     }
+    //     // self.hook_states.push(HookState::CreateEntity(owned));
+    // }
 
     /// Add a cleanup function which will be run once before the next reaction.
     pub(crate) fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
@@ -128,10 +165,15 @@ impl TrackingScope {
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
         self.cleanups = std::mem::take(&mut other.cleanups);
+        self.hook_states = std::mem::take(&mut other.hook_states);
         self.changed.store(
             other.changed.load(std::sync::atomic::Ordering::Relaxed),
             std::sync::atomic::Ordering::Relaxed,
         );
+    }
+
+    pub(crate) fn take_hooks(&mut self, other: &mut Self) {
+        self.hook_states = std::mem::take(&mut other.hook_states)
     }
 }
 
@@ -152,13 +194,18 @@ impl DespawnScopes for World {
         // Run any cleanups
         let mut cleanups = std::mem::take(&mut scope.cleanups);
         // Recursively despawn owned objects
-        let owned_list = std::mem::take(&mut scope.owned);
+        let hooks = std::mem::take(&mut scope.hook_states);
         entt.despawn();
         for cleanup_fn in cleanups.drain(..) {
             cleanup_fn(self);
         }
-        for owned in owned_list {
-            self.despawn_owned_recursive(owned);
+        for hook in hooks {
+            match hook {
+                HookState::CreateEntity(owned) => {
+                    self.entity_mut(owned).despawn_recursive();
+                }
+                _ => panic!("Unexpected hook state"),
+            }
         }
     }
 }
