@@ -81,20 +81,6 @@ impl TrackingScope {
         }
     }
 
-    // pub(crate) fn add_owned(&mut self, owned: Entity) {
-    //     if self.next_hook_index < self.hook_states.len() {
-    //         match &self.hook_states[self.next_hook_index] {
-    //             HookState::CreateEntity(entity) => {
-    //                 assert!(*entity == owned, "Hook state mismatch");
-    //             }
-    //             _ => panic!("Expected CreateEntity hook"),
-    //         }
-    //     } else {
-    //         self.hook_states.push(HookState::CreateEntity(owned));
-    //     }
-    //     // self.hook_states.push(HookState::CreateEntity(owned));
-    // }
-
     /// Add a cleanup function which will be run once before the next reaction.
     pub(crate) fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
         self.cleanups.push(Box::new(cleanup));
