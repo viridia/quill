@@ -1,3 +1,4 @@
+use super::{Disabled, IsDisabled};
 use crate::{
     colors,
     cursor::StyleBuilderCursor,
@@ -201,62 +202,63 @@ impl ViewTemplate for Button {
                         On::<Pointer<Click>>::run(move |world: &mut World| {
                             let mut focus = world.get_resource_mut::<Focus>().unwrap();
                             focus.0 = Some(id);
-                            // if !disabled.get(world) {
-                            let mut event = world
-                                .get_resource_mut::<ListenerInput<Pointer<Click>>>()
-                                .unwrap();
-                            event.stop_propagation();
-                            if let Some(on_click) = on_click {
-                                world.run_callback(on_click, ());
-                            }
-                            // }
-                        }),
-                        On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                            // if !disabled.get(world) {
-                            pressed.set(world, true);
-                            // }
-                        }),
-                        On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                            // if !disabled.get(world) {
-                            pressed.set(world, false);
-                            // }
-                        }),
-                        On::<Pointer<DragEnter>>::run(move |world: &mut World| {
-                            // if !disabled.get(world) {
-                            pressed.set(world, true);
-                            // }
-                        }),
-                        On::<Pointer<DragLeave>>::run(move |world: &mut World| {
-                            // if !disabled.get(world) {
-                            pressed.set(world, false);
-                            // }
-                        }),
-                        On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
-                            println!("PointerCancel");
-                            // if !disabled.get(world) {
-                            pressed.set(world, false);
-                            // }
-                        }),
-                        On::<KeyPressEvent>::run(move |world: &mut World| {
-                            // if !disabled.get(world) {
-                            let mut event = world
-                                .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                                .unwrap();
-                            if !event.repeat
-                                && (event.key_code == KeyCode::Enter
-                                    || event.key_code == KeyCode::Space)
-                            {
+                            if !world.is_disabled(id) {
+                                let mut event = world
+                                    .get_resource_mut::<ListenerInput<Pointer<Click>>>()
+                                    .unwrap();
                                 event.stop_propagation();
                                 if let Some(on_click) = on_click {
                                     world.run_callback(on_click, ());
                                 }
                             }
-                            // }
+                        }),
+                        On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                            if !world.is_disabled(id) {
+                                pressed.set(world, true);
+                            }
+                        }),
+                        On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                            if !world.is_disabled(id) {
+                                pressed.set(world, false);
+                            }
+                        }),
+                        On::<Pointer<DragEnter>>::run(move |world: &mut World| {
+                            if !world.is_disabled(id) {
+                                pressed.set(world, true);
+                            }
+                        }),
+                        On::<Pointer<DragLeave>>::run(move |world: &mut World| {
+                            if !world.is_disabled(id) {
+                                pressed.set(world, false);
+                            }
+                        }),
+                        On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
+                            println!("PointerCancel");
+                            if !world.is_disabled(id) {
+                                pressed.set(world, false);
+                            }
+                        }),
+                        On::<KeyPressEvent>::run(move |world: &mut World| {
+                            if !world.is_disabled(id) {
+                                let mut event = world
+                                    .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                                    .unwrap();
+                                if !event.repeat
+                                    && (event.key_code == KeyCode::Enter
+                                        || event.key_code == KeyCode::Space)
+                                {
+                                    event.stop_propagation();
+                                    if let Some(on_click) = on_click {
+                                        world.run_callback(on_click, ());
+                                    }
+                                }
+                            }
                         }),
                     )
                 },
                 (),
             )
+            .insert_if(self.disabled, || Disabled)
             .insert_if(self.autofocus, || AutoFocus)
             .children((
                 Element::<NodeBundle>::new()

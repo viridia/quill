@@ -1,4 +1,4 @@
-use std::sync::atomic::AtomicBool;
+use std::sync::{atomic::AtomicBool, Arc};
 
 use bevy::{
     ecs::component::{ComponentId, Tick},
@@ -6,11 +6,14 @@ use bevy::{
     utils::HashSet,
 };
 
+use crate::AnyCallback;
+
 /// Tracks the sequence of hook calls within a reaction.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) enum HookState {
-    CreateEntity(Entity),
-    CreateMutable(Entity, ComponentId),
+    Entity(Entity),
+    Mutable(Entity, ComponentId),
+    Callback(Arc<dyn AnyCallback + Send + Sync>),
 }
 
 /// A component that tracks the dependencies of a reactive task.
@@ -73,7 +76,7 @@ impl TrackingScope {
 
     pub(crate) fn next_hook(&mut self) -> Option<HookState> {
         if self.next_hook_index < self.hook_states.len() {
-            let hook = self.hook_states[self.next_hook_index];
+            let hook = self.hook_states[self.next_hook_index].clone();
             self.next_hook_index += 1;
             Some(hook)
         } else {
@@ -170,11 +173,14 @@ impl TrackingScope {
         }
         for hook in self.hook_states.drain(..) {
             match hook {
-                HookState::CreateEntity(ent) => {
+                HookState::Entity(ent) => {
                     world.entity_mut(ent).despawn();
                 }
-                HookState::CreateMutable(mutable_ent, _) => {
+                HookState::Mutable(mutable_ent, _) => {
                     world.entity_mut(mutable_ent).despawn();
+                }
+                HookState::Callback(callback) => {
+                    callback.remove(world);
                 }
             }
         }

@@ -1,43 +1,40 @@
-use bevy::prelude::*;
+use std::any::TypeId;
+
+use bevy::{ecs::system::SystemId, prelude::*};
 
 use crate::Cx;
-
-pub(crate) trait CallbackFnRef<P> {
-    fn call(&self, props: P, world: &mut World);
-}
-
-impl<P, F: Fn(P, &mut World)> CallbackFnRef<P> for F {
-    fn call(&self, props: P, world: &mut World) {
-        self(props, world);
-    }
-}
-
-pub(crate) trait CallbackFnMutRef<P> {
-    fn call(&mut self, props: P, world: &mut World);
-}
-
-impl<P, F: FnMut(P, &mut World)> CallbackFnMutRef<P> for F {
-    fn call(&mut self, props: P, world: &mut World) {
-        self(props, world);
-    }
-}
-
-/// Contains a boxed, type-erased callback.
-#[derive(Component)]
-pub(crate) struct CallbackFnCell<P> {
-    pub(crate) inner: Option<Box<dyn CallbackFnRef<P> + Send + Sync>>,
-}
-
-#[derive(Component)]
-pub(crate) struct CallbackFnMutCell<P> {
-    pub(crate) inner: Option<Box<dyn CallbackFnMutRef<P> + Send + Sync>>,
-}
 
 /// Contains a reference to a callback. `P` is the type of the props.
 #[derive(PartialEq)]
 pub struct Callback<P = ()> {
-    pub(crate) id: Entity,
+    pub(crate) id: SystemId<P, ()>,
     pub(crate) marker: std::marker::PhantomData<P>,
+}
+
+pub trait AnyCallback: 'static {
+    fn remove(&self, world: &mut World);
+    fn type_id(&self) -> TypeId;
+}
+
+impl dyn AnyCallback + Send + Sync {
+    /// Get the original typed callback.
+    pub fn downcast<P: 'static>(&self) -> Callback<P> {
+        if TypeId::of::<P>() == self.type_id() {
+            // Safe because we just checked the type.
+            unsafe { std::mem::transmute_copy(&self) }
+        } else {
+            panic!("downcast failed")
+        }
+    }
+}
+
+impl<P: 'static> AnyCallback for Callback<P> {
+    fn remove(&self, world: &mut World) {
+        world.remove_system(self.id).unwrap();
+    }
+    fn type_id(&self) -> TypeId {
+        TypeId::of::<P>()
+    }
 }
 
 impl<P> Copy for Callback<P> {}
@@ -59,28 +56,7 @@ impl RunCallback for World {
     /// * `callback` - The callback to invoke.
     /// * `props` - The props to pass to the callback.
     fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
-        let mut callback_entity = self.entity_mut(callback.id);
-        if let Some(mut cell) = callback_entity.get_mut::<CallbackFnCell<P>>() {
-            let mut callback_fn = cell.inner.take();
-            let callback_box = callback_fn.as_ref().expect("Callback is not present");
-            callback_box.call(props, self);
-            let mut callback_entity = self.entity_mut(callback.id);
-            callback_entity
-                .get_mut::<CallbackFnCell<P>>()
-                .unwrap()
-                .inner = callback_fn.take();
-        } else if let Some(mut cell) = callback_entity.get_mut::<CallbackFnMutCell<P>>() {
-            let mut callback_fn = cell.inner.take();
-            let callback_box = callback_fn.as_mut().expect("Callback is not present");
-            callback_box.call(props, self);
-            let mut callback_entity = self.entity_mut(callback.id);
-            callback_entity
-                .get_mut::<CallbackFnMutCell<P>>()
-                .unwrap()
-                .inner = callback_fn.take();
-        } else {
-            warn!("No callback found for {:?}", callback.id);
-        }
+        self.run_system_with_input(callback.id, props).unwrap();
     }
 }
 

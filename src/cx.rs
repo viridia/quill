@@ -1,11 +1,11 @@
-use std::{cell::RefCell, marker::PhantomData};
+use std::{cell::RefCell, marker::PhantomData, sync::Arc};
 
 use bevy::{
     hierarchy::BuildWorldChildren,
-    prelude::{Component, Entity, Resource, World},
+    prelude::{Component, Entity, IntoSystem, Resource, World},
 };
 
-use crate::{mutable::Mutable, tracking_scope::HookState, MutableCell, WriteMutable};
+use crate::{mutable::Mutable, tracking_scope::HookState, Callback, MutableCell, WriteMutable};
 use crate::{tracking_scope::TrackingScope, ReadMutable};
 
 /// A context parameter that is passed to views and callbacks. It contains the reactive
@@ -56,7 +56,7 @@ impl<'p, 'w> Cx<'p, 'w> {
     pub fn create_entity(&mut self) -> Entity {
         let hook = self.tracking.borrow_mut().next_hook();
         match hook {
-            Some(HookState::CreateEntity(entity)) => entity,
+            Some(HookState::Entity(entity)) => entity,
             Some(_) => {
                 panic!("Expected create_entity() hook, found something else");
             }
@@ -64,7 +64,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                 let entity = self.world_mut().spawn_empty().id();
                 self.tracking
                     .borrow_mut()
-                    .push_hook(HookState::CreateEntity(entity));
+                    .push_hook(HookState::Entity(entity));
                 entity
             }
         }
@@ -77,7 +77,7 @@ impl<'p, 'w> Cx<'p, 'w> {
     {
         let hook = self.tracking.borrow_mut().next_hook();
         match hook {
-            Some(HookState::CreateMutable(cell, component)) => Mutable {
+            Some(HookState::Mutable(cell, component)) => Mutable {
                 cell,
                 component,
                 marker: PhantomData,
@@ -97,12 +97,40 @@ impl<'p, 'w> Cx<'p, 'w> {
                 // self.tracking.borrow_mut().add_owned(cell);
                 self.tracking
                     .borrow_mut()
-                    .push_hook(HookState::CreateMutable(cell, component));
+                    .push_hook(HookState::Mutable(cell, component));
                 Mutable {
                     cell,
                     component,
                     marker: PhantomData,
                 }
+            }
+        }
+    }
+
+    /// Create a new callback in this context. This registers a one-shot system with the world.
+    /// The callback will be unregistered when the tracking scope is dropped.
+    pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+        &mut self,
+        callback: S,
+    ) -> Callback<P> {
+        let hook = self.tracking.borrow_mut().next_hook();
+        self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::Callback(cb)) => cb.as_ref().downcast::<P>(),
+
+            Some(_) => {
+                panic!("Expected create_callback() hook, found something else");
+            }
+            None => {
+                let id = self.world_mut().register_system(callback);
+                let result = Callback {
+                    id,
+                    marker: PhantomData,
+                };
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::Callback(Arc::new(result)));
+                result
             }
         }
     }
