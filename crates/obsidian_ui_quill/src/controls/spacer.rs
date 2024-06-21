@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
-use quill::*;
+use bevy_quill::*;
 
 fn style_spacer(ss: &mut StyleBuilder) {
     ss.flex_grow(1.);

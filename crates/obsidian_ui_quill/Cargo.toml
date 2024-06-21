@@ -7,4 +7,4 @@ edition = "2021"
 bevy = { workspace = true }
 bevy_mod_picking = { workspace = true }
 bevy_mod_stylebuilder = { workspace = true }
-quill = { path = "../.." }
+bevy_quill = { path = "../.." }

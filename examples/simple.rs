@@ -6,8 +6,8 @@ mod common;
 
 use bevy::{color::palettes, prelude::*};
 use bevy_mod_stylebuilder::*;
+use bevy_quill::{Cond, Cx, Element, QuillPlugin, View, ViewTemplate};
 use common::*;
-use quill::{Cond, Cx, Element, QuillPlugin, View, ViewTemplate};
 
 fn main() {
     App::new()

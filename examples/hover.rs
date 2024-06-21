@@ -7,9 +7,9 @@ mod common;
 use bevy::{color::palettes, prelude::*};
 use bevy_mod_picking::{debug::DebugPickingMode, DefaultPickingPlugins};
 use bevy_mod_stylebuilder::*;
+use bevy_quill::{Cx, Element, QuillPlugin, View, ViewTemplate};
 use common::*;
 use obsidian_ui_quill::{hooks::UseIsHover, ObsidianUiPlugin};
-use quill::{Cx, Element, QuillPlugin, View, ViewTemplate};
 
 fn main() {
     App::new()

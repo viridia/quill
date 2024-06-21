@@ -1,6 +1,6 @@
 use bevy::{hierarchy::Parent, prelude::*};
 use bevy_mod_picking::{focus::HoverMap, pointer::PointerId};
-use quill::Cx;
+use bevy_quill::Cx;
 
 /// Component which tracks whether the pointer is hovering over an entity.
 #[derive(Default, Component)]

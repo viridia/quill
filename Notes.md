@@ -1,22 +1,25 @@
 # Next
 
-- How to handle children params: we need to stash the state somewhere.
+- before button:
+  - How to handle children params: we need to stash the state somewhere.
+  - Test callbacks.
+  - Test focus.
+  - Test mutable.
+  - implement .effect() for elements.
 - How to handle the 'disabled' property in Button - we want to access lazily so that we don't have
   to rebind event handlers.
+  - create a "Disabled" component. Could be a marker.
 - Asset source for obsidian
-- Button:disabled is not dynamic
 - Button
 - Write tests for:
   - passing children as params (and dealing with memoization)
 - Finish scope tracing.
 - Effects w/deps
-  - insert effect
   - entity mutation effect
-- Change create_entity to hook
-  - Need for scope to track hook order.
 - For loops
 - Component Library
 - Re-enable pointer events in StyleBuilder.
+- impl_trait_for_tuples for effect tuples.
 
 # Challenges to overcome:
 

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     colors,
     cursor::StyleBuilderCursor,
@@ -19,7 +17,7 @@ use bevy::{
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::*;
-use quill::{Callback, Cx, Element, RunCallback, View, ViewTemplate, ViewTuple};
+use bevy_quill::{Callback, ChildViews, Cx, Element, RunCallback, View, ViewTemplate, ViewTuple};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
@@ -73,7 +71,7 @@ pub struct Button {
     pub disabled: bool,
 
     /// The content to display inside the button.
-    pub children: Arc<dyn ViewTuple>,
+    pub children: ChildViews,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -288,7 +286,7 @@ impl ViewTemplate for Button {
                                         .outline_offset(2);
                                 }
                                 false => {
-                                    sb.outline_color(None);
+                                    sb.outline_color(Option::<Color>::None);
                                 }
                             };
                         },

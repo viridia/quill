@@ -8,12 +8,14 @@ use bevy::{
     prelude::{Added, Component, Entity, With, World},
     utils::hashbrown::HashSet,
 };
-use std::sync::{Arc, Mutex};
+use std::{
+    any::Any,
+    sync::{Arc, Mutex},
+};
 
 #[cfg(feature = "verbose")]
 use bevy::log::info;
 
-#[allow(unused)]
 /// An object which produces one or more display nodes. The `View` is itself immutable and
 /// stateless, but it can produce a mutable state object which is updated when the view is rebuilt.
 /// This state object must be managed externally, and is passed to the `View` methods as a
@@ -46,6 +48,7 @@ pub trait View: Sync + Send + 'static {
     /// However, some view implementations are just thin wrappers around other views, in which
     /// case they should return true to indicate that the parent of this view should also re-attach
     /// its children.
+    #[allow(unused)]
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
         false
     }
@@ -117,11 +120,22 @@ impl<V: View> ViewStateCell<V> {
     }
 }
 
+/// A `ViewAdapter` is a stateless object that can be used to access an object implementing [`View`]
+/// in a type-erased fashion, without needing to store a `dyn View`. This allows querying for ECS
+/// components that contain implementations of the `View` trait without knowing the concrete type.
+/// Note that it must be stateless since it is created statically, and passed around by static
+/// reference.
+///
+/// The way this works is that instead of passing a reference to the view directly, we pass in
+/// the entity id for the entity that contains the `ViewState` component, and retrieve the view
+/// each time.
+///
+/// See [`AnyViewAdapter`] and [`ViewThunk`].
 pub struct ViewAdapter<V: View> {
     marker: std::marker::PhantomData<V>,
 }
 
-/// Type-erased trait for a [`ViewState`].
+/// The dynamic trait used by [`ViewAdapter`]. See also [`ViewThunk`].
 pub trait AnyViewAdapter: Sync + Send + 'static {
     /// Return the span of entities produced by this View.
     fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan;
@@ -189,25 +203,13 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
 #[derive(Component)]
 pub struct ViewThunk(pub(crate) &'static dyn AnyViewAdapter);
 
-/// An ECS component which holds a reference to the root of a view hierarchy.
+/// An ECS component which marks a view entity as being the root of a view hierarchy. This is
+/// used as a starting point for top-down traversals.
 #[derive(Component)]
 pub struct ViewRoot;
 
-/// A reference to a [`View`] which can be passed around as a parameter.
-// pub struct ViewHandle(pub(crate) Arc<Mutex<dyn AnyViewState>>);
-
 /// View which renders nothing.
 pub struct EmptyView;
-
-//     fn raze(&self, world: &mut World, state: &mut Self::State) {
-//         let vc = world.entity(state.0).get::<ViewCell>().unwrap();
-//         let cell = vc.0.clone();
-//         let mut view = cell.lock().unwrap();
-//         view.raze(world);
-//         world.entity_mut(state.0).remove_parent();
-//         world.entity_mut(state.0).despawn();
-//     }
-// }
 
 pub(crate) fn build_views(world: &mut World) {
     let mut roots = world.query_filtered::<(Entity, &ViewThunk), Added<ViewRoot>>();
@@ -242,15 +244,6 @@ pub(crate) fn rebuild_views(world: &mut World) {
             }
         })
         .collect::<Vec<_>>();
-
-    // if !changed.is_empty() {
-    //     println!("# Changed views: {:?}", changed.len());
-    // }
-    // for (e, scope) in q.iter(world) {
-    //     if scope.dependencies_changed(world, this_run) {
-    //         v.insert(e);
-    //     }
-    // }
 
     // Record the changed entities for debugging purposes.
     if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {

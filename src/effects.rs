@@ -11,14 +11,17 @@ pub trait EntityEffect: Sync + Send {
     ///
     /// Arguments:
     /// - `cx`: The reactive context
-    /// - `target`: The display entity that will be styled.
+    /// - `target`: The display entity that the effect will apply to.
+    ///
+    /// Returns:
+    /// - The state of the effect.
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State;
 
     /// Re-apply the effect to the target entity.
     ///
     /// Arguments:
     /// - `cx`: The reactive context
-    /// - `target`: The display entity that will be styled.
+    /// - `target`: The display entity that the effect will apply to.
     /// - `state`: The state returned by the previous call to `apply`.
     fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {}
 }

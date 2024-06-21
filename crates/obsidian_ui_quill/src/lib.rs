@@ -42,6 +42,8 @@ pub use rounded_corners::RoundedCorners;
 /// Plugin for the Obsidian UI library.
 pub struct ObsidianUiPlugin;
 
+pub use hooks::is_hover::UseIsHover as _;
+
 impl Plugin for ObsidianUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((

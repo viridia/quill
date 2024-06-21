@@ -29,6 +29,9 @@ pub use node_span::*;
 pub use tracking_scope::TrackingScope;
 pub use view::*;
 pub use view_template::ViewTemplate;
+pub use view_tuple::AnyViewTuple;
+pub use view_tuple::ChildViews;
+pub use view_tuple::IntoChildViews;
 pub use view_tuple::ViewTuple;
 
 pub struct QuillPlugin;
