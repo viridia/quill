@@ -6,6 +6,8 @@
   - Test focus.
   - Test mutable.
   - Test disabled
+  - Dispose mutables / TrackingScope cleanup.
+- Callbacks should be one-shot systems!
 - How to handle the 'disabled' property in Button - we want to access lazily so that we don't have
   to rebind event handlers.
   - create a "Disabled" component. Could be a marker.

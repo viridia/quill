@@ -161,86 +161,25 @@ impl TrackingScope {
     pub(crate) fn take_hooks(&mut self, other: &mut Self) {
         self.hook_states = std::mem::take(&mut other.hook_states)
     }
-}
 
-/// Trait which allows despawning of any owned objects or reactions in the tracking scope
-/// associated with an entity. This operation is recursive in that an owned object may itself
-/// own other objects.
-pub trait DespawnScopes {
-    /// Despawn all owned objects and reactions associated with the given entity.
-    fn despawn_owned_recursive(&mut self, scope_entity: Entity);
-}
-
-impl DespawnScopes for World {
-    fn despawn_owned_recursive(&mut self, scope_entity: Entity) {
-        let mut entt = self.entity_mut(scope_entity);
-        let Some(mut scope) = entt.get_mut::<TrackingScope>() else {
-            return;
-        };
-        // Run any cleanups
-        let mut cleanups = std::mem::take(&mut scope.cleanups);
-        // Recursively despawn owned objects
-        let hooks = std::mem::take(&mut scope.hook_states);
-        entt.despawn();
+    /// Raze the entities and components that were created during the reaction.
+    pub(crate) fn raze(&mut self, world: &mut World) {
+        let mut cleanups = std::mem::take(&mut self.cleanups);
         for cleanup_fn in cleanups.drain(..) {
-            cleanup_fn(self);
+            cleanup_fn(world);
         }
-        for hook in hooks {
+        for hook in self.hook_states.drain(..) {
             match hook {
-                HookState::CreateEntity(owned) => {
-                    self.entity_mut(owned).despawn_recursive();
+                HookState::CreateEntity(ent) => {
+                    world.entity_mut(ent).despawn();
                 }
-                _ => panic!("Unexpected hook state"),
+                HookState::CreateMutable(mutable_ent, _) => {
+                    world.entity_mut(mutable_ent).despawn();
+                }
             }
         }
     }
 }
-
-/// Run reactions whose dependencies have changed.
-// pub fn run_reactions(world: &mut World) {
-//     let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
-//     let mut changed = HashSet::<Entity>::default();
-//     let tick = world.change_tick();
-//     for (entity, scope, _) in scopes.iter(world) {
-//         if scope.dependencies_changed(world, tick) {
-//             changed.insert(entity);
-//         }
-//     }
-
-//     // Record the changed entities for debugging purposes.
-//     if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
-//         // Check for empty first to avoid setting mutation flag.
-//         if !tracing.0.is_empty() {
-//             tracing.0.clear();
-//         }
-//         if !changed.is_empty() {
-//             tracing.0.extend(changed.iter().copied());
-//         }
-//     }
-
-//     for scope_entity in changed.iter() {
-//         // Call registered cleanup functions
-//         let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
-//         let mut cleanups = std::mem::take(&mut scope.cleanups);
-//         for cleanup_fn in cleanups.drain(..) {
-//             cleanup_fn(world);
-//         }
-
-//         // Run the reaction
-//         let (_, _, reaction_cell) = scopes.get_mut(world, *scope_entity).unwrap();
-//         let mut next_scope = TrackingScope::new(tick);
-//         let inner = reaction_cell.0.clone();
-//         inner
-//             .lock()
-//             .unwrap()
-//             .react(*scope_entity, world, &mut next_scope);
-
-//         // Replace deps and cleanups in the current scope with the next scope.
-//         let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
-//         scope.take_deps(&mut next_scope);
-//         scope.tick = tick;
-//     }
-// }
 
 #[cfg(test)]
 mod tests {

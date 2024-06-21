@@ -117,6 +117,9 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         let cell = entt.take::<ViewTemplateStateCell<VT>>().unwrap();
         let mut inner = cell.0.lock().unwrap();
         inner.raze(world);
+        let mut entt = world.entity_mut(entity);
+        let mut scope = entt.take::<TrackingScope>().unwrap();
+        scope.raze(world);
         world.entity_mut(entity).remove_parent();
         world.entity_mut(entity).despawn();
     }
