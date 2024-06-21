@@ -1,5 +1,5 @@
 [package]
-name = "obsidian_ui_quill"
+name = "quill_obsidian"
 version = "0.1.0"
 edition = "2021"
 

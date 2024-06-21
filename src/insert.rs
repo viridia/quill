@@ -1,23 +1,9 @@
-use bevy::prelude::{Bundle, Entity};
+use bevy::prelude::{Bundle, Component, Entity};
 
 use crate::{effects::EntityEffect, Cx};
 
-// /// Inserts a static, pre-constructed bundle into the target entity. No reactivity.
-// pub struct ApplyInserBundleEffect<B: Bundle> {
-//     pub(crate) bundle: B,
-// }
-
-// impl<B: Bundle> EntityEffect for ApplyInserBundleEffect<B> {
-//     type State = ();
-//     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
-//         let mut entt = cx.world_mut().entity_mut(target);
-//         entt.insert(self.bundle);
-//     }
-// }
-
-/// Applies dynamic styles which are computed reactively. The `deps` field is used to determine
-/// whether the styles need to be recomputed; if the deps have not changed since the previous
-/// update cycle, then the styles are not recomputed.
+/// Inserts a bundle into the target. If the deps change, then the bundle will be recomputed
+/// and reinserted.
 pub struct InsertBundleEffect<B: Bundle, F: Fn(D) -> B, D: PartialEq + Clone> {
     pub(crate) factory: F,
     pub(crate) deps: D,
@@ -40,22 +26,34 @@ impl<B: Bundle, F: Fn(D) -> B + Send + Sync, D: PartialEq + Clone + Send + Sync>
     }
 }
 
-/// Applies dynamic styles which are computed reactively. The `deps` field is used to determine
-/// whether the styles need to be recomputed; if the deps have not changed since the previous
-/// update cycle, then the styles are not recomputed.
-pub struct ConditionalInsertBundleEffect<B: Bundle, F: Fn() -> B> {
+/// Conditionally inserts a bundle into the target. If the condition is true, then the bundle
+/// will be inserted. If the condition later becomes false, the component will be removed.
+pub struct ConditionalInsertComponentEffect<B: Bundle, F: Fn() -> B> {
     pub(crate) factory: F,
     pub(crate) condition: bool,
 }
 
-impl<B: Bundle, F: Fn() -> B + Send + Sync> EntityEffect for ConditionalInsertBundleEffect<B, F> {
-    type State = ();
+impl<C: Component, F: Fn() -> C + Send + Sync> EntityEffect
+    for ConditionalInsertComponentEffect<C, F>
+{
+    type State = bool;
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
         if self.condition {
             let mut target = cx.world_mut().entity_mut(target);
             target.insert((self.factory)());
         }
+        self.condition
     }
 
-    fn reapply(&self, _cx: &mut Cx, _target: Entity, _state: &mut Self::State) {}
+    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
+        if self.condition != *state {
+            *state = self.condition;
+            if self.condition {
+                self.apply(cx, target);
+            } else {
+                let mut target = cx.world_mut().entity_mut(target);
+                target.remove::<C>();
+            }
+        }
+    }
 }

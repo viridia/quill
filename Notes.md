@@ -5,12 +5,10 @@
   - Test callbacks.
   - Test focus.
   - Test mutable.
-  - implement .effect() for elements.
+  - Test disabled
 - How to handle the 'disabled' property in Button - we want to access lazily so that we don't have
   to rebind event handlers.
   - create a "Disabled" component. Could be a marker.
-- Asset source for obsidian
-- Button
 - Write tests for:
   - passing children as params (and dealing with memoization)
 - Finish scope tracing.

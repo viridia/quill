@@ -8,10 +8,7 @@ use bevy::{
     prelude::{Added, Component, Entity, With, World},
     utils::hashbrown::HashSet,
 };
-use std::{
-    any::Any,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "verbose")]
 use bevy::log::info;

@@ -17,7 +17,9 @@ use bevy::{
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::*;
-use bevy_quill::{Callback, ChildViews, Cx, Element, RunCallback, View, ViewTemplate, ViewTuple};
+use bevy_quill::{
+    Callback, ChildViews, Cx, Element, IntoChildViews, RunCallback, View, ViewTemplate,
+};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
@@ -123,8 +125,8 @@ impl Button {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: ViewTuple>(self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children(mut self, children: impl IntoChildViews) -> Self {
+        self.children = children.into_child_views();
         self
     }
 
@@ -174,6 +176,7 @@ impl ViewTemplate for Button {
         let minimal = self.minimal;
 
         let size = self.size;
+        let on_click = self.on_click;
 
         Element::<NodeBundle>::for_entity(id)
             .named("Button")
@@ -190,27 +193,24 @@ impl ViewTemplate for Button {
                 },
                 self.style.clone(),
             ))
+            .insert(TabIndex, self.tab_index)
             .insert(
-                |_| {
+                move |_| {
                     (
-                        TabIndex(self.tab_index),
                         AccessibilityNode::from(NodeBuilder::new(Role::Button)),
-                        {
-                            let on_click = self.on_click;
-                            On::<Pointer<Click>>::run(move |world: &mut World| {
-                                let mut focus = world.get_resource_mut::<Focus>().unwrap();
-                                focus.0 = Some(id);
-                                // if !disabled.get(world) {
-                                let mut event = world
-                                    .get_resource_mut::<ListenerInput<Pointer<Click>>>()
-                                    .unwrap();
-                                event.stop_propagation();
-                                if let Some(on_click) = on_click {
-                                    world.run_callback(on_click, ());
-                                }
-                                // }
-                            })
-                        },
+                        On::<Pointer<Click>>::run(move |world: &mut World| {
+                            let mut focus = world.get_resource_mut::<Focus>().unwrap();
+                            focus.0 = Some(id);
+                            // if !disabled.get(world) {
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<Pointer<Click>>>()
+                                .unwrap();
+                            event.stop_propagation();
+                            if let Some(on_click) = on_click {
+                                world.run_callback(on_click, ());
+                            }
+                            // }
+                        }),
                         On::<Pointer<DragStart>>::run(move |world: &mut World| {
                             // if !disabled.get(world) {
                             pressed.set(world, true);
@@ -237,24 +237,21 @@ impl ViewTemplate for Button {
                             pressed.set(world, false);
                             // }
                         }),
-                        On::<KeyPressEvent>::run({
-                            let on_click = self.on_click;
-                            move |world: &mut World| {
-                                // if !disabled.get(world) {
-                                let mut event = world
-                                    .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                                    .unwrap();
-                                if !event.repeat
-                                    && (event.key_code == KeyCode::Enter
-                                        || event.key_code == KeyCode::Space)
-                                {
-                                    event.stop_propagation();
-                                    if let Some(on_click) = on_click {
-                                        world.run_callback(on_click, ());
-                                    }
+                        On::<KeyPressEvent>::run(move |world: &mut World| {
+                            // if !disabled.get(world) {
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                                .unwrap();
+                            if !event.repeat
+                                && (event.key_code == KeyCode::Enter
+                                    || event.key_code == KeyCode::Space)
+                            {
+                                event.stop_propagation();
+                                if let Some(on_click) = on_click {
+                                    world.run_callback(on_click, ());
                                 }
-                                // }
                             }
+                            // }
                         }),
                     )
                 },
@@ -265,7 +262,10 @@ impl ViewTemplate for Button {
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
                     .style(style_button_bg)
-                    .insert(|_| corners.to_border_radius(self.size.border_radius()), ())
+                    .insert(
+                        move |size| corners.to_border_radius(size.border_radius()),
+                        self.size,
+                    )
                     .style_effect(
                         |(minimal, variant, disabled, pressed, hovering), sb| {
                             let color = if minimal {

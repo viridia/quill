@@ -6,7 +6,7 @@ use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use crate::{
     cx::Cx,
     effects::{self, AppendEffect, EffectTuple, EntityEffect},
-    insert::{ConditionalInsertBundleEffect, InsertBundleEffect},
+    insert::{ConditionalInsertComponentEffect, InsertBundleEffect},
     node_span::NodeSpan,
     style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
     view::View,
@@ -141,21 +141,21 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         })
     }
 
-    /// Insert a bundle into the target entity. This will only be run once, when the entity
-    /// is first built.
+    /// Insert a component into the target entity if the condition is true. If the condition
+    /// later becomes false, the component will be removed.
     ///
     /// Arguments:
     /// - condition: if true, the bundle will be inserted.
-    /// - factory: A function which computes the bundle based on the dependencies.
-    pub fn insert_if<B2: Bundle, S: Fn() -> B2 + Send + Sync>(
+    /// - factory: A function which computes the component based on the dependencies.
+    pub fn insert_if<C2: Component, S: Fn() -> C2 + Send + Sync>(
         self,
         condition: bool,
         factory: S,
-    ) -> Element<B, C, <E as AppendEffect<ConditionalInsertBundleEffect<B2, S>>>::Result>
+    ) -> Element<B, C, <E as AppendEffect<ConditionalInsertComponentEffect<C2, S>>>::Result>
     where
-        E: AppendEffect<ConditionalInsertBundleEffect<B2, S>>,
+        E: AppendEffect<ConditionalInsertComponentEffect<C2, S>>,
     {
-        self.add_effect(ConditionalInsertBundleEffect { condition, factory })
+        self.add_effect(ConditionalInsertComponentEffect { condition, factory })
     }
 }
 

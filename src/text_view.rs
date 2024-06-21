@@ -7,6 +7,7 @@ use bevy::{
 
 #[cfg(feature = "verbose")]
 use bevy::log::info;
+use bevy_mod_stylebuilder::TextStyleChanged;
 
 use crate::{cx::Cx, NodeSpan, View};
 
@@ -67,7 +68,7 @@ fn build_text_view(world: &mut World, text: &str) -> Entity {
                 text: Text::from_section(text, TextStyle { ..default() }),
                 ..default()
             },
-            // TextStyleChanged,
+            TextStyleChanged,
         ))
         .id()
 }

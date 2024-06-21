@@ -9,7 +9,7 @@ use bevy_mod_picking::{debug::DebugPickingMode, DefaultPickingPlugins};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{Cx, Element, QuillPlugin, View, ViewTemplate};
 use common::*;
-use obsidian_ui_quill::{hooks::UseIsHover, ObsidianUiPlugin};
+use quill_obsidian::{hooks::UseIsHover, ObsidianUiPlugin};
 
 fn main() {
     App::new()
@@ -26,9 +26,14 @@ fn main() {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(Element::<NodeBundle>::new().children(HoverTest).to_root());
+    commands.spawn(
+        Element::<NodeBundle>::new()
+            .children((HoverTest, HoverTest2))
+            .to_root(),
+    );
 }
 
+/// Hover test using conditional styles
 #[derive(Clone, PartialEq)]
 struct HoverTest;
 
@@ -48,6 +53,24 @@ impl ViewTemplate for HoverTest {
                 },
                 hovering,
             )
+            .children("Hover Me ")
+    }
+}
+
+/// Hover test using conditional insert
+#[derive(Clone, PartialEq)]
+struct HoverTest2;
+
+impl ViewTemplate for HoverTest2 {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let id = cx.create_entity();
+        let hovering = cx.use_is_hover(id);
+        Element::<NodeBundle>::for_entity(id)
+            .style(|ss: &mut StyleBuilder| {
+                ss.border(3);
+            })
+            .insert_if(hovering, || BackgroundColor(palettes::css::RED.into()))
             .children("Hover Me ")
     }
 }

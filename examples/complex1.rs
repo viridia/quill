@@ -9,7 +9,7 @@ use bevy_mod_picking::{debug::DebugPickingMode, DefaultPickingPlugins};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{ChildViews, Cx, Element, IntoChildViews, QuillPlugin, View, ViewTemplate};
 use common::*;
-use obsidian_ui_quill::ObsidianUiPlugin;
+use quill_obsidian::ObsidianUiPlugin;
 
 fn main() {
     App::new()
@@ -66,11 +66,10 @@ impl ChildParamsTest {
 impl ViewTemplate for ChildParamsTest {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
-        Element::<NodeBundle>::new().style(style_test).children((
-            "Title",
-            self.slot1.clone(),
-            self.slot2.clone(),
-        ))
+        Element::<NodeBundle>::new()
+            .style(style_test)
+            .insert(|_| BackgroundColor(palettes::css::DARK_BLUE.into()), ())
+            .children(("Title", self.slot1.clone(), self.slot2.clone()))
     }
 }
 

@@ -6,24 +6,28 @@ mod builder_border_radius;
 mod builder_font;
 mod builder_layout;
 mod builder_outline;
-// mod builder_pointer_events;
-// mod builder_texture_atlas;
+mod builder_pointer_events;
 mod builder_z_index;
+mod text_styles;
+// mod builder_texture_atlas;
 
 use std::sync::Arc;
 
+use bevy::app::{Plugin, Update};
 // pub use atlas_loader::TextureAtlasLoader;
 pub use builder::*;
 pub use builder_background::StyleBuilderBackground;
 pub use builder_border_color::StyleBuilderBorderColor;
 pub use builder_border_radius::StyleBuilderBorderRadius;
-pub use builder_font::{InheritableFontStyles, StyleBuilderFont, TextStyleChanged};
+pub use builder_font::StyleBuilderFont;
 pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
-// pub use builder_pointer_events::StyleBuilderPointerEvents;
+pub use builder_pointer_events::StyleBuilderPointerEvents;
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
 pub use builder_z_index::StyleBuilderZIndex;
 use impl_trait_for_tuples::*;
+use text_styles::update_text_styles;
+pub use text_styles::{InheritableFontStyles, TextStyleChanged};
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
 pub trait StyleTuple: Sync + Send {
@@ -106,5 +110,13 @@ impl StyleHandle {
     /// Construct a placeholder style handle.
     pub fn none() -> Self {
         Self { style: None }
+    }
+}
+
+pub struct StyleBuilderPlugin;
+
+impl Plugin for StyleBuilderPlugin {
+    fn build(&self, app: &mut bevy::app::App) {
+        app.add_systems(Update, update_text_styles);
     }
 }

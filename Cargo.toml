@@ -23,7 +23,7 @@ impl-trait-for-tuples = "0.2.2"
 smallvec = "1.13.2"
 
 [dev-dependencies]
-obsidian_ui_quill = { path = "crates/obsidian_ui_quill" }
+quill_obsidian = { path = "crates/quill_obsidian" }
 # obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }

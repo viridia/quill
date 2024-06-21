@@ -801,6 +801,7 @@ name = "bevy_mod_stylebuilder"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_mod_picking",
  "impl-trait-for-tuples",
 ]
 
@@ -974,7 +975,7 @@ dependencies = [
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
  "impl-trait-for-tuples",
- "obsidian_ui_quill",
+ "quill_obsidian",
  "smallvec",
 ]
 
@@ -2967,16 +2968,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "obsidian_ui_quill"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_mod_picking",
- "bevy_mod_stylebuilder",
- "bevy_quill",
-]
-
-[[package]]
 name = "ogg"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3177,6 +3168,16 @@ name = "profiling"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43d84d1d7a6ac92673717f9f6d1518374ef257669c24ebc5ac25d5033828be58"
+
+[[package]]
+name = "quill_obsidian"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_mod_stylebuilder",
+ "bevy_quill",
+]
 
 [[package]]
 name = "quote"

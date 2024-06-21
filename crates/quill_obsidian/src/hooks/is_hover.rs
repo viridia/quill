@@ -38,7 +38,6 @@ impl<'p, 'w> UseIsHover for Cx<'p, 'w> {
     fn use_is_hover(&mut self, target: Entity) -> bool {
         let mut entt = self.world_mut().entity_mut(target);
         if !entt.contains::<Hovering>() {
-            println!("inserting Hovering");
             entt.insert(Hovering(false));
         }
         self.use_component::<Hovering>(target)
