@@ -243,17 +243,14 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
         #[cfg(feature = "verbose")]
         info!("Razing element: {}", state.0);
 
-        // assert!(state.is_some());
-        // self.raze_children(world);
-
         // Delete the display node.
         world.entity_mut(state.0).remove_parent();
-        world.entity_mut(state.0).despawn();
+        if self.display.is_none() {
+            // Only despawn the display entity if we created it. If we got it from the outside,
+            // then it's the responsibility of the caller to clean it up.
+            world.entity_mut(state.0).despawn();
+        }
         self.children.raze_spans(world, &mut state.1);
-        // *state = None;
-
-        // Delete all reactions and despawn the view entity.
-        // world.despawn_owned_recursive(view_entity);
     }
 
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {

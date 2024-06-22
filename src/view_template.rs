@@ -44,7 +44,7 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
     fn build(&self, cx: &mut Cx) -> Self::State {
         let tick = cx.world_mut().change_tick();
         let parent = cx.owner();
-        let child_entity = cx.world_mut().spawn_empty().id();
+        let child_entity = cx.world_mut().spawn_empty().set_parent(parent).id();
 
         #[cfg(feature = "verbose")]
         info!("build() {}", child_entity);
@@ -56,14 +56,11 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         let nodes = view.nodes(cx.world(), &state);
         let cell = ViewTemplateState::new(self.clone(), view, state);
         let thunk = cell.create_thunk();
-        cx.world_mut()
-            .entity_mut(child_entity)
-            .insert((
-                ViewTemplateStateCell(Arc::new(Mutex::new(cell))),
-                scope,
-                thunk,
-            ))
-            .set_parent(parent);
+        cx.world_mut().entity_mut(child_entity).insert((
+            ViewTemplateStateCell(Arc::new(Mutex::new(cell))),
+            scope,
+            thunk,
+        ));
         (child_entity, nodes)
     }
 

@@ -14,9 +14,11 @@ use bevy_mod_picking::{
 use bevy_mod_stylebuilder::*;
 use quill_obsidian::{
     colors,
-    controls::{Button, Checkbox, Splitter, SplitterDirection},
+    controls::{
+        Button, ButtonVariant, Checkbox, Splitter, SplitterDirection, ToolButton, ToolPalette,
+    },
     focus::TabGroup,
-    typography, viewport, ObsidianUiPlugin,
+    typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
 // use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 // use bevy_reactor_overlays as overlays;
@@ -300,62 +302,56 @@ impl ViewTemplate for DemoUi {
                         panel_width,
                     )
                     .children((
-                        // ToolPalette::new().columns(3).children((
-                        //     ToolButton::new()
-                        //         .children("Preview")
-                        //         .corners(RoundedCorners::Left)
-                        //         .variant(cx.create_derived(|cx| {
-                        //             let st = cx.use_resource::<State<EditorState>>();
-                        //             if *st.get() == EditorState::Preview {
-                        //                 ButtonVariant::Selected
-                        //             } else {
-                        //                 ButtonVariant::Default
-                        //             }
-                        //         }))
-                        //         .on_click(cx.create_callback(|cx, _| {
-                        //             if let Some(mut mode) =
-                        //                 cx.world_mut().get_resource_mut::<NextState<EditorState>>()
-                        //             {
-                        //                 mode.set(EditorState::Preview);
-                        //             }
-                        //         })),
-                        //     ToolButton::new()
-                        //         .children("Materials")
-                        //         .corners(RoundedCorners::None)
-                        //         .variant(cx.create_derived(|cx| {
-                        //             let st = cx.use_resource::<State<EditorState>>();
-                        //             if *st.get() == EditorState::Graph {
-                        //                 ButtonVariant::Selected
-                        //             } else {
-                        //                 ButtonVariant::Default
-                        //             }
-                        //         }))
-                        //         .on_click(cx.create_callback(|cx, _| {
-                        //             if let Some(mut mode) =
-                        //                 cx.world_mut().get_resource_mut::<NextState<EditorState>>()
-                        //             {
-                        //                 mode.set(EditorState::Graph);
-                        //             }
-                        //         })),
-                        //     ToolButton::new()
-                        //         .children("Split")
-                        //         .corners(RoundedCorners::Right)
-                        //         .variant(cx.create_derived(|cx| {
-                        //             let st = cx.use_resource::<State<EditorState>>();
-                        //             if *st.get() == EditorState::Split {
-                        //                 ButtonVariant::Selected
-                        //             } else {
-                        //                 ButtonVariant::Default
-                        //             }
-                        //         }))
-                        //         .on_click(cx.create_callback(|cx, _| {
-                        //             if let Some(mut mode) =
-                        //                 cx.world_mut().get_resource_mut::<NextState<EditorState>>()
-                        //             {
-                        //                 mode.set(EditorState::Split);
-                        //             }
-                        //         })),
-                        // )),
+                        ToolPalette::new().columns(3).children((
+                            ToolButton::new()
+                                .children("Preview")
+                                .corners(RoundedCorners::Left)
+                                .variant({
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Preview {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                })
+                                .on_click(cx.create_callback(
+                                    |mut mode: ResMut<NextState<EditorState>>| {
+                                        mode.set(EditorState::Preview);
+                                    },
+                                )),
+                            ToolButton::new()
+                                .children("Materials")
+                                .corners(RoundedCorners::None)
+                                .variant({
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Graph {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                })
+                                .on_click(cx.create_callback(
+                                    |mut mode: ResMut<NextState<EditorState>>| {
+                                        mode.set(EditorState::Graph);
+                                    },
+                                )),
+                            ToolButton::new()
+                                .children("Split")
+                                .corners(RoundedCorners::Right)
+                                .variant({
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Split {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                })
+                                .on_click(cx.create_callback(
+                                    |mut mode: ResMut<NextState<EditorState>>| {
+                                        mode.set(EditorState::Split);
+                                    },
+                                )),
+                        )),
                         Element::<NodeBundle>::new()
                             .style(style_button_row)
                             .children((

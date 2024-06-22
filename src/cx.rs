@@ -1,7 +1,7 @@
 use std::{cell::RefCell, marker::PhantomData, sync::Arc};
 
 use bevy::{
-    hierarchy::BuildWorldChildren,
+    hierarchy::{BuildWorldChildren, Parent},
     prelude::{Component, Entity, IntoSystem, Resource, World},
 };
 
@@ -176,6 +176,13 @@ impl<'p, 'w> Cx<'p, 'w> {
         }
     }
 
+    /// Insert a component on the owner entity of the current context. This component can
+    /// be accessed by this context any any child contexts via [`use_inherited_component`].
+    pub fn insert(&mut self, component: impl Component) {
+        let owner = self.owner;
+        self.world_mut().entity_mut(owner).insert(component);
+    }
+
     /// Return a reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource<T: Resource>(&self) -> &T {
@@ -209,6 +216,24 @@ impl<'p, 'w> Cx<'p, 'w> {
         match self.world.get_entity(entity) {
             Some(c) => c.get::<C>(),
             None => None,
+        }
+    }
+
+    /// Return a reference to the Component `C` on the owner entity of the current
+    /// context, or one of it's ancestors. This searches up the entity tree until it finds
+    /// a component of the given type. If found, the component is added to the current tracking
+    /// scope.
+    pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
+        let mut entity = self.owner;
+        loop {
+            let ec = self.use_component(entity);
+            if ec.is_some() {
+                return ec;
+            }
+            match self.world.entity(entity).get::<Parent>() {
+                Some(parent) => entity = **parent,
+                _ => return None,
+            }
         }
     }
 }
