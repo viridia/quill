@@ -6,7 +6,7 @@ use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use crate::{
     cx::Cx,
     effects::{self, AppendEffect, CallbackEffect, EffectTuple, EntityEffect},
-    insert::{ConditionalInsertComponentEffect, InsertBundleEffect},
+    insert::{ConditionalInsertComponentEffect, InsertBundleEffect, StaticInsertBundleEffect},
     node_span::NodeSpan,
     style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
     view::View,
@@ -168,6 +168,20 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         E: AppendEffect<ConditionalInsertComponentEffect<C2, S>>,
     {
         self.add_effect(ConditionalInsertComponentEffect { condition, factory })
+    }
+
+    /// Insert a bundle into the target entity once and never update it.
+    ///
+    /// Arguments:
+    /// - bundle: The bundle to insert.
+    pub fn insert_static<B2: Bundle + Clone>(
+        self,
+        bundle: B2,
+    ) -> Element<B, C, <E as AppendEffect<StaticInsertBundleEffect<B2>>>::Result>
+    where
+        E: AppendEffect<StaticInsertBundleEffect<B2>>,
+    {
+        self.add_effect(StaticInsertBundleEffect { bundle })
     }
 }
 

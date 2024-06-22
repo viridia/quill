@@ -68,7 +68,7 @@ impl ViewTemplate for ChildParamsTest {
     fn create(&self, _cx: &mut Cx) -> Self::View {
         Element::<NodeBundle>::new()
             .style(style_test)
-            .insert(|_| BackgroundColor(palettes::css::DARK_BLUE.into()), ())
+            .insert_static(BackgroundColor(palettes::css::DARK_BLUE.into()))
             .children(("Title", self.slot1.clone(), self.slot2.clone()))
     }
 }

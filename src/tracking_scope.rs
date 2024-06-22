@@ -1,5 +1,5 @@
 use std::{
-    any::Any,
+    any::{type_name, Any},
     sync::{atomic::AtomicBool, Arc},
 };
 
@@ -105,7 +105,7 @@ impl TrackingScope {
             world
                 .components()
                 .resource_id::<T>()
-                .expect("Unknown resource type"),
+                .unwrap_or_else(|| panic!("Unknown resource type: {}", std::any::type_name::<T>())),
         );
     }
 
@@ -113,10 +113,9 @@ impl TrackingScope {
     pub(crate) fn track_component<C: Component>(&mut self, entity: Entity, world: &World) {
         self.track_component_id(
             entity,
-            world
-                .components()
-                .component_id::<C>()
-                .expect("Unknown component type"),
+            world.components().component_id::<C>().unwrap_or_else(|| {
+                panic!("Unknown component type: {}", std::any::type_name::<C>())
+            }),
         );
     }
 

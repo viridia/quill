@@ -31,8 +31,8 @@ mod materials;
 /// Module containing standard sizes.
 pub mod size;
 
-// / Module of utilities for embedding a 3D viewport in the 2D UI.
-// pub mod viewport;
+/// Module of utilities for embedding a 3D viewport in the 2D UI.
+pub mod viewport;
 
 /// Standard styles for fonts.
 pub mod typography;

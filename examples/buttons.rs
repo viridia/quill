@@ -1,4 +1,4 @@
-//! Example of a simple UI layout
+//! Demo of button variations.
 #![feature(impl_trait_in_assoc_type)]
 
 use bevy::{
@@ -48,7 +48,6 @@ fn main() {
             DefaultPickingPlugins,
             QuillPlugin,
             ObsidianUiPlugin,
-            StyleBuilderPlugin,
         ))
         .add_systems(Startup, setup_view_root)
         .add_systems(Update, close_on_esc)

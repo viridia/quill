@@ -249,7 +249,7 @@ impl ViewTemplate for Checkbox {
                     .style_effect(
                         |disabled, sb| {
                             // info!("Checkbox disabled: {}", disabled);
-                            // This doesn't work because inherited text styles don't change.
+                            // This doesn't work because inherited text styles don't update.
                             sb.color(if disabled {
                                 colors::FOREGROUND.with_alpha(0.3)
                             } else {

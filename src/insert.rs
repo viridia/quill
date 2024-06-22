@@ -57,3 +57,18 @@ impl<C: Component, F: Fn() -> C + Send + Sync> EntityEffect
         }
     }
 }
+
+/// Inserts a bundle into the target once and never updates it.
+pub struct StaticInsertBundleEffect<B: Bundle + Clone> {
+    pub(crate) bundle: B,
+}
+
+impl<B: Bundle + Clone> EntityEffect for StaticInsertBundleEffect<B> {
+    type State = ();
+    fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
+        let mut target = cx.world_mut().entity_mut(target);
+        target.insert(self.bundle.clone());
+    }
+
+    fn reapply(&self, _cx: &mut Cx, _target: Entity, _state: &mut Self::State) {}
+}
