@@ -1,4 +1,7 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::{
+    any::Any,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 use bevy::{
     ecs::component::{ComponentId, Tick},
@@ -14,6 +17,7 @@ pub(crate) enum HookState {
     Entity(Entity),
     Mutable(Entity, ComponentId),
     Callback(Arc<dyn AnyCallback + Send + Sync>),
+    Effect(Arc<dyn Any + Send + Sync + 'static>),
 }
 
 /// A component that tracks the dependencies of a reactive task.
@@ -66,6 +70,12 @@ impl TrackingScope {
             tick,
             cleanups: Vec::new(),
         }
+    }
+
+    pub(crate) fn replace_hook(&mut self, hook: HookState) {
+        assert!(self.next_hook_index <= self.hook_states.len());
+        assert!(self.next_hook_index > 0);
+        self.hook_states[self.next_hook_index - 1] = hook;
     }
 
     pub(crate) fn push_hook(&mut self, hook: HookState) {
@@ -181,6 +191,9 @@ impl TrackingScope {
                 }
                 HookState::Callback(callback) => {
                     callback.remove(world);
+                }
+                HookState::Effect(_) => {
+                    // Do nothing
                 }
             }
         }

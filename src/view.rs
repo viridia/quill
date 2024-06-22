@@ -206,7 +206,21 @@ pub struct ViewThunk(pub(crate) &'static dyn AnyViewAdapter);
 pub struct ViewRoot;
 
 /// View which renders nothing.
-pub struct EmptyView;
+impl View for () {
+    type State = ();
+
+    fn nodes(&self, _world: &World, _state: &Self::State) -> NodeSpan {
+        NodeSpan::Empty
+    }
+
+    fn build(&self, _cx: &mut Cx) -> Self::State {}
+
+    fn rebuild(&self, _cx: &mut Cx, _state: &mut Self::State) -> bool {
+        false
+    }
+
+    fn raze(&self, _world: &mut World, _state: &mut Self::State) {}
+}
 
 pub(crate) fn build_views(world: &mut World) {
     let mut roots = world.query_filtered::<(Entity, &ViewThunk), Added<ViewRoot>>();

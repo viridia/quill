@@ -26,7 +26,7 @@ fn style_test(ss: &mut StyleBuilder) {
         .top(0)
         .bottom(0)
         .row_gap(4)
-        .background_color(colors::U1);
+        .background_color(colors::U2);
 }
 
 fn style_row(ss: &mut StyleBuilder) {

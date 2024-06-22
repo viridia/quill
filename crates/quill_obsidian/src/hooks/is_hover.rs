@@ -31,11 +31,11 @@ pub(crate) fn update_hover_states(
 /// Method which tracks whether the mouse is hovering over the given entity.
 pub trait UseIsHover {
     /// Hook that returns true when the mouse is hovering over the given entity or a descendant.
-    fn use_is_hover(&mut self, target: Entity) -> bool;
+    fn is_hovered(&mut self, target: Entity) -> bool;
 }
 
 impl<'p, 'w> UseIsHover for Cx<'p, 'w> {
-    fn use_is_hover(&mut self, target: Entity) -> bool {
+    fn is_hovered(&mut self, target: Entity) -> bool {
         let mut entt = self.world_mut().entity_mut(target);
         if !entt.contains::<Hovering>() {
             entt.insert(Hovering(false));

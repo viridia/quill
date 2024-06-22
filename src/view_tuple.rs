@@ -70,37 +70,6 @@ impl<A: View> ViewTuple for A {
     }
 }
 
-#[allow(unused)]
-impl ViewTuple for () {
-    type State = ();
-
-    #[inline(always)]
-    fn len(&self) -> usize {
-        0
-    }
-
-    #[inline(always)]
-    fn span_nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        NodeSpan::Empty
-    }
-
-    #[inline(always)]
-    fn build_spans(&self, cx: &mut Cx) -> Self::State {}
-
-    #[inline(always)]
-    fn rebuild_spans(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
-        false
-    }
-
-    #[inline(always)]
-    fn raze_spans(&self, world: &mut World, state: &mut Self::State) {}
-
-    #[inline(always)]
-    fn attach_descendants(&self, world: &mut World, state: &mut Self::State) -> bool {
-        false
-    }
-}
-
 #[impl_for_tuples(1, 16)]
 #[tuple_types_custom_trait_bound(View)]
 impl ViewTuple for Tuple {

@@ -23,7 +23,7 @@ pub mod focus;
 pub mod hooks;
 
 /// Module containing custom materials.
-// pub mod materials;
+mod materials;
 
 /// Utilities for managing scrolling views.
 // pub mod scrolling;
@@ -37,6 +37,7 @@ pub mod size;
 /// Standard styles for fonts.
 pub mod typography;
 
+use materials::SwatchRectMaterial;
 pub use rounded_corners::RoundedCorners;
 
 /// Plugin for the Obsidian UI library.
@@ -49,7 +50,7 @@ impl Plugin for ObsidianUiPlugin {
         app.add_plugins((
             // UiMaterialPlugin::<GradientRectMaterial>::default(),
             // UiMaterialPlugin::<SliderRectMaterial>::default(),
-            // UiMaterialPlugin::<SwatchRectMaterial>::default(),
+            UiMaterialPlugin::<SwatchRectMaterial>::default(),
             // UiMaterialPlugin::<DotGridMaterial>::default(),
             // UiMaterialPlugin::<DrawPathMaterial>::default(),
             // hooks::BistableTransitionPlugin,

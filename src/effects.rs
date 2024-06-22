@@ -142,6 +142,29 @@ impl EffectTuple for Tuple {
     }
 }
 
+/// A general-purpose effect that allows arbitrary mutations to the display entity.
+pub struct CallbackEffect<F: Fn(&mut Cx, Entity, D), D: PartialEq + Clone> {
+    pub(crate) effect_fn: F,
+    pub(crate) deps: D,
+}
+
+impl<F: Fn(&mut Cx, Entity, D) + Send + Sync, D: PartialEq + Clone + Send + Sync> EntityEffect
+    for CallbackEffect<F, D>
+{
+    type State = D;
+    fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
+        (self.effect_fn)(cx, target, self.deps.clone());
+        self.deps.clone()
+    }
+
+    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
+        if *state != self.deps {
+            *state = self.deps.clone();
+            (self.effect_fn)(cx, target, self.deps.clone());
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

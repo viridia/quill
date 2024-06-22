@@ -94,7 +94,6 @@ impl<'p, 'w> Cx<'p, 'w> {
                     .set_parent(owner)
                     .id();
                 let component = self.world_mut().init_component::<MutableCell<T>>();
-                // self.tracking.borrow_mut().add_owned(cell);
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Mutable(cell, component));
@@ -107,17 +106,59 @@ impl<'p, 'w> Cx<'p, 'w> {
         }
     }
 
+    /// Create an effect which runs each time the reactive context is executed, *and* the given
+    /// dependencies change.
+    ///
+    /// Arguments:
+    /// - `effect_fn`: The effect function to run.
+    /// - `deps`: The dependencies which trigger the effect.
+    pub fn create_effect<
+        S: Fn(&mut Cx, D) + Send + Sync,
+        D: PartialEq + Clone + Send + Sync + 'static,
+    >(
+        &mut self,
+        effect_fn: S,
+        deps: D,
+    ) {
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::Effect(prev_deps)) => match prev_deps.downcast_ref::<D>() {
+                Some(prev_deps) => {
+                    if *prev_deps != deps {
+                        effect_fn(self, deps.clone());
+                        self.tracking
+                            .borrow_mut()
+                            .replace_hook(HookState::Effect(Arc::new(deps)));
+                    }
+                }
+                None => {
+                    panic!("Effect dependencies type mismatch");
+                }
+            },
+            Some(_) => {
+                panic!("Expected create_effect() hook, found something else");
+            }
+            None => {
+                effect_fn(self, deps.clone());
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::Effect(Arc::new(deps)));
+            }
+        }
+    }
+
     /// Create a new callback in this context. This registers a one-shot system with the world.
     /// The callback will be unregistered when the tracking scope is dropped.
+    ///
+    /// Note: This function takes no deps argument, the callback is only registered once the first
+    /// time it is called. Subsequent calls will return the original callback.
     pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
         &mut self,
         callback: S,
     ) -> Callback<P> {
         let hook = self.tracking.borrow_mut().next_hook();
-        self.tracking.borrow_mut().next_hook();
         match hook {
             Some(HookState::Callback(cb)) => cb.as_ref().downcast::<P>(),
-
             Some(_) => {
                 panic!("Expected create_callback() hook, found something else");
             }

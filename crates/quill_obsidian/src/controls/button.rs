@@ -169,10 +169,9 @@ impl ViewTemplate for Button {
         let id = cx.create_entity();
         let variant = self.variant;
         let pressed = cx.create_mutable::<bool>(false);
-        let hovering = cx.use_is_hover(id);
-        let focused = cx.use_is_focus_visible(id);
+        let hovering = cx.is_hovered(id);
+        let focused = cx.is_focus_visible(id);
 
-        let disabled = self.disabled;
         let corners = self.corners;
         let minimal = self.minimal;
 
@@ -195,6 +194,11 @@ impl ViewTemplate for Button {
                 self.style.clone(),
             ))
             .insert(TabIndex, self.tab_index)
+            // The reason we do this is to avoid capturing `disabled` in the bevy_mod_picking event
+            // handlers, as this would require removing and inserting them every time the disabled
+            // state changes.
+            .insert_if(self.disabled, || Disabled)
+            .insert_if(self.autofocus, || AutoFocus)
             .insert(
                 move |_| {
                     (
@@ -258,8 +262,6 @@ impl ViewTemplate for Button {
                 },
                 (),
             )
-            .insert_if(self.disabled, || Disabled)
-            .insert_if(self.autofocus, || AutoFocus)
             .children((
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
@@ -277,7 +279,7 @@ impl ViewTemplate for Button {
                             };
                             sb.background_color(color);
                         },
-                        (minimal, variant, disabled, pressed.get(cx), hovering),
+                        (minimal, variant, self.disabled, pressed.get(cx), hovering),
                     )
                     .style_effect(
                         move |focused, sb| {

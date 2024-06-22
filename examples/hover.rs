@@ -41,7 +41,7 @@ impl ViewTemplate for HoverTest {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let id = cx.create_entity();
-        let hovering = cx.use_is_hover(id);
+        let hovering = cx.is_hovered(id);
         Element::<NodeBundle>::for_entity(id)
             .style_effect(
                 |hovering, ss| {
@@ -65,7 +65,7 @@ impl ViewTemplate for HoverTest2 {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let id = cx.create_entity();
-        let hovering = cx.use_is_hover(id);
+        let hovering = cx.is_hovered(id);
         Element::<NodeBundle>::for_entity(id)
             .style(|ss: &mut StyleBuilder| {
                 ss.border(3);

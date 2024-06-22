@@ -5,7 +5,7 @@ use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 
 use crate::{
     cx::Cx,
-    effects::{self, AppendEffect, EffectTuple, EntityEffect},
+    effects::{self, AppendEffect, CallbackEffect, EffectTuple, EntityEffect},
     insert::{ConditionalInsertComponentEffect, InsertBundleEffect},
     node_span::NodeSpan,
     style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
@@ -88,6 +88,18 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
             effects: self.effects.append_effect(effect),
             marker: PhantomData,
         }
+    }
+
+    /// Add a general-purpose effect which can mutate the display entity.
+    pub fn effect<S: Fn(&mut Cx, Entity, D) + Send + Sync, D: PartialEq + Clone + Send + Sync>(
+        self,
+        effect_fn: S,
+        deps: D,
+    ) -> Element<B, C, <E as AppendEffect<CallbackEffect<S, D>>>::Result>
+    where
+        E: AppendEffect<CallbackEffect<S, D>>,
+    {
+        self.add_effect(CallbackEffect { effect_fn, deps })
     }
 
     /// Apply a set of styles to the element
