@@ -45,11 +45,6 @@ impl InheritableFontStyles {
 #[derive(Component)]
 pub struct UseInheritedTextStyles;
 
-/// A marker component that is used to indicate that the text element needs to recompute the
-/// inherited text styles.
-#[derive(Component)]
-pub struct TextStyleChanged;
-
 #[allow(clippy::type_complexity)]
 pub(crate) fn update_text_styles(
     mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,

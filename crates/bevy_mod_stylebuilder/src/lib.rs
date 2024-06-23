@@ -30,7 +30,7 @@ pub use builder_pointer_events::StyleBuilderPointerEvents;
 pub use builder_z_index::StyleBuilderZIndex;
 use impl_trait_for_tuples::*;
 use text_styles::update_text_styles;
-pub use text_styles::{InheritableFontStyles, TextStyleChanged, UseInheritedTextStyles};
+pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
 pub trait StyleTuple: Sync + Send {
