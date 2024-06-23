@@ -5,10 +5,9 @@ use bevy::{ecs::system::SystemId, prelude::*};
 use crate::Cx;
 
 /// Contains a reference to a callback. `P` is the type of the props.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Callback<P = ()> {
     pub(crate) id: SystemId<P, ()>,
-    pub(crate) marker: std::marker::PhantomData<P>,
 }
 
 pub trait AnyCallback: 'static {
@@ -21,7 +20,7 @@ impl dyn AnyCallback + Send + Sync {
     pub fn downcast<P: 'static>(&self) -> Callback<P> {
         if TypeId::of::<P>() == self.type_id() {
             // Safe because we just checked the type.
-            unsafe { std::mem::transmute_copy(&self) }
+            unsafe { *(self as *const dyn AnyCallback as *const Callback<P>) }
         } else {
             panic!("downcast failed")
         }
@@ -30,6 +29,7 @@ impl dyn AnyCallback + Send + Sync {
 
 impl<P: 'static> AnyCallback for Callback<P> {
     fn remove(&self, world: &mut World) {
+        println!("Removing callback");
         world.remove_system(self.id).unwrap();
     }
     fn type_id(&self) -> TypeId {

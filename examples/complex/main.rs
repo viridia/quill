@@ -15,7 +15,8 @@ use bevy_mod_stylebuilder::*;
 use quill_obsidian::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Splitter, SplitterDirection, ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, Splitter,
+        SplitterDirection, ToolButton, ToolPalette,
     },
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
@@ -268,30 +269,30 @@ impl ViewTemplate for DemoUi {
             .style((typography::text_default, style_main))
             .insert(move |_| (TabGroup::default(), TargetCamera(camera)), ())
             .children((
-                // Dialog::new()
-                //     .width(ui::Val::Px(400.))
-                //     .open(checked_1.signal())
-                //     .on_close(cx.create_callback(move |cx, _| {
-                //         checked_1.set(cx, false);
-                //     }))
-                //     .children((
-                //         DialogHeader::new().children("Dialog Header"),
-                //         "Dialog Body",
-                //         DialogFooter::new().children((
-                //             Button::new()
-                //                 .children("Cancel")
-                //                 .on_click(cx.create_callback(move |cx, _| {
-                //                     checked_1.set(cx, false);
-                //                 })),
-                //             Button::new()
-                //                 .children("Close")
-                //                 .variant(ButtonVariant::Primary)
-                //                 .autofocus(true)
-                //                 .on_click(cx.create_callback(move |cx, _| {
-                //                     checked_1.set(cx, false);
-                //                 })),
-                //         )),
-                //     )),
+                Dialog::new()
+                    .width(ui::Val::Px(400.))
+                    .open(checked_1.get(cx))
+                    .on_close(cx.create_callback(move |world: &mut World| {
+                        checked_1.set(world, false);
+                    }))
+                    .children((
+                        DialogHeader::new().children("Dialog Header"),
+                        "Dialog Body",
+                        DialogFooter::new().children((
+                            Button::new()
+                                .children("Cancel")
+                                .on_click(cx.create_callback(move |world: &mut World| {
+                                    checked_1.set(world, false);
+                                })),
+                            Button::new()
+                                .children("Close")
+                                .variant(ButtonVariant::Primary)
+                                .autofocus(true)
+                                .on_click(cx.create_callback(move |world: &mut World| {
+                                    checked_1.set(world, false);
+                                })),
+                        )),
+                    )),
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
                     .style(style_aside)

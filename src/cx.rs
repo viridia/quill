@@ -164,10 +164,7 @@ impl<'p, 'w> Cx<'p, 'w> {
             }
             None => {
                 let id = self.world_mut().register_system(callback);
-                let result = Callback {
-                    id,
-                    marker: PhantomData,
-                };
+                let result = Callback { id };
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Callback(Arc::new(result)));

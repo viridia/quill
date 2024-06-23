@@ -1,5 +1,5 @@
 use std::{
-    any::{type_name, Any},
+    any::Any,
     sync::{atomic::AtomicBool, Arc},
 };
 

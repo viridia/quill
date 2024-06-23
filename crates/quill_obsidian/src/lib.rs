@@ -3,6 +3,9 @@ use bevy::prelude::*;
 
 mod rounded_corners;
 
+/// Utilities for animating component properties.
+pub mod animation;
+
 /// Module containing standard color definitions.
 #[allow(missing_docs)]
 pub mod colors;
@@ -53,8 +56,8 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
             // UiMaterialPlugin::<DotGridMaterial>::default(),
             // UiMaterialPlugin::<DrawPathMaterial>::default(),
-            // hooks::BistableTransitionPlugin,
-            // animation::AnimatedTransitionPlugin,
+            hooks::BistableTransitionPlugin,
+            animation::AnimatedTransitionPlugin,
             focus::KeyboardInputPlugin,
         ))
         // .add_plugins((

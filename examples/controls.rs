@@ -12,7 +12,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 use quill_obsidian::{
     colors,
-    controls::{Button, Checkbox, Swatch},
+    controls::{Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, Swatch},
     ObsidianUiPlugin, RoundedCorners,
 };
 
@@ -52,7 +52,6 @@ fn main() {
             DefaultPickingPlugins,
             QuillPlugin,
             ObsidianUiPlugin,
-            StyleBuilderPlugin,
         ))
         .add_systems(Startup, setup_view_root)
         .add_systems(Update, close_on_esc)
@@ -81,9 +80,7 @@ impl ViewTemplate for ButtonsDemo {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let checked = cx.create_mutable(true);
         let disabled = cx.create_mutable(false);
-        let click = cx.create_callback(|| {
-            info!("Clicked!");
-        });
+        let dialog_open = cx.create_mutable(false);
         let on_checked = cx.create_callback(move |value: In<bool>, world: &mut World| {
             checked.set(world, *value);
             // info!("Checked: {}", *value);
@@ -119,32 +116,36 @@ impl ViewTemplate for ButtonsDemo {
                     Swatch::new(colors::U1).style(style_swatch),
                     Swatch::new(Srgba::new(0.5, 1.0, 0.0, 0.5)).style(style_swatch),
                 )),
-                "Corners",
+                "Dialog",
                 Element::<NodeBundle>::new().style(style_row).children((
                     Button::new()
-                        .on_click(click)
-                        .children("corners: All")
-                        .corners(RoundedCorners::All),
-                    Button::new()
-                        .on_click(click)
-                        .children("corners: Top")
-                        .corners(RoundedCorners::Top),
-                    Button::new()
-                        .on_click(click)
-                        .children("corners: Bottom")
-                        .corners(RoundedCorners::Bottom),
-                    Button::new()
-                        .on_click(click)
-                        .children("corners: Left")
-                        .corners(RoundedCorners::Left),
-                    Button::new()
-                        .on_click(click)
-                        .children("corners: Right")
-                        .corners(RoundedCorners::Right),
-                    Button::new()
-                        .on_click(click)
-                        .children("corners: None")
-                        .corners(RoundedCorners::None),
+                        .on_click(cx.create_callback(move |world: &mut World| {
+                            dialog_open.set(world, true);
+                        }))
+                        .children("Open..."),
+                    Dialog::new()
+                        .width(ui::Val::Px(400.))
+                        .open(dialog_open.get(cx))
+                        .on_close(cx.create_callback(move |world: &mut World| {
+                            dialog_open.set(world, false);
+                        }))
+                        .children((
+                            DialogHeader::new().children("Dialog Header"),
+                            DialogFooter::new().children((
+                                Button::new()
+                                    .children("Cancel")
+                                    .on_click(cx.create_callback(move |world: &mut World| {
+                                        dialog_open.set(world, false);
+                                    })),
+                                Button::new()
+                                    .children("Close")
+                                    .variant(ButtonVariant::Primary)
+                                    .autofocus(true)
+                                    .on_click(cx.create_callback(move |world: &mut World| {
+                                        dialog_open.set(world, false);
+                                    })),
+                            )),
+                        )),
                 )),
             ))
     }

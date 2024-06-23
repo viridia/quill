@@ -4,23 +4,24 @@ use crate::{View, ViewTuple};
 
 use crate::node_span::NodeSpan;
 
-/// A View which renders a sequence of nodes which are inserted into the parent view.
-pub struct Fragment<A: ViewTuple> {
+/// A `Portal` represents a view that is displayed with no parent, causing it's location to
+/// be relative to the window rather than any parent view.
+pub struct Portal<A: ViewTuple> {
     children: A,
 }
 
-impl<A: ViewTuple> Fragment<A> {
-    /// Construct a new [`Fragment`] from a tuple of views.
+impl<A: ViewTuple> Portal<A> {
+    /// Construct a new [`Portal`] from a tuple of views.
     pub fn new(children: A) -> Self {
         Self { children }
     }
 }
 
-impl<A: ViewTuple> View for Fragment<A> {
+impl<A: ViewTuple> View for Portal<A> {
     type State = A::State;
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        self.children.span_nodes(world, state)
+    fn nodes(&self, _world: &World, _state: &Self::State) -> NodeSpan {
+        NodeSpan::Empty
     }
 
     fn build(&self, cx: &mut crate::Cx) -> Self::State {
@@ -36,11 +37,12 @@ impl<A: ViewTuple> View for Fragment<A> {
     }
 
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
-        self.children.attach_descendants(world, state)
+        self.children.attach_descendants(world, state);
+        false
     }
 }
 
-impl<A: ViewTuple + Clone> Clone for Fragment<A> {
+impl<A: ViewTuple + Clone> Clone for Portal<A> {
     fn clone(&self) -> Self {
         Self {
             children: self.children.clone(),
@@ -48,7 +50,7 @@ impl<A: ViewTuple + Clone> Clone for Fragment<A> {
     }
 }
 
-impl<A: ViewTuple + PartialEq> PartialEq for Fragment<A> {
+impl<A: ViewTuple + PartialEq> PartialEq for Portal<A> {
     fn eq(&self, other: &Self) -> bool {
         self.children.eq(&other.children)
     }

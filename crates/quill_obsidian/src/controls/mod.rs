@@ -1,5 +1,6 @@
 mod button;
 mod checkbox;
+mod dialog;
 mod disabled;
 mod icon;
 mod icon_button;
@@ -10,6 +11,7 @@ mod tool_palette;
 
 pub use button::*;
 pub use checkbox::*;
+pub use dialog::*;
 pub use disabled::*;
 pub use icon::*;
 pub use icon_button::*;
