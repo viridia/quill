@@ -13,7 +13,10 @@ mod text_styles;
 
 use std::sync::Arc;
 
-use bevy::app::{Plugin, Update};
+use bevy::{
+    app::{Plugin, Update},
+    prelude::{IntoSystemConfigs, SystemSet},
+};
 // pub use atlas_loader::TextureAtlasLoader;
 pub use builder::*;
 pub use builder_background::StyleBuilderBackground;
@@ -27,7 +30,7 @@ pub use builder_pointer_events::StyleBuilderPointerEvents;
 pub use builder_z_index::StyleBuilderZIndex;
 use impl_trait_for_tuples::*;
 use text_styles::update_text_styles;
-pub use text_styles::{InheritableFontStyles, TextStyleChanged};
+pub use text_styles::{InheritableFontStyles, TextStyleChanged, UseInheritedTextStyles};
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
 pub trait StyleTuple: Sync + Send {
@@ -113,10 +116,15 @@ impl StyleHandle {
     }
 }
 
+/// A system set that includes any systems that run dynamic style computations. These will
+/// generally run after the UI nodes have been updated.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct StyleBuilderSystemSet;
+
 pub struct StyleBuilderPlugin;
 
 impl Plugin for StyleBuilderPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_systems(Update, update_text_styles);
+        app.add_systems(Update, update_text_styles.in_set(StyleBuilderSystemSet));
     }
 }

@@ -12,8 +12,10 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 use quill_obsidian::{
     colors,
-    controls::{Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, Swatch},
-    ObsidianUiPlugin, RoundedCorners,
+    controls::{
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, SpinBox, Swatch,
+    },
+    ObsidianUiPlugin,
 };
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -85,6 +87,7 @@ impl ViewTemplate for ButtonsDemo {
             checked.set(world, *value);
             // info!("Checked: {}", *value);
         });
+        let spin_value = cx.create_mutable::<f32>(50.);
         Element::<NodeBundle>::new()
             .insert(TargetCamera, self.camera)
             .style(style_test)
@@ -116,6 +119,19 @@ impl ViewTemplate for ButtonsDemo {
                     Swatch::new(colors::U1).style(style_swatch),
                     Swatch::new(Srgba::new(0.5, 1.0, 0.0, 0.5)).style(style_swatch),
                 )),
+                "Spinbox",
+                Element::<NodeBundle>::new()
+                    .style(style_row)
+                    .children((SpinBox::new()
+                        .style(|sb: &mut StyleBuilder| {
+                            sb.width(100);
+                        })
+                        .value(spin_value.get(cx))
+                        .on_change(cx.create_callback(
+                            move |value: In<f32>, world: &mut World| {
+                                spin_value.set(world, *value);
+                            },
+                        )),)),
                 "Dialog",
                 Element::<NodeBundle>::new().style(style_row).children((
                     Button::new()

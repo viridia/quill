@@ -20,7 +20,7 @@ use bevy::{
     app::{App, Plugin, Update},
     prelude::IntoSystemConfigs,
 };
-use bevy_mod_stylebuilder::StyleBuilderPlugin;
+use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
 
 pub use callback::*;
 pub use cond::Cond;
@@ -45,7 +45,9 @@ impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(StyleBuilderPlugin).add_systems(
             Update,
-            (build_views, rebuild_views, reattach_children).chain(),
+            (build_views, rebuild_views, reattach_children)
+                .chain()
+                .before(StyleBuilderSystemSet),
         );
     }
 }

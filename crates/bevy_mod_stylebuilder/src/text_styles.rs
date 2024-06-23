@@ -40,59 +40,81 @@ impl InheritableFontStyles {
     }
 }
 
+/// A marker component that is used to indicate that the text entity wants to opt-in to using
+/// inherited text styles.
+#[derive(Component)]
+pub struct UseInheritedTextStyles;
+
 /// A marker component that is used to indicate that the text element needs to recompute the
 /// inherited text styles.
 #[derive(Component)]
 pub struct TextStyleChanged;
 
+#[allow(clippy::type_complexity)]
 pub(crate) fn update_text_styles(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Text), With<TextStyleChanged>>,
-    inherited: Query<&InheritableFontStyles>,
+    mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,
+    inherited: Query<Ref<InheritableFontStyles>>,
     parents: Query<&Parent>,
     server: Res<AssetServer>,
 ) {
+    let inherited_changed = inherited.iter().any(|cmp| cmp.is_changed());
     for (entity, mut text) in query.iter_mut() {
-        let mut styles = InheritableFontStyles::default();
+        let style = match compute_inherited_style(entity, &inherited, &parents, &server) {
+            Some(value) => value,
+            None => continue,
+        };
 
-        // Search parents for inherited styles.
-        let mut ancestor = entity;
-        loop {
+        if text.is_changed() || inherited_changed {
+            let styles_changed = text.sections.iter().any(|section| {
+                section.style.font != style.font
+                    || section.style.font_size != style.font_size
+                    || section.style.color != style.color
+            });
+            if styles_changed {
+                for section in text.sections.iter_mut() {
+                    section.style = style.clone();
+                }
+            }
+        }
+    }
+}
+
+fn compute_inherited_style(
+    entity: Entity,
+    inherited: &Query<Ref<InheritableFontStyles>, ()>,
+    parents: &Query<&Parent, ()>,
+    server: &Res<AssetServer>,
+) -> Option<TextStyle> {
+    let mut styles = InheritableFontStyles::default();
+    let mut ancestor = entity;
+    loop {
+        if styles.is_final() {
+            break;
+        }
+        if let Ok(inherited_styles) = inherited.get(ancestor) {
+            styles.merge(inherited_styles.as_ref());
             if styles.is_final() {
                 break;
             }
-            if let Ok(inherited_styles) = inherited.get(ancestor) {
-                styles.merge(inherited_styles);
-                if styles.is_final() {
-                    break;
-                }
-            }
-            if let Ok(parent) = parents.get(ancestor) {
-                ancestor = parent.get();
-            } else {
-                break;
-            }
         }
-
-        // If we have a font handle, but it's not ready, then skip this update.
-        if let Some(ref handle) = styles.font {
-            match server.load_state(handle) {
-                bevy::asset::LoadState::Loaded => {}
-                _ => {
-                    continue;
-                }
-            }
+        if let Ok(parent) = parents.get(ancestor) {
+            ancestor = parent.get();
+        } else {
+            break;
         }
-
-        let style = TextStyle {
-            font: styles.font.unwrap_or_default(),
-            font_size: styles.font_size.unwrap_or(12.),
-            color: styles.color.unwrap_or(Color::WHITE),
-        };
-
-        for section in text.sections.iter_mut() {
-            section.style = style.clone();
-        }
-        commands.entity(entity).remove::<TextStyleChanged>();
     }
+    if let Some(ref handle) = styles.font {
+        match server.load_state(handle) {
+            bevy::asset::LoadState::Loaded => {}
+            _ => {
+                return None;
+            }
+        }
+    }
+    let style = TextStyle {
+        font: styles.font.unwrap_or_default(),
+        font_size: styles.font_size.unwrap_or(12.),
+        color: styles.color.unwrap_or(Color::WHITE),
+    };
+    Some(style)
 }
