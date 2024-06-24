@@ -1,7 +1,5 @@
 use bevy::{ecs::component::ComponentId, ecs::world::Command, prelude::*};
 
-use crate::Cx;
-
 /// Contains a mutable reactive value.
 #[derive(Component)]
 pub(crate) struct MutableCell<T>(pub(crate) T);
@@ -38,10 +36,8 @@ where
 {
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
-    pub fn update<F: FnOnce(Mut<T>)>(&self, world: &mut World, updater: F) {
-        let value = world.get_mut::<MutableCell<T>>(self.cell).unwrap();
-        let inner = value.map_unchanged(|v| &mut v.0);
-        (updater)(inner);
+    pub fn update<F: FnOnce(Mut<T>), W: WriteMutable>(&self, cx: &mut W, updater: F) {
+        cx.update_mutable(self.cell, updater);
     }
 }
 
@@ -145,6 +141,12 @@ pub trait WriteMutable {
     fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
     where
         T: Send + Sync + Clone + PartialEq + 'static;
+
+    /// Update a mutable value in place using a callback. The callback is passed a
+    /// `Mut<T>` which can be used to modify the value.
+    fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)
+    where
+        T: Send + Sync + 'static;
 }
 
 /// Custom command which updates the state of a mutable cell.
@@ -215,6 +217,17 @@ impl WriteMutable for World {
         T: Send + Sync + Clone + PartialEq + 'static,
     {
         self.commands().add(UpdateMutableCell { mutable, value });
+    }
+
+    /// Update a mutable value in place using a callback. The callback is passed a
+    /// `Mut<T>` which can be used to modify the value.
+    fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)
+    where
+        T: Send + Sync + 'static,
+    {
+        let value = self.get_mut::<MutableCell<T>>(mutable).unwrap();
+        let inner = value.map_unchanged(|v| &mut v.0);
+        (updater)(inner);
     }
 }
 

@@ -1,17 +1,17 @@
 # Next
 
-- Test focus.
 - For loops
+- Test focus.
 - Finish controls:
-  - Slider
-  - GradientSlider
   - Menu
   - Scrollview
   - Disclosure
   - Listview
   - Spacer not working
+- README
 - Experiment with observer-based destructors.
   - Start with TrackingScope::raze().
+  - Need to migrate to DeferredWorld.
 - TrackingScope::raze never gets called on the root.
 - Finish scope tracing.
 - impl_trait_for_tuples for effect tuples.

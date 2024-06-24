@@ -348,4 +348,11 @@ impl<'p, 'w> WriteMutable for Cx<'p, 'w> {
     {
         self.world.write_mutable_clone(mutable, value);
     }
+
+    fn update_mutable<T, F: FnOnce(bevy::prelude::Mut<T>)>(&mut self, mutable: Entity, updater: F)
+    where
+        T: Send + Sync + 'static,
+    {
+        self.world.update_mutable(mutable, updater);
+    }
 }
