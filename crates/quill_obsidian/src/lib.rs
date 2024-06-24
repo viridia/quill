@@ -40,7 +40,7 @@ pub mod viewport;
 /// Standard styles for fonts.
 pub mod typography;
 
-use materials::SwatchRectMaterial;
+use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
 pub use rounded_corners::RoundedCorners;
 
 /// Plugin for the Obsidian UI library.
@@ -51,8 +51,8 @@ pub use hooks::is_hover::UseIsHover as _;
 impl Plugin for ObsidianUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            // UiMaterialPlugin::<GradientRectMaterial>::default(),
-            // UiMaterialPlugin::<SliderRectMaterial>::default(),
+            UiMaterialPlugin::<GradientRectMaterial>::default(),
+            UiMaterialPlugin::<SliderRectMaterial>::default(),
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
             // UiMaterialPlugin::<DotGridMaterial>::default(),
             // UiMaterialPlugin::<DrawPathMaterial>::default(),

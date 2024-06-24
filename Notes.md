@@ -9,6 +9,7 @@
   - Scrollview
   - Disclosure
   - Listview
+  - Spacer not working
 - Experiment with observer-based destructors.
   - Start with TrackingScope::raze().
 - TrackingScope::raze never gets called on the root.

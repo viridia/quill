@@ -80,14 +80,20 @@ impl ViewTemplate for Swatch {
         let color = self.color;
         let selected = self.selected;
 
-        let mut ui_materials = cx
-            .world_mut()
-            .get_resource_mut::<Assets<SwatchRectMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(SwatchRectMaterial {
-            color: LinearRgba::from(colors::U1).to_vec4(),
-            border_radius: Vec4::splat(0.),
-        });
+        // Wrap material creation in a memo, we only want to create the material once.
+        let material = cx.create_memo(
+            |cx, _| {
+                let mut ui_materials = cx
+                    .world_mut()
+                    .get_resource_mut::<Assets<SwatchRectMaterial>>()
+                    .unwrap();
+                ui_materials.add(SwatchRectMaterial {
+                    color: LinearRgba::from(colors::U1).to_vec4(),
+                    border_radius: Vec4::splat(0.),
+                })
+            },
+            (),
+        );
 
         // Update material color
         cx.create_effect(

@@ -18,6 +18,7 @@ pub(crate) enum HookState {
     Mutable(Entity, ComponentId),
     Callback(Arc<dyn AnyCallback + Send + Sync>),
     Effect(Arc<dyn Any + Send + Sync + 'static>),
+    Memo(Arc<dyn Any + Send + Sync + 'static>),
 }
 
 /// A component that tracks the dependencies of a reactive task.
@@ -191,7 +192,7 @@ impl TrackingScope {
                 HookState::Callback(callback) => {
                     callback.remove(world);
                 }
-                HookState::Effect(_) => {
+                HookState::Effect(_) | HookState::Memo(_) => {
                     // Do nothing
                 }
             }

@@ -57,7 +57,9 @@ fn style_spinbox_button(ss: &mut StyleBuilder) {
     ss.height(20.).padding(0).max_width(12).flex_grow(0.2);
 }
 
-#[derive(Component)]
+/// Component used to hold the spinbox params so that they can be accessed by the callbacks
+/// without capturing.
+#[derive(Component, Copy, Clone)]
 struct SpinBoxState {
     value: f32,
     min: f32,
@@ -191,7 +193,6 @@ impl ViewTemplate for SpinBox {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let spinbox_id = cx.create_entity();
-        let drag_state = cx.create_mutable::<DragState>(DragState::default());
         let rect = cx.use_element_rect(spinbox_id);
         let show_buttons = rect.width() >= 48.;
         let on_change = self.on_change;
@@ -215,6 +216,7 @@ impl ViewTemplate for SpinBox {
             }
         });
 
+        // Ensure DragState component exists before rendering.
         let mut entt = cx.world_mut().entity_mut(spinbox_id);
         if !entt.contains::<DragState>() {
             entt.insert(DragState {
@@ -261,19 +263,17 @@ impl ViewTemplate for SpinBox {
                                             .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
                                             .unwrap();
                                         event.stop_propagation();
-                                        let entt = world.entity(spinbox_id);
-                                        let state = entt.get::<SpinBoxState>().unwrap();
-                                        drag_state.set(
-                                            world,
-                                            DragState {
-                                                dragging: DragType::Dragging,
-                                                offset: state.value,
-                                                was_dragged: false,
-                                            },
-                                        );
+                                        let mut entt = world.entity_mut(spinbox_id);
+                                        let value = entt.get::<SpinBoxState>().unwrap().value;
+                                        entt.insert(DragState {
+                                            dragging: DragType::Dragging,
+                                            offset: value,
+                                            was_dragged: false,
+                                        });
                                     }),
                                     On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                                        let ds = drag_state.get(world);
+                                        let entt = world.entity(spinbox_id);
+                                        let ds = entt.get::<DragState>().unwrap();
                                         if ds.dragging == DragType::Dragging {
                                             if !ds.was_dragged {
                                                 // We want to know if it was a click or a drag.
@@ -281,27 +281,25 @@ impl ViewTemplate for SpinBox {
                                                 // Once we have text input fields.
                                                 println!("was not dragged");
                                             }
-                                            let entt = world.entity(spinbox_id);
+                                            let mut entt = world.entity_mut(spinbox_id);
                                             let state = entt.get::<SpinBoxState>().unwrap();
-                                            drag_state.set(
-                                                world,
-                                                DragState {
-                                                    dragging: DragType::None,
-                                                    offset: state.value,
-                                                    was_dragged: false,
-                                                },
-                                            );
+                                            entt.insert(DragState {
+                                                dragging: DragType::None,
+                                                offset: state.value,
+                                                was_dragged: false,
+                                            });
                                         }
                                     }),
                                     On::<Pointer<Drag>>::run(move |world: &mut World| {
-                                        let ds = drag_state.get(world);
+                                        let entt = world.entity(spinbox_id);
+                                        let ds = *entt.get::<DragState>().unwrap();
                                         if ds.dragging == DragType::Dragging {
                                             let event = world
                                                 .get_resource::<ListenerInput<Pointer<Drag>>>()
                                                 .unwrap();
-                                            let entt = world.entity(spinbox_id);
-                                            let state = entt.get::<SpinBoxState>().unwrap();
                                             let delta = (event.distance.x - event.distance.y) * 0.1;
+                                            let mut entt = world.entity_mut(spinbox_id);
+                                            let state = entt.get::<SpinBoxState>().unwrap();
                                             // Rate of change increases with drag distance
                                             let new_value = ds.offset
                                                 + (delta.abs().powf(1.3)
@@ -315,13 +313,10 @@ impl ViewTemplate for SpinBox {
                                                 (new_value * rounding).round() / rounding;
                                             if value != new_value {
                                                 if !ds.was_dragged {
-                                                    drag_state.set(
-                                                        world,
-                                                        DragState {
-                                                            was_dragged: true,
-                                                            ..ds
-                                                        },
-                                                    );
+                                                    entt.insert(DragState {
+                                                        was_dragged: true,
+                                                        ..ds
+                                                    });
                                                 }
                                                 if let Some(on_change) = on_change {
                                                     world.run_callback(
@@ -336,7 +331,10 @@ impl ViewTemplate for SpinBox {
                             },
                             (self.min, self.max),
                         )
-                        .children(format!("{:.*}", self.precision, self.value)),
+                        .children(match self.formatted_value {
+                            Some(ref formatted_value) => formatted_value.clone(),
+                            None => format!("{:.*}", self.precision, self.value),
+                        }),
                     Cond::new(
                         show_buttons,
                         IconButton::new("obsidian_ui://icons/chevron_right.png")

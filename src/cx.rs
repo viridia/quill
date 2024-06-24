@@ -8,6 +8,12 @@ use bevy::{
 use crate::{mutable::Mutable, tracking_scope::HookState, Callback, MutableCell, WriteMutable};
 use crate::{tracking_scope::TrackingScope, ReadMutable};
 
+#[derive(Clone)]
+struct Memo<R: Clone, D: Clone + PartialEq> {
+    result: R,
+    deps: D,
+}
+
 /// A context parameter that is passed to views and callbacks. It contains the reactive
 /// tracking scope, which is used to manage reactive dependencies, as well as a reference to
 /// the Bevy world.
@@ -143,6 +149,57 @@ impl<'p, 'w> Cx<'p, 'w> {
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Effect(Arc::new(deps)));
+            }
+        }
+    }
+
+    /// Create a memoized value which is only recomputed when dependencies change.
+    ///
+    /// Arguments:
+    /// - `factory_fn`: The factory function which computes the memoized value.
+    /// - `deps`: The dependencies which trigger the effect.
+    pub fn create_memo<
+        R: Clone + Send + Sync + 'static,
+        S: Fn(&mut Cx, D) -> R + Send + Sync,
+        D: PartialEq + Clone + Send + Sync + 'static,
+    >(
+        &mut self,
+        factory_fn: S,
+        deps: D,
+    ) -> R {
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::Memo(memo)) => match memo.downcast_ref::<Memo<R, D>>() {
+                Some(prev_memo) => {
+                    if prev_memo.deps != deps {
+                        let result = factory_fn(self, deps.clone());
+                        self.tracking
+                            .borrow_mut()
+                            .replace_hook(HookState::Memo(Arc::new(Memo {
+                                result: result.clone(),
+                                deps,
+                            })));
+                        result
+                    } else {
+                        prev_memo.result.clone()
+                    }
+                }
+                None => {
+                    panic!("Memo dependencies type mismatch");
+                }
+            },
+            Some(_) => {
+                panic!("Expected create_memo() hook, found something else");
+            }
+            None => {
+                let result = factory_fn(self, deps.clone());
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::Memo(Arc::new(Memo {
+                        result: result.clone(),
+                        deps,
+                    })));
+                result
             }
         }
     }

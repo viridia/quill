@@ -4,6 +4,7 @@
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
     color::palettes,
+    log::tracing_subscriber::fmt::format,
     prelude::*,
     ui,
 };
@@ -13,7 +14,8 @@ use bevy_quill::*;
 use quill_obsidian::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, SpinBox, Swatch,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, Slider, SpinBox,
+        Swatch,
     },
     ObsidianUiPlugin,
 };
@@ -88,6 +90,7 @@ impl ViewTemplate for ButtonsDemo {
             // info!("Checked: {}", *value);
         });
         let spin_value = cx.create_mutable::<f32>(50.);
+        let slider_value = cx.create_mutable::<f32>(50.);
         Element::<NodeBundle>::new()
             .insert(TargetCamera, self.camera)
             .style(style_test)
@@ -132,6 +135,72 @@ impl ViewTemplate for ButtonsDemo {
                                 spin_value.set(world, *value);
                             },
                         )),)),
+                "Slider",
+                Element::<NodeBundle>::new().style(style_row).children((
+                    " Normal:",
+                    Slider::new()
+                        .range(0. ..=100.)
+                        .style(|sb: &mut StyleBuilder| {
+                            sb.width(100);
+                        })
+                        .value(slider_value.get(cx))
+                        .on_change(
+                            cx.create_callback(move |value: In<f32>, world: &mut World| {
+                                slider_value.set(world, *value);
+                            }),
+                        ),
+                    " Compact:",
+                    Slider::new()
+                        .range(0. ..=100.)
+                        .style(|sb: &mut StyleBuilder| {
+                            sb.width(50);
+                        })
+                        .value(slider_value.get(cx))
+                        .on_change(
+                            cx.create_callback(move |value: In<f32>, world: &mut World| {
+                                slider_value.set(world, *value);
+                            }),
+                        ),
+                    " Precision:",
+                    Slider::new()
+                        .range(0. ..=100.)
+                        .style(|sb: &mut StyleBuilder| {
+                            sb.width(100);
+                        })
+                        .precision(2)
+                        .value(slider_value.get(cx))
+                        .on_change(
+                            cx.create_callback(move |value: In<f32>, world: &mut World| {
+                                slider_value.set(world, *value);
+                            }),
+                        ),
+                    " Labeled:",
+                    Slider::new()
+                        .range(0. ..=100.)
+                        .style(|sb: &mut StyleBuilder| {
+                            sb.width(100);
+                        })
+                        .label("Gain")
+                        .value(slider_value.get(cx))
+                        .on_change(
+                            cx.create_callback(move |value: In<f32>, world: &mut World| {
+                                slider_value.set(world, *value);
+                            }),
+                        ),
+                    " Custom Format:",
+                    Slider::new()
+                        .range(0. ..=100.)
+                        .style(|sb: &mut StyleBuilder| {
+                            sb.width(100);
+                        })
+                        .formatted_value(format!("{:.0} dB", slider_value.get(cx)))
+                        .value(slider_value.get(cx))
+                        .on_change(
+                            cx.create_callback(move |value: In<f32>, world: &mut World| {
+                                slider_value.set(world, *value);
+                            }),
+                        ),
+                )),
                 "Dialog",
                 Element::<NodeBundle>::new().style(style_row).children((
                     Button::new()
