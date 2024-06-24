@@ -38,8 +38,8 @@ where
 {
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
-    pub fn update<F: FnOnce(Mut<T>)>(&self, cx: &mut Cx, updater: F) {
-        let value = cx.world_mut().get_mut::<MutableCell<T>>(self.cell).unwrap();
+    pub fn update<F: FnOnce(Mut<T>)>(&self, world: &mut World, updater: F) {
+        let value = world.get_mut::<MutableCell<T>>(self.cell).unwrap();
         let inner = value.map_unchanged(|v| &mut v.0);
         (updater)(inner);
     }

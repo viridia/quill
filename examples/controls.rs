@@ -4,7 +4,6 @@
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
     color::palettes,
-    log::tracing_subscriber::fmt::format,
     prelude::*,
     ui,
 };
@@ -14,8 +13,8 @@ use bevy_quill::*;
 use quill_obsidian::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, Slider, SpinBox,
-        Swatch,
+        Button, ButtonVariant, Checkbox, ColorGradient, Dialog, DialogFooter, DialogHeader,
+        GradientSlider, Slider, SpinBox, Swatch,
     },
     ObsidianUiPlugin,
 };
@@ -91,6 +90,8 @@ impl ViewTemplate for ButtonsDemo {
         });
         let spin_value = cx.create_mutable::<f32>(50.);
         let slider_value = cx.create_mutable::<f32>(50.);
+        let color_value = cx.create_mutable::<Srgba>(Srgba::new(1.0, 0.0, 0.0, 1.0));
+        let color = color_value.get(cx);
         Element::<NodeBundle>::new()
             .insert(TargetCamera, self.camera)
             .style(style_test)
@@ -201,6 +202,24 @@ impl ViewTemplate for ButtonsDemo {
                             }),
                         ),
                 )),
+                "GradientSlider",
+                GradientSlider::new()
+                    .gradient(ColorGradient::new(&[
+                        Srgba::new(color.red, 0.0, color.blue, 1.0),
+                        Srgba::new(color.red, 1.0, color.blue, 1.0),
+                    ]))
+                    .min(0.)
+                    .max(255.)
+                    .value(color.green * 255.0)
+                    .style(|sb: &mut StyleBuilder| {
+                        sb.width(100);
+                    })
+                    .precision(1)
+                    .on_change(
+                        cx.create_callback(move |value: In<f32>, world: &mut World| {
+                            color_value.update(world, |mut state| state.green = *value / 255.0);
+                        }),
+                    ),
                 "Dialog",
                 Element::<NodeBundle>::new().style(style_row).children((
                     Button::new()
