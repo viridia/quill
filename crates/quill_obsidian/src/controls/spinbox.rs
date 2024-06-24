@@ -301,9 +301,11 @@ impl ViewTemplate for SpinBox {
                                                 .unwrap();
                                             let entt = world.entity(spinbox_id);
                                             let state = entt.get::<SpinBoxState>().unwrap();
+                                            let delta = (event.distance.x - event.distance.y) * 0.1;
+                                            // Rate of change increases with drag distance
                                             let new_value = ds.offset
-                                                + ((event.distance.x - event.distance.y)
-                                                    * 0.1
+                                                + (delta.abs().powf(1.3)
+                                                    * delta.signum()
                                                     * state.step);
                                             let rounding = f32::powi(10., state.precision as i32);
                                             let value = state.value;

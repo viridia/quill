@@ -2,6 +2,13 @@
 
 - Test focus.
 - For loops
+- Finish controls:
+  - Slider
+  - GradientSlider
+  - Menu
+  - Scrollview
+  - Disclosure
+  - Listview
 - Experiment with observer-based destructors.
   - Start with TrackingScope::raze().
 - TrackingScope::raze never gets called on the root.
