@@ -252,11 +252,9 @@ handle comparisons between items:
 
 - `For::each()` requires that the array elements implement `PartialEq`.
 - `For::each_cmp()` takes an additional comparator argument which is used to compare the items.
-- `For::indexed()` doesn't compare items, but instead uses the array index as a key. This version
+- `For::index()` doesn't compare items, but instead uses the array index as a key. This version
   is less efficient, since an item insertion or deletion will require re-building all of the
   child views.
-
-There is also `For::index()` and `For::keyed()`.
 
 ### Returning multiple nodes
 
