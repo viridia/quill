@@ -210,6 +210,7 @@ impl ViewTempate for EvenOrOdd {
             "The count is: ",
             Cond::new(counter.count & 1 == 0, "even", "odd"),
         ))
+    }
 }
 ```
 
@@ -222,25 +223,40 @@ changes.
 Often the "false" branch of a `Cond` will be the empty view, `()`, which renders nothing and
 creates no entities.
 
-## -- TODO
-
-<!-- ### Rendering multiple items with `For`
+### Rendering multiple items with `For`
 
 `For::each()` takes a list of items, and a callback which renders a `View` for each item:
 
 ```rust
-fn event_log(mut cx: Cx) -> impl View {
-    let log = cx.use_resource::<ClickLog>();
-    Element::new()
-        .children(For::each(&log.0, |item| {
-            Element::new()
-                .styled(STYLE_LOG_ENTRY.clone())
-                .children((item.to_owned(), "00:00:00"))
-        })),
+struct EventLog;
+
+impl ViewTempate for EventLog {
+    type View = impl View;
+
+    fn create(cx: &mut Cx) -> Self::View {
+      let log = cx.use_resource::<ClickLog>();
+      Element::new()
+          .children(For::each(&log.0, |item| {
+              Element::new()
+                  .styled(STYLE_LOG_ENTRY.clone())
+                  .children((item.to_owned(), "00:00:00"))
+          }).with_fallback("No items")),
+    }
 }
 ```
 
-There is also `For::index()` and `For::keyed()`. -->
+During updates, the `For` view compares the list of items with the previous list and computes
+a diff. Only items which have actually changed (insertions, deletions and mutations) are
+rebuilt. There are three different variations of the `For` construct, which differ in how they
+handle comparisons between items:
+
+- `For::each()` requires that the array elements implement `PartialEq`.
+- `For::each_cmp()` takes an additional comparator argument which is used to compare the items.
+- `For::indexed()` doesn't compare items, but instead uses the array index as a key. This version
+  is less efficient, since an item insertion or deletion will require re-building all of the
+  child views.
+
+There is also `For::index()` and `For::keyed()`.
 
 ### Returning multiple nodes
 
