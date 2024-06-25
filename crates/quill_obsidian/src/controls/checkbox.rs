@@ -141,13 +141,13 @@ impl ViewTemplate for Checkbox {
         Element::<NodeBundle>::for_entity(id)
             .named("Checkbox")
             .style((typography::text_default, style_checkbox, self.style.clone()))
-            .insert(TabIndex, self.tab_index)
+            .insert_dyn(TabIndex, self.tab_index)
             // The reason we do this is to avoid capturing `checked` and `disabled` in the
             // bevy_mod_picking event handlers, as this would require removing and inserting
             // them every time the checked or disabled state changes.
             .insert_if(self.disabled, || Disabled)
             .insert_if(self.checked, || Checked)
-            .insert(
+            .insert_dyn(
                 move |_| {
                     (
                         AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
@@ -212,7 +212,7 @@ impl ViewTemplate for Checkbox {
                 Element::<NodeBundle>::new()
                     .named("Checkbox::Border")
                     .style(style_checkbox_border)
-                    .style_effect(
+                    .style_dyn(
                         |(checked, pressed, hovering), sb| {
                             let color = match (checked, pressed, hovering) {
                                 (true, true, _) => colors::ACCENT.darker(0.1),
@@ -226,7 +226,7 @@ impl ViewTemplate for Checkbox {
                         },
                         (checked, pressed.get(cx), hovering),
                     )
-                    .style_effect(
+                    .style_dyn(
                         |focused, sb| {
                             if focused {
                                 sb.outline_color(colors::FOCUS)
@@ -246,7 +246,7 @@ impl ViewTemplate for Checkbox {
                     )),
                 Element::<NodeBundle>::new()
                     .style(style_checkbox_label)
-                    .style_effect(
+                    .style_dyn(
                         |disabled, sb| {
                             // info!("Checkbox disabled: {}", disabled);
                             // This doesn't work because inherited text styles don't update.

@@ -134,7 +134,7 @@ impl ViewTemplate for Dialog {
                 Element::<NodeBundle>::new()
                     .named("Dialog::Overlay")
                     .style(style_dialog_overlay)
-                    .insert(
+                    .insert_dyn(
                         move |_| {
                             (
                                 // Click on backdrop sends close signal.
@@ -182,14 +182,14 @@ impl ViewTemplate for Dialog {
                     )
                     .children(
                         Element::<NodeBundle>::new()
-                            .insert_static(TabGroup {
+                            .insert(TabGroup {
                                 order: 0,
                                 modal: true,
                             })
                             .style((text_default, style_dialog, move |ss: &mut StyleBuilder| {
                                 ss.width(width);
                             }))
-                            .insert_static(Transform {
+                            .insert(Transform {
                                 scale: Vec3::splat(0.1),
                                 ..default()
                             })

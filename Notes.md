@@ -8,10 +8,14 @@
   - Disclosure
   - Listview
   - Spacer not working
-- README
+- Think about separating styles from Quill.
 - Experiment with observer-based destructors.
   - Start with TrackingScope::raze().
   - Need to migrate to DeferredWorld.
 - TrackingScope::raze never gets called on the root.
 - Finish scope tracing.
 - impl_trait_for_tuples for effect tuples.
+- Document:
+  - callbacks
+  - other hooks
+  - portals

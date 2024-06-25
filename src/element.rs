@@ -119,7 +119,7 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
     /// Arguments:
     /// - style_fn: A function which computes the styles based on the dependencies.
     /// - deps: The dependencies which trigger a recompute of the styles.
-    pub fn style_effect<
+    pub fn style_dyn<
         S: Fn(D, &mut StyleBuilder) + Send + Sync,
         D: PartialEq + Clone + Send + Sync,
     >(
@@ -133,13 +133,31 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         self.add_effect(ApplyDynamicStylesEffect { style_fn, deps })
     }
 
+    /// Insert a bundle into the target entity once and never update it.
+    ///
+    /// Arguments:
+    /// - bundle: The bundle to insert.
+    pub fn insert<B2: Bundle + Clone>(
+        self,
+        bundle: B2,
+    ) -> Element<B, C, <E as AppendEffect<StaticInsertBundleEffect<B2>>>::Result>
+    where
+        E: AppendEffect<StaticInsertBundleEffect<B2>>,
+    {
+        self.add_effect(StaticInsertBundleEffect { bundle })
+    }
+
     /// Insert a bundle into the target entity. This will be re-run whenever the dependencies
     /// change.
     ///
     /// Arguments:
     /// - bundle_gen: A function which computes the bundle based on the dependencies.
     /// - deps: The dependencies which trigger a recompute of the bundle.
-    pub fn insert<B2: Bundle, S: Fn(D) -> B2 + Send + Sync, D: PartialEq + Clone + Send + Sync>(
+    pub fn insert_dyn<
+        B2: Bundle,
+        S: Fn(D) -> B2 + Send + Sync,
+        D: PartialEq + Clone + Send + Sync,
+    >(
         self,
         bundle_gen: S,
         deps: D,
@@ -168,20 +186,6 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
         E: AppendEffect<ConditionalInsertComponentEffect<C2, S>>,
     {
         self.add_effect(ConditionalInsertComponentEffect { condition, factory })
-    }
-
-    /// Insert a bundle into the target entity once and never update it.
-    ///
-    /// Arguments:
-    /// - bundle: The bundle to insert.
-    pub fn insert_static<B2: Bundle + Clone>(
-        self,
-        bundle: B2,
-    ) -> Element<B, C, <E as AppendEffect<StaticInsertBundleEffect<B2>>>::Result>
-    where
-        E: AppendEffect<StaticInsertBundleEffect<B2>>,
-    {
-        self.add_effect(StaticInsertBundleEffect { bundle })
     }
 }
 

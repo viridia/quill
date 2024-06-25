@@ -139,8 +139,8 @@ impl ViewTemplate for Splitter {
         Element::<NodeBundle>::for_entity(id)
             .named("Splitter")
             .style(style_splitter)
-            .insert(SplitterValue, self.value)
-            .insert(
+            .insert_dyn(SplitterValue, self.value)
+            .insert_dyn(
                 move |_| {
                     (
                         On::<Pointer<DragStart>>::run(move |world: &mut World| {
@@ -193,7 +193,7 @@ impl ViewTemplate for Splitter {
             .children(
                 Element::<NodeBundle>::new()
                     .style(style_splitter_inner)
-                    .style_effect(
+                    .style_dyn(
                         move |(is_hovering, dragging), sb| {
                             // Color change on hover / drag
                             let color = match (dragging, is_hovering) {

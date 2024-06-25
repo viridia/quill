@@ -93,7 +93,7 @@ impl ViewTemplate for ButtonsDemo {
         let color_value = cx.create_mutable::<Srgba>(Srgba::new(1.0, 0.0, 0.0, 1.0));
         let color = color_value.get(cx);
         Element::<NodeBundle>::new()
-            .insert(TargetCamera, self.camera)
+            .insert_dyn(TargetCamera, self.camera)
             .style(style_test)
             .children((
                 "Checkbox",

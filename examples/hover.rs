@@ -43,7 +43,7 @@ impl ViewTemplate for HoverTest {
         let id = cx.create_entity();
         let hovering = cx.is_hovered(id);
         Element::<NodeBundle>::for_entity(id)
-            .style_effect(
+            .style_dyn(
                 |hovering, ss| {
                     if hovering {
                         ss.border_color(palettes::css::RED).border(3);

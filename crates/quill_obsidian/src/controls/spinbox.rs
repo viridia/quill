@@ -228,7 +228,7 @@ impl ViewTemplate for SpinBox {
 
         Element::<NodeBundle>::for_entity(spinbox_id)
             .style((style_spinbox, self.style.clone()))
-            .insert(
+            .insert_dyn(
                 |(value, min, max, precision, step)| SpinBoxState {
                     value,
                     min,
@@ -254,7 +254,7 @@ impl ViewTemplate for SpinBox {
                     ),
                     Element::<NodeBundle>::new()
                         .style(style_spinbox_label)
-                        .insert(
+                        .insert_dyn(
                             move |_| {
                                 (
                                     On::<Pointer<DragStart>>::run(move |world: &mut World| {

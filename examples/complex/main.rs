@@ -267,7 +267,7 @@ impl ViewTemplate for DemoUi {
         Element::<NodeBundle>::new()
             .named("Main")
             .style((typography::text_default, style_main))
-            .insert(move |_| (TabGroup::default(), TargetCamera(camera)), ())
+            .insert_dyn(move |_| (TabGroup::default(), TargetCamera(camera)), ())
             .children((
                 Dialog::new()
                     .width(ui::Val::Px(400.))
@@ -296,7 +296,7 @@ impl ViewTemplate for DemoUi {
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
                     .style(style_aside)
-                    .style_effect(
+                    .style_dyn(
                         move |width, sb| {
                             sb.width(ui::Val::Px(width));
                         },
@@ -459,7 +459,7 @@ impl ViewTemplate for CenterPanel {
                     Element::<NodeBundle>::new()
                         .named("Preview")
                         .style(style_viewport)
-                        .insert_static((viewport::ViewportInsetElement, Pickable::IGNORE))
+                        .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
                         .children(
                             Element::<NodeBundle>::new()
                                 .named("Log")
@@ -475,7 +475,7 @@ impl ViewTemplate for CenterPanel {
                                 .on_change(drag_call_back),
                             Element::<NodeBundle>::new()
                                 .style(graph_view_style)
-                                .style_effect(
+                                .style_dyn(
                                     move |height, sb| {
                                         sb.height(ui::Val::Px(height));
                                     },

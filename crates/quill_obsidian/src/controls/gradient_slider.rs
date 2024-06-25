@@ -289,7 +289,7 @@ impl ViewTemplate for GradientSlider {
         Element::<NodeBundle>::for_entity(slider_id)
             .named("GradientSlider")
             .style((style_slider, self.style.clone()))
-            .insert(
+            .insert_dyn(
                 |(value, min, max, precision)| SliderState {
                     value,
                     min,
@@ -298,7 +298,7 @@ impl ViewTemplate for GradientSlider {
                 },
                 (self.value, self.min, self.max, self.precision),
             )
-            .insert(
+            .insert_dyn(
                 move |_| {
                     (
                         On::<Pointer<Down>>::run(move |world: &mut World| {
@@ -387,7 +387,7 @@ impl ViewTemplate for GradientSlider {
             )
             .children((
                 Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
-                    .insert_static(gradient_material.clone())
+                    .insert(gradient_material.clone())
                     .style(style_gradient),
                 Element::<NodeBundle>::new()
                     .named("GradientSlider::Track")
@@ -396,7 +396,7 @@ impl ViewTemplate for GradientSlider {
                         Element::<NodeBundle>::new()
                             .named("GradientSlider::Thumb")
                             .style(style_thumb)
-                            .style_effect(
+                            .style_dyn(
                                 move |(min, max, value), sb| {
                                     let percent = if max > min {
                                         ((value - min) / (max - min)).clamp(0., 1.)

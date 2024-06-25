@@ -193,13 +193,13 @@ impl ViewTemplate for Button {
                 },
                 self.style.clone(),
             ))
-            .insert(TabIndex, self.tab_index)
+            .insert_dyn(TabIndex, self.tab_index)
             // The reason we do this is to avoid capturing `disabled` in the bevy_mod_picking event
             // handlers, as this would require removing and inserting them every time the disabled
             // state changes.
             .insert_if(self.disabled, || Disabled)
             .insert_if(self.autofocus, || AutoFocus)
-            .insert(
+            .insert_dyn(
                 move |_| {
                     (
                         AccessibilityNode::from(NodeBuilder::new(Role::Button)),
@@ -266,11 +266,11 @@ impl ViewTemplate for Button {
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
                     .style(style_button_bg)
-                    .insert(
+                    .insert_dyn(
                         move |size| corners.to_border_radius(size.border_radius()),
                         self.size,
                     )
-                    .style_effect(
+                    .style_dyn(
                         |(minimal, variant, disabled, pressed, hovering), sb| {
                             let color = if minimal {
                                 colors::TRANSPARENT
@@ -281,7 +281,7 @@ impl ViewTemplate for Button {
                         },
                         (minimal, variant, self.disabled, pressed.get(cx), hovering),
                     )
-                    .style_effect(
+                    .style_dyn(
                         move |focused, sb| {
                             match focused {
                                 true => {

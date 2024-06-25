@@ -18,12 +18,12 @@ bevy_mod_picking = { git = "https://github.com/tychedelia/bevy_mod_picking" }
 [dependencies]
 bevy = { workspace = true }
 bevy_mod_stylebuilder = { workspace = true }
-bevy_mod_picking = { workspace = true }
 impl-trait-for-tuples = "0.2.2"
 smallvec = "1.13.2"
 
 [dev-dependencies]
 quill_obsidian = { path = "crates/quill_obsidian" }
+bevy_mod_picking = { workspace = true }
 # obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }

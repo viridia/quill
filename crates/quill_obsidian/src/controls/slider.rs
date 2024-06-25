@@ -259,8 +259,8 @@ impl ViewTemplate for Slider {
 
         Element::<MaterialNodeBundle<SliderRectMaterial>>::for_entity(slider_id)
             .style((style_slider, self.style.clone()))
-            .insert_static(material.clone())
-            .insert(
+            .insert(material.clone())
+            .insert_dyn(
                 |(value, min, max, precision, step)| SliderState {
                     value,
                     min,
@@ -270,7 +270,7 @@ impl ViewTemplate for Slider {
                 },
                 (self.value, self.min, self.max, self.precision, self.step),
             )
-            .insert(
+            .insert_dyn(
                 move |_| {
                     (
                         On::<Pointer<DragStart>>::run(move |world: &mut World| {

@@ -111,8 +111,8 @@ impl ViewTemplate for Swatch {
         Element::<MaterialNodeBundle<SwatchRectMaterial>>::new()
             .named("Swatch")
             .style((style_swatch, self.style.clone()))
-            .insert(|m| m, material.clone())
-            .insert(
+            .insert_dyn(|m| m, material.clone())
+            .insert_dyn(
                 |(color, on_click)| {
                     On::<Pointer<Click>>::run(move |world: &mut World| {
                         if let Some(on_click) = on_click {

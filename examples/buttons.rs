@@ -78,7 +78,7 @@ impl ViewTemplate for ButtonsDemo {
             info!("Clicked!");
         });
         Element::<NodeBundle>::new()
-            .insert(TargetCamera, self.camera)
+            .insert_dyn(TargetCamera, self.camera)
             .style(style_test)
             .children((
                 "Variants",

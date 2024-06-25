@@ -74,7 +74,7 @@ impl ViewTemplate for Icon {
                 },
                 self.style.clone(),
             ))
-            .style_effect(
+            .style_dyn(
                 |color, sb| {
                     sb.background_image_color(color);
                 },

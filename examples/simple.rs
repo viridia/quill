@@ -158,7 +158,7 @@ impl ViewTemplate for DynamicStyle {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let counter = cx.use_resource::<Counter>();
         Element::<NodeBundle>::new()
-            .style_effect(
+            .style_dyn(
                 |ct, ss| {
                     if ct {
                         ss.border_color(palettes::css::RED).border(3);
