@@ -365,67 +365,6 @@ with the following steps:
 - create an `Element` using the created id with `Element::for_entity(id)`.
 - in the builder methods for the `Element`, use `is_hovered` to conditionally apply styles.
 
-<!-- ### Advanced hooks
-
-There are several advanced hooks in the examples directory. These hooks are not part of Quill,
-but will likely be included in "Egret" which is the planned headless widget library based on Quill.
-
-#### `use_enter_exit()`
-
-The `.use_enter_exit()` hook is useful for elements such as dialog boxes which do both an open
-and close animation. The idea is that when a dialog box closes you don't want to destroy the display
-graph until the closing animation is complete:
-
-```rust
-use super::enter_exit::EnterExitApi;
-
-let state = cx.use_enter_exit(open, 0.3);
-```
-
-In this example, `open` is a boolean flag which is true when we want the dialog to be open, and
-false when we want it to be closed. Changing this flag starts a timer which drives a state machine;
-the second argument is the delay time, in seconds, for the animations.
-
-The output, `state`, is an enum which can have one of six values:
-
-```rust
-#[derive(Default, Clone, PartialEq)]
-pub enum EnterExitState {
-    EnterStart,
-    Entering,
-    Entered,
-    ExitStart,
-    Exiting,
-
-    #[default]
-    Exited,
-}
-```
-
-These values can be converted into strings by calling `.as_class_name()` on them. The resulting
-value can be put directly on the element as a class name, and the class names can be used in
-dynamic stylesheet selectors.
-
-The calling presenter should, in most cases, render the item whenever the state is not `Exited`.
-
-```rust
-let state = cx.use_enter_exit(open, 0.3);
-If::new(
-    state != EnterExitState::Exited,
-    Element::new().class_name(state.as_class_name()), // Dialog content, etc.
-    ()
-```
-
-#### `use_element_rect()`
-
-The `use_element_rect()` hook returns the rectangular bounds of a ui node as a reactive data source,
-meaning that it will trigger an update whenever the position or size of the element changes.
-The input is the entity id of the element we wish to measure:
-
-```rust
-let rect = cx.use_element_rect(id_inner);
-``` -->
-
 ## Styling
 
 There are several different ways to approach styling in Bevy. One is "imperative styles", meaning
@@ -493,7 +432,7 @@ CSS in a number of important ways:
   styles are merged strictly in the order that they appear on the element.
 - Styles can only affect the element they are assigned to, not their children.
 
-<!-- ### Deep Dive: For-loops
+### Deep Dive: For-loops
 
 `For` views are views that, given an array of data items, render a variable number of children.
 There are three different flavors of `For` loops. The simplest, and least efficient, is the
@@ -503,23 +442,26 @@ cycle. Thus, if element #2 becomes element #3, then the for loop will just blind
 existing display nodes at position #3, destroying any nodes that don't match and building new
 nodes in their place.
 
-The next type is `.keyed()`, which is a bit smarter: it takes an additional function closure which
-produces a unique key for each array element. The keys can be any data type, so long as they are
-clonable and equals-comparable. The algorithm then attempts to match the old array nodes with the
-new ones using an LCS (Longest Common Substring) matching algorithm. This means that as array
-elements shift around, it will re-use the display nodes from the previous render, minimizing the
-amount of churn. Any insertions or deletions will be detected, and the nodes in those positions
-built or razed as appropriate.
+The next type is `.each_cmp()`, which is a bit smarter: it takes an additional function closure which
+produces can compare two array elements. The items can be any data type, so long as they are
+clonable. The algorithm then attempts to match the old array nodes with the new ones using an LCS
+(Longest Common Substring) matching algorithm. This means that as array elements shift around, it
+will re-use the display nodes from the previous render, minimizing the amount of churn. Any
+insertions or deletions will be detected, and the nodes in those positions built or razed as
+appropriate.
 
-Finally, there is `.each()`, which treats the actual array data as the key. This doesn't require
-the extra closure argument, but requires that your array data implement `Clone` and `PartialEq`. -->
+Finally, there is `.each()`, which doesn't require a comparator function, since it requires the
+array elements to implement both `Clone` and `PartialEq`.
 
-<!-- ### Deep-Dive: NodeSpans
+### Deep-Dive: NodeSpans
 
 Even though the view state graph is frequently reconstructed, it's "shape" is relatively stable,
 unlike the display graph. For example, a `For` element may generate varying numbers of children
 in the display graph, but each new iteration of the view state graph will have a `For` node in
-the same relative location.
+the same location relative to other view nodes. The output of a view, however, can vary in number
+and shape depending on the state of the UI. This presents a challenge when you want to update
+just some children and not others, since the children may have different relative positions
+within their parent.
 
 A helper class which is used by views is `NodeSpan`, which is kind of like a "rope" for Bevy
 Entities. The `.build()` method of each `View` produces exactly one `NodeSpan`, however that span
@@ -532,7 +474,7 @@ of three elements, where the second element is a "For" element. This means that 
 `.build()` will produce three `NodeSpans`, but the middle `NodeSpan` will contain a varying number
 of entities based on the data passed to the `For`. For a list of n items passed to `For`, the total
 number of entities for the presenter will be n + 2. As the for loop reacts to changes in the length
-of the array, it will always know where in the flat list of entities those changes will go. -->
+of the array, it will always know where in the flat list of entities those changes will go.
 
 # Bibliography
 
