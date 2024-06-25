@@ -15,15 +15,14 @@ use bevy_mod_stylebuilder::*;
 use quill_obsidian::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, Splitter,
-        SplitterDirection, ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogBody, DialogFooter, DialogHeader, ListView,
+        Slider, Splitter, SplitterDirection, ToolButton, ToolPalette,
     },
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
 // use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 // use bevy_reactor_overlays as overlays;
-// use bevy_reactor_signals::{Cx, Rcx, RunContextRead, RunContextSetup, TrackingScopeTracing};
 // use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 // use obsidian_ui::{
 //     colors,
@@ -72,7 +71,6 @@ fn style_aside(ss: &mut StyleBuilder) {
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
         .width(200)
-        .border(1)
         .pointer_events(true);
 }
 
@@ -159,6 +157,9 @@ pub struct PreviewEntities {
     overlay: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct ClickLog(pub Vec<String>);
+
 fn main() {
     App::new()
         .register_asset_source(
@@ -173,6 +174,7 @@ fn main() {
         )
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
+        .init_resource::<ClickLog>()
         // .init_resource::<DemoGraphRoot>()
         // .insert_resource(TestStruct {
         //     unlit: Some(true),
@@ -194,13 +196,6 @@ fn main() {
             require_markers: true,
             ..default()
         })
-        // .add_plugins((
-        //     CorePlugin,
-        //     InputPlugin,
-        //     InteractionPlugin,
-        //     BevyUiBackend,
-        //     RaycastBackend,
-        // ))
         // .add_plugins(InspectorPlugin)
         .add_plugins((
             QuillPlugin,
@@ -221,10 +216,10 @@ fn main() {
                 viewport::update_camera_viewport.run_if(in_state(EditorState::Split)),
             ),
         )
-        // .add_systems(OnEnter(EditorState::Preview), enter_preview_mode)
-        // .add_systems(OnExit(EditorState::Preview), exit_preview_mode)
-        // .add_systems(OnEnter(EditorState::Split), enter_preview_mode)
-        // .add_systems(OnExit(EditorState::Split), exit_preview_mode)
+        .add_systems(OnEnter(EditorState::Preview), enter_preview_mode)
+        .add_systems(OnExit(EditorState::Preview), exit_preview_mode)
+        .add_systems(OnEnter(EditorState::Split), enter_preview_mode)
+        .add_systems(OnExit(EditorState::Split), exit_preview_mode)
         .run();
 }
 
@@ -245,21 +240,11 @@ impl ViewTemplate for DemoUi {
     type View = impl View;
 
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let mut inc_count = 0;
-        let mut dec_count = 0;
-        let clicked_increment = cx.create_callback(move || {
-            inc_count += 1;
-            println!("Increment clicked: {} times", inc_count);
-        });
-        let clicked_decrement = cx.create_callback(move || {
-            dec_count += 1;
-            println!("Decrement clicked: {} times", dec_count);
-        });
-
+        let dialog_open = cx.create_mutable(false);
         let checked_1 = cx.create_mutable(false);
         let checked_2 = cx.create_mutable(true);
         let red = cx.create_mutable::<f32>(128.);
-        let name = cx.create_mutable("filename.txt".to_string());
+        // let name = cx.create_mutable("filename.txt".to_string());
 
         let panel_width = cx.use_resource::<PanelWidth>().0;
         let camera = self.0;
@@ -271,25 +256,25 @@ impl ViewTemplate for DemoUi {
             .children((
                 Dialog::new()
                     .width(ui::Val::Px(400.))
-                    .open(checked_1.get(cx))
+                    .open(dialog_open.get(cx))
                     .on_close(cx.create_callback(move |world: &mut World| {
-                        checked_1.set(world, false);
+                        dialog_open.set(world, false);
                     }))
                     .children((
                         DialogHeader::new().children("Dialog Header"),
-                        "Dialog Body",
+                        DialogBody::new().children("Example dialog body text."),
                         DialogFooter::new().children((
                             Button::new()
                                 .children("Cancel")
                                 .on_click(cx.create_callback(move |world: &mut World| {
-                                    checked_1.set(world, false);
+                                    dialog_open.set(world, false);
                                 })),
                             Button::new()
                                 .children("Close")
                                 .variant(ButtonVariant::Primary)
                                 .autofocus(true)
                                 .on_click(cx.create_callback(move |world: &mut World| {
-                                    checked_1.set(world, false);
+                                    dialog_open.set(world, false);
                                 })),
                         )),
                     )),
@@ -358,11 +343,19 @@ impl ViewTemplate for DemoUi {
                             .children((
                                 Button::new()
                                     .children("Open…")
-                                    .on_click(clicked_increment)
+                                    .on_click(cx.create_callback(move |world: &mut World| {
+                                        let mut log = world.get_resource_mut::<ClickLog>().unwrap();
+                                        log.0.push("Open clicked".to_string());
+                                        dialog_open.set(world, true);
+                                    }))
                                     .style(style_button_flex),
                                 Button::new()
                                     .children("Save")
-                                    .on_click(clicked_decrement)
+                                    .on_click(cx.create_callback(
+                                        move |mut log: ResMut<ClickLog>| {
+                                            log.0.push("Save clicked".to_string());
+                                        },
+                                    ))
                                     .style(style_button_flex),
                             )),
                         Element::<NodeBundle>::new()
@@ -376,7 +369,10 @@ impl ViewTemplate for DemoUi {
                                     .checked(checked_1.get(cx))
                                     .on_change(cx.create_callback(
                                         move |checked: In<bool>, world: &mut World| {
-                                            println!("Include Author Name: {}", *checked);
+                                            let mut log =
+                                                world.get_resource_mut::<ClickLog>().unwrap();
+                                            log.0
+                                                .push(format!("Include Author Name: {}", *checked));
                                             checked_1.set(world, *checked);
                                         },
                                     )),
@@ -385,35 +381,46 @@ impl ViewTemplate for DemoUi {
                                     .checked(checked_2.get(cx))
                                     .on_change(cx.create_callback(
                                         move |checked: In<bool>, world: &mut World| {
-                                            println!("Include Metadata: {}", *checked);
+                                            let mut log =
+                                                world.get_resource_mut::<ClickLog>().unwrap();
+                                            log.0.push(format!("Include Metadata: {}", *checked));
                                             checked_2.set(world, *checked);
                                         },
                                     )),
                             )),
-                        Element::<NodeBundle>::new().style(style_column_group), // .children(
-                                                                                //     Slider::new()
-                                                                                //         .min(0.)
-                                                                                //         .max(255.)
-                                                                                //         .value(red.signal())
-                                                                                //         .style(style_slider)
-                                                                                //         .precision(1)
-                                                                                //         .on_change(cx.create_callback(move |cx, value| {
-                                                                                //             red.set(cx, value);
-                                                                                //         })),
-                                                                                // )
-                                                                                // TextInput::new(TextInputProps {
-                                                                                //     value: name.signal(),
-                                                                                //     on_change: Some(cx.create_callback(
-                                                                                //         move |cx: &mut Cx, value: String| {
-                                                                                //             name.set_clone(cx, value.clone());
-                                                                                //         },
-                                                                                //     )),
-                                                                                //     ..default()
-                                                                                // }),
-                                                                                // ResourcePropertyInspector::<TestStruct>::new(),
-                                                                                // ResourcePropertyInspector::<TestStruct2>::new(),
-                                                                                // ResourcePropertyInspector::<TestStruct3>::new(),
-                                                                                // ReactionsTable,
+                        Element::<NodeBundle>::new()
+                            .style(style_column_group)
+                            .children(
+                                Slider::new()
+                                    .min(0.)
+                                    .max(255.)
+                                    .value(red.get(cx))
+                                    .style(style_slider)
+                                    .precision(1)
+                                    .on_change(cx.create_callback(
+                                        move |value: In<f32>, world: &mut World| {
+                                            let mut log =
+                                                world.get_resource_mut::<ClickLog>().unwrap();
+                                            log.0.push(format!("Slider value: {}", *value));
+                                            red.set(world, *value);
+                                        },
+                                    )),
+                                // )
+                                // TextInput::new(TextInputProps {
+                                //     value: name.signal(),
+                                //     on_change: Some(cx.create_callback(
+                                //         move |cx: &mut Cx, value: String| {
+                                //             name.set_clone(cx, value.clone());
+                                //         },
+                                //     )),
+                                //     ..default()
+                                // }
+                            ),
+                        // ResourcePropertyInspector::<TestStruct>::new(),
+                        // ResourcePropertyInspector::<TestStruct2>::new(),
+                        // ResourcePropertyInspector::<TestStruct3>::new(),
+                        // ReactionsTable,
+                        LogList,
                     )),
                 Splitter::new()
                     .direction(SplitterDirection::Vertical)
@@ -492,12 +499,25 @@ impl ViewTemplate for CenterPanel {
 }
 
 #[derive(Clone, PartialEq)]
+struct LogList;
+
+impl ViewTemplate for LogList {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let log = cx.use_resource::<ClickLog>();
+        ListView::new()
+            .children(For::each(&log.0, |msg| msg.clone()))
+            .style(style_scroll_area)
+    }
+}
+
+#[derive(Clone, PartialEq)]
 struct NodeGraphDemo;
 
 impl ViewTemplate for NodeGraphDemo {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
-        ()
+        // ()
     }
 }
 
@@ -683,29 +703,30 @@ fn setup_ui(mut commands: Commands) -> Entity {
         .id()
 }
 
-// fn enter_preview_mode(mut commands: Commands) {
-//     let camera = commands
-//         .spawn((
-//             Camera3dBundle {
-//                 transform: Transform::from_xyz(0.0, 6., 12.0)
-//                     .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
-//                 ..default()
-//             },
-//             viewport::ViewportCamera,
-//             RaycastPickable,
-//             // BackdropPickable,
-//         ))
-//         .id();
+fn enter_preview_mode(mut commands: Commands) {
+    let camera = commands
+        .spawn((
+            Camera3dBundle {
+                transform: Transform::from_xyz(0.0, 6., 12.0)
+                    .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+                ..default()
+            },
+            viewport::ViewportCamera,
+            RaycastPickable,
+            // BackdropPickable,
+        ))
+        .id();
 
-//     let overlay = commands.spawn(TransformOverlayDemo.to_root()).id();
-//     commands.insert_resource(PreviewEntities { camera, overlay });
-// }
+    // let overlay = commands.spawn(TransformOverlayDemo.to_root()).id();
+    let overlay = commands.spawn_empty().id();
+    commands.insert_resource(PreviewEntities { camera, overlay });
+}
 
-// fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
-//     commands.entity(preview.camera).despawn();
-//     commands.add(DespawnViewRoot::new(preview.overlay));
-//     commands.remove_resource::<PreviewEntities>()
-// }
+fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
+    commands.entity(preview.camera).despawn();
+    // commands.add(DespawnViewRoot::new(preview.overlay));
+    commands.remove_resource::<PreviewEntities>()
+}
 
 fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
     for mut transform in &mut query {

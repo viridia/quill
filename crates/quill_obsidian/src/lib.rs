@@ -29,7 +29,7 @@ pub mod hooks;
 mod materials;
 
 /// Utilities for managing scrolling views.
-// pub mod scrolling;
+pub mod scrolling;
 
 /// Module containing standard sizes.
 pub mod size;
@@ -40,6 +40,7 @@ pub mod viewport;
 /// Standard styles for fonts.
 pub mod typography;
 
+use bevy_mod_picking::prelude::EventListenerPlugin;
 use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
 pub use rounded_corners::RoundedCorners;
 
@@ -60,16 +61,16 @@ impl Plugin for ObsidianUiPlugin {
             animation::AnimatedTransitionPlugin,
             focus::KeyboardInputPlugin,
         ))
-        // .add_plugins((
-        //     EventListenerPlugin::<ScrollWheel>::default(),
-        //     EventListenerPlugin::<MenuCloseEvent>::default(),
-        // ))
-        // .add_event::<ScrollWheel>()
+        .add_plugins((
+            EventListenerPlugin::<scrolling::ScrollWheel>::default(),
+            // EventListenerPlugin::<MenuCloseEvent>::default(),
+        ))
+        .add_event::<scrolling::ScrollWheel>()
         .add_systems(
             Update,
             (
-                // scrolling::handle_scroll_events,
-                // scrolling::update_scroll_positions,
+                scrolling::handle_scroll_events,
+                scrolling::update_scroll_positions,
                 hooks::is_hover::update_hover_states,
                 cursor::update_cursor,
             ),

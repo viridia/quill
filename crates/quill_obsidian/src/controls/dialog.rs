@@ -264,8 +264,7 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::Stretch)
         .justify_content(ui::JustifyContent::FlexStart)
-        .padding((12, 6))
-        .min_height(200);
+        .padding((12, 6));
 }
 
 /// Displays a standard dialog body.

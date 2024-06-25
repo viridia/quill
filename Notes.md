@@ -1,12 +1,9 @@
 # Next
 
-- For loops
 - Test focus.
 - Finish controls:
   - Menu
-  - Scrollview
   - Disclosure
-  - Listview
 - Think about separating styles from Quill.
   - Hard to do because text view uses the marker component.
 - Experiment with observer-based destructors.
