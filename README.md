@@ -303,6 +303,48 @@ implement `Clone`.
 You can also update Mutables in place via `.update()`, which takes a callback that is passed
 a reference to the mutable data.
 
+## Hook methods and the Cx object
+
+The `Cx` context object is passed as a parameter when creating view templates or building views.
+This object contains a reference to the tracking scope, which tracks the set of reactive
+dependencies for the current template.
+
+`Cx` includes a number of methods for managing state, known as "hook functions". This use of the
+word "hook" comes from React.js and means effectively the same thing: a method which gives
+access to implicit state associated the current template. "Implicit state" refers to the fact that
+you don't need to manually allocate and deallocate the data returned by the hook.
+
+Hook results are automatically memoized based on calling order: the first hook called within
+a template will always return the same result no matter how many times it is called, the same is
+true for the second hook and so on. This means, however, that it is important to call the hooks
+in the same order every tine - if try to call hooks conditionally in an if-statement, or in a loop,
+this is an error and will cause a panic.
+
+Here are some of the most frequently-used hooks:
+
+- `create_mutable()` has already been discussed in the previous section.
+- `create_effect(closure, deps)` runs a callback, but only when `deps` changes.
+- `create_memo(factory, deps)` returns a memoized value which is recomputed when `deps` changes.
+- `create_entity()` spawns a new, empty entity id. This entity will automatically be despawned
+  when the template instance is despawned.
+- `create_callback(system)` registers a new one-shot system. The returned object can be passed
+  to child widgets and other functions, and used to receive events.
+
+`Cx` also has some additional methods which are not technically hooks because they don't need
+to be called in a specific order:
+
+- `use_resource()` returns a reference to the specified `Resource`.
+- `use_component()` returns a reference to the specifie `Component`.
+
+The Quill Obsidian crate extends the `Cx` trait by adding some addional hooks:
+
+- `is_hovering()` returns true if the mouse is hovering over the current element.
+- `is_focused()` returns true if the element has keyboard focus. There are other variations such
+  as `is_focus_visible()`.
+- `use_element_rect(id)` returns the screen rect of a widget, given an entity id.
+- `create_bistable_transition(open)` creates a simple state machine which can be used when animating
+  elements that have an "entering" and "exiting" animation.
+
 ## Element::from_entity() and explicit entity ids
 
 Elements normally spawn a new Entity when they are built. However, there are cases where you want

@@ -53,10 +53,10 @@ impl<'p, 'w> Cx<'p, 'w> {
         self.owner
     }
 
-    /// Spawn an empty [`Entity`]. The caller is responsible for despawning the entity.
-    pub fn create_entity_untracked(&mut self) -> Entity {
-        self.world_mut().spawn_empty().id()
-    }
+    // Spawn an empty [`Entity`]. The caller is responsible for despawning the entity.
+    // pub fn create_entity_untracked(&mut self) -> Entity {
+    //     self.world_mut().spawn_empty().id()
+    // }
 
     /// Spawn an empty [`Entity`]. The entity will be despawned when the tracking scope is dropped.
     pub fn create_entity(&mut self) -> Entity {
