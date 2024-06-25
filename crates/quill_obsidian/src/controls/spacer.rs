@@ -7,7 +7,7 @@ fn style_spacer(ss: &mut StyleBuilder) {
 }
 
 /// A spacer widget that fills the available space.
-#[derive(Clone, Default)]
+#[derive(Clone, PartialEq, Default)]
 pub struct Spacer;
 
 impl ViewTemplate for Spacer {

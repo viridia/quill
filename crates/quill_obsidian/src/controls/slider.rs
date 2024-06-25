@@ -10,7 +10,7 @@ use crate::{
     RoundedCorners,
 };
 
-use super::IconButton;
+use super::{IconButton, Spacer};
 
 #[derive(Clone, PartialEq, Default, Copy)]
 enum DragType {
@@ -53,10 +53,6 @@ fn style_label(ss: &mut StyleBuilder) {
         .font_size(16)
         .padding((6, 0))
         .color(colors::FOREGROUND);
-}
-
-fn style_label_spacer(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.);
 }
 
 fn style_slider_button(ss: &mut StyleBuilder) {
@@ -384,11 +380,7 @@ impl ViewTemplate for Slider {
                     Element::<NodeBundle>::new().style(style_label).children((
                         Cond::new(
                             self.label.is_some(),
-                            Fragment::new((
-                                self.label.clone().unwrap_or_default(),
-                                // Spacer::default(),
-                                Element::<NodeBundle>::new().style(style_label_spacer),
-                            )),
+                            Fragment::new((self.label.clone().unwrap_or_default(), Spacer)),
                             (),
                         ),
                         match self.formatted_value {

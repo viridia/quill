@@ -7,8 +7,8 @@
   - Scrollview
   - Disclosure
   - Listview
-  - Spacer not working
 - Think about separating styles from Quill.
+  - Hard to do because text view uses the marker component.
 - Experiment with observer-based destructors.
   - Start with TrackingScope::raze().
   - Need to migrate to DeferredWorld.
