@@ -84,12 +84,12 @@ commands.spawn(MyWidget.to_root());
 
 Quill manages views and templates on three different levels:
 
-- `ViewTemplates` are application-level components that "react" when their dependencies change.
+- _View templates_ are application-level components that "react" when their dependencies change.
   If you have every used `React.js`, a `ViewTemplate` is the equivalent of a React `Component`.
-- `Views` are lower-level constructs that generate the basic ECS building blocks of a UI,
+- _Views_ are lower-level constructs that generate the basic ECS building blocks of a UI,
   such as entities and components. Views understand incremental updates: how to patch an ECS
   hierarchy to make modifications without re-constructing the whole tree.
-- "display nodes" are the actual renderable ECS entities created by the views.
+- _Display nodes_ are the actual renderable ECS entities created by the views.
 
 Every `ViewTemplate` has a method called `create` which is called when the template is first
 spawned, and which is called again each time the display needs to update. It's important to
@@ -99,10 +99,10 @@ understand how `create()` is called, as this is the key to working with Quill:
   be written in a way that is repeatable. Fortunately, the `Cx` object has lots of methods to help
   with this: for example, if you want to write some code that only runs once, or only runs under
   certain situations, you can call `cx.create_effect()`.
-- `create()` is reactive, meaning that it will be run again whenever one of its dependnencies change.
-  For example, when you access a Bevy resource or component, it automatically add that resource or
+- `create()` is reactive, meaning that it will be run again whenever one of its dependencies change.
+  For example, when you access a Bevy resource or component, it automatically adds that resource or
   component to a tracking list. If some other function later modifies that resource or component,
-  it will trigger a reaction, which will cause `create` to run again.
+  it will trigger a _reaction_, which will cause `create` to run again.
 
 It's important to write the `create()` method in a way that doesn't leak memory or resources.
 For example, it would be a mistake to write a `create()` method that calls `material_assets.add()`
@@ -195,7 +195,7 @@ The `.insert()` method is frequently used for inserting `bevy_mod_picking` event
 ### Conditional rendering with `Cond`
 
 The `Cond` (short for "conditional") view takes a conditional expression, and two child views, one
-which is rendered when the condition is true, the other when the condition is false.
+which is built when the condition is true, the other when the condition is false.
 
 ```rust
 /// Widget that displays whether the count is even or odd.
@@ -225,7 +225,7 @@ creates no entities.
 
 ### Rendering multiple items with `For`
 
-`For::each()` takes a list of items, and a callback which renders a `View` for each item:
+`For::each()` takes a list of items, and a callback which builds a `View` for each item:
 
 ```rust
 struct EventLog;

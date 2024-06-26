@@ -14,7 +14,7 @@ use quill_obsidian::{
     colors,
     controls::{
         Button, ButtonVariant, Checkbox, ColorGradient, Dialog, DialogFooter, DialogHeader,
-        GradientSlider, Slider, SpinBox, Swatch,
+        GradientSlider, MenuButton, MenuDivider, MenuItem, MenuPopup, Slider, SpinBox, Swatch,
     },
     ObsidianUiPlugin,
 };
@@ -251,6 +251,39 @@ impl ViewTemplate for ButtonsDemo {
                             )),
                         )),
                 )),
+                "MenuButton",
+                Element::<NodeBundle>::new()
+                    .style(style_row)
+                    .children((MenuButton::new().children("Menu").popup(
+                        MenuPopup::new().children((
+                            MenuItem::new()
+                                .label("Alpha Male")
+                                .on_click(cx.create_callback(|| {
+                                    println!("Alpha item clicked");
+                                })),
+                            MenuItem::new()
+                                .label("Beta Test")
+                                .on_click(cx.create_callback(|| {
+                                    println!("Beta item clicked");
+                                })),
+                            MenuItem::new()
+                                .label("Delta Sleep")
+                                .on_click(cx.create_callback(|| {
+                                    println!("Delta item clicked");
+                                })),
+                            MenuItem::new()
+                                .label("Gamma Ray")
+                                .on_click(cx.create_callback(|| {
+                                    println!("Gamma item clicked");
+                                })),
+                            MenuDivider,
+                            MenuItem::new()
+                                .label("Omega Point")
+                                .on_click(cx.create_callback(|| {
+                                    println!("Omega item clicked");
+                                })),
+                        )),
+                    ),)),
             ))
     }
 }

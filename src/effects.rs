@@ -83,6 +83,23 @@ impl<H1: EntityEffect, H2: EntityEffect, H3: EntityEffect, H4: EntityEffect, T: 
     }
 }
 
+impl<
+        H1: EntityEffect,
+        H2: EntityEffect,
+        H3: EntityEffect,
+        H4: EntityEffect,
+        H5: EntityEffect,
+        T: EntityEffect,
+    > AppendEffect<T> for (H1, H2, H3, H4, H5)
+{
+    type Result = (H1, H2, H3, H4, H5, T);
+
+    #[inline(always)]
+    fn append(self, tail: T) -> Self::Result {
+        (self.0, self.1, self.2, self.3, self.4, tail)
+    }
+}
+
 #[doc(hidden)]
 pub trait EffectTuple: Send + Sync {
     /// Aggregate EntityEffect::State for all tuple members.

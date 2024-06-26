@@ -20,7 +20,7 @@ pub mod cursor;
 pub mod focus;
 
 /// Utilities for floating popups.
-// pub mod floating;
+pub mod floating;
 
 /// Module containing extensions to `Cx`.
 pub mod hooks;
@@ -41,6 +41,7 @@ pub mod viewport;
 pub mod typography;
 
 use bevy_mod_picking::prelude::EventListenerPlugin;
+use controls::MenuCloseEvent;
 use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
 pub use rounded_corners::RoundedCorners;
 
@@ -63,7 +64,7 @@ impl Plugin for ObsidianUiPlugin {
         ))
         .add_plugins((
             EventListenerPlugin::<scrolling::ScrollWheel>::default(),
-            // EventListenerPlugin::<MenuCloseEvent>::default(),
+            EventListenerPlugin::<MenuCloseEvent>::default(),
         ))
         .add_event::<scrolling::ScrollWheel>()
         .add_systems(
@@ -74,7 +75,7 @@ impl Plugin for ObsidianUiPlugin {
                 hooks::is_hover::update_hover_states,
                 cursor::update_cursor,
             ),
-        );
-        // .add_systems(PostUpdate, floating::position_floating);
+        )
+        .add_systems(PostUpdate, floating::position_floating);
     }
 }
