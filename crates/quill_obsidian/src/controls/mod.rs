@@ -2,6 +2,7 @@ mod button;
 mod checkbox;
 mod dialog;
 mod disabled;
+mod disclosure_toggle;
 mod gradient_slider;
 mod icon;
 mod icon_button;
