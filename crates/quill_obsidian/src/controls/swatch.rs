@@ -82,9 +82,8 @@ impl ViewTemplate for Swatch {
 
         // Wrap material creation in a memo, we only want to create the material once.
         let material = cx.create_memo(
-            |cx, _| {
-                let mut ui_materials = cx
-                    .world_mut()
+            |world, _| {
+                let mut ui_materials = world
                     .get_resource_mut::<Assets<SwatchRectMaterial>>()
                     .unwrap();
                 ui_materials.add(SwatchRectMaterial {
@@ -97,9 +96,8 @@ impl ViewTemplate for Swatch {
 
         // Update material color
         cx.create_effect(
-            |cx, (material, color)| {
-                let mut ui_materials = cx
-                    .world_mut()
+            |world, (material, color)| {
+                let mut ui_materials = world
                     .get_resource_mut::<Assets<SwatchRectMaterial>>()
                     .unwrap();
                 let material = ui_materials.get_mut(material.id()).unwrap();

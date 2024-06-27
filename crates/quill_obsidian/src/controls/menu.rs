@@ -74,13 +74,13 @@ pub struct MenuButton {
     pub minimal: bool,
 
     /// The content to display inside the button.
-    pub children: ChildViews,
+    pub children: ViewChild,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
 
     /// The popup to display when the button is clicked.
-    pub popup: ChildViews,
+    pub popup: ViewChild,
 
     /// If true, don't display the caret icon.
     pub no_caret: bool,
@@ -132,8 +132,8 @@ impl MenuButton {
     }
 
     /// Set the button children.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 
@@ -150,8 +150,8 @@ impl MenuButton {
     }
 
     /// Set the button popup.
-    pub fn popup(mut self, popup: impl IntoChildViews) -> Self {
-        self.popup = popup.into_child_views();
+    pub fn popup(mut self, popup: impl IntoViewChild) -> Self {
+        self.popup = popup.into_view_child();
         self
     }
 
@@ -347,7 +347,7 @@ fn style_popup(ss: &mut StyleBuilder) {
 #[derive(Clone, PartialEq)]
 pub struct MenuPopup {
     /// The children of the popup.
-    pub children: ChildViews,
+    pub children: ViewChild,
 
     /// Additional styles to apply to the popup.
     pub style: StyleHandle,
@@ -378,8 +378,8 @@ impl MenuPopup {
     }
 
     /// Set the children of the popup.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 
@@ -512,7 +512,7 @@ fn style_menu_item(ss: &mut StyleBuilder) {
 #[derive(Default, Clone, PartialEq)]
 pub struct MenuItem {
     /// The label of the menu item.
-    pub label: ChildViews,
+    pub label: ViewChild,
 
     /// Additional styles to apply to the menu item.
     pub style: StyleHandle,
@@ -536,8 +536,8 @@ impl MenuItem {
     }
 
     /// Set the label of the menu item.
-    pub fn label(mut self, label: impl IntoChildViews) -> Self {
-        self.label = label.into_child_views();
+    pub fn label(mut self, label: impl IntoViewChild) -> Self {
+        self.label = label.into_view_child();
         self
     }
 

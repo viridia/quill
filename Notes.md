@@ -16,3 +16,5 @@
   - callbacks
   - other hooks
   - portals
+- Recent colors in color edit.
+- Optimize swatch grid with memo.

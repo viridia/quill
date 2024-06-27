@@ -30,15 +30,16 @@ impl For {
     /// comparison of the generated keys.
     pub fn each_cmp<
         Item: Clone + Send + Sync,
+        Iter: IntoIterator<Item = Item> + Clone + Send + Sync,
         Cmp: Fn(&Item, &Item) -> bool,
         V: View,
         F: Fn(&Item) -> V + Send,
     >(
-        items: &[Item],
+        iter: Iter,
         cmp: Cmp,
         each: F,
-    ) -> ForEach<Item, V, Cmp, F, ()> {
-        ForEach::new(Vec::from(items), cmp, each)
+    ) -> ForEach<Item, Iter, V, Cmp, F, ()> {
+        ForEach::new(iter, cmp, each)
     }
 
     /// Transforms an iterator of items into an array of child views, one for each element in
@@ -46,10 +47,15 @@ impl For {
     /// input items. During rebuilds, the list of child views may be re-ordered based on a
     /// comparison of the generated keys. This version requires that the items implement
     /// `PartialEq`.
-    pub fn each<Item: Clone + PartialEq + Send + Sync, V: View, F: Fn(&Item) -> V + Send>(
-        items: &[Item],
+    pub fn each<
+        Item: Clone + PartialEq + Send + Sync,
+        Iter: IntoIterator<Item = Item> + Clone + Send + Sync,
+        V: View,
+        F: Fn(&Item) -> V + Send,
+    >(
+        iter: Iter,
         each: F,
-    ) -> ForEach<Item, V, impl Fn(&Item, &Item) -> bool, F, ()> {
-        ForEach::new(Vec::from(items), |a, b| a == b, each)
+    ) -> ForEach<Item, Iter, V, impl Fn(&Item, &Item) -> bool, F, ()> {
+        ForEach::new(iter, |a, b| a == b, each)
     }
 }

@@ -9,7 +9,7 @@ use crate::{mutable::Mutable, tracking_scope::HookState, Callback, MutableCell, 
 use crate::{tracking_scope::TrackingScope, ReadMutable};
 
 #[derive(Clone)]
-struct Memo<R: Clone, D: Clone + PartialEq> {
+struct Memo<R: Clone, D: Clone> {
     result: R,
     deps: D,
 }
@@ -119,7 +119,7 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// - `effect_fn`: The effect function to run.
     /// - `deps`: The dependencies which trigger the effect.
     pub fn create_effect<
-        S: Fn(&mut Cx, D) + Send + Sync,
+        S: Fn(&mut World, D) + Send + Sync,
         D: PartialEq + Clone + Send + Sync + 'static,
     >(
         &mut self,
@@ -131,7 +131,7 @@ impl<'p, 'w> Cx<'p, 'w> {
             Some(HookState::Effect(prev_deps)) => match prev_deps.downcast_ref::<D>() {
                 Some(prev_deps) => {
                     if *prev_deps != deps {
-                        effect_fn(self, deps.clone());
+                        effect_fn(self.world, deps.clone());
                         self.tracking
                             .borrow_mut()
                             .replace_hook(HookState::Effect(Arc::new(deps)));
@@ -145,7 +145,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                 panic!("Expected create_effect() hook, found something else");
             }
             None => {
-                effect_fn(self, deps.clone());
+                effect_fn(self.world, deps.clone());
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Effect(Arc::new(deps)));
@@ -160,7 +160,7 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// - `deps`: The dependencies which trigger the effect.
     pub fn create_memo<
         R: Clone + Send + Sync + 'static,
-        S: Fn(&mut Cx, D) -> R + Send + Sync,
+        S: Fn(&mut World, D) -> R + Send + Sync,
         D: PartialEq + Clone + Send + Sync + 'static,
     >(
         &mut self,
@@ -172,6 +172,60 @@ impl<'p, 'w> Cx<'p, 'w> {
             Some(HookState::Memo(memo)) => match memo.downcast_ref::<Memo<R, D>>() {
                 Some(prev_memo) => {
                     if prev_memo.deps != deps {
+                        let result = factory_fn(self.world, deps.clone());
+                        self.tracking
+                            .borrow_mut()
+                            .replace_hook(HookState::Memo(Arc::new(Memo {
+                                result: result.clone(),
+                                deps,
+                            })));
+                        result
+                    } else {
+                        prev_memo.result.clone()
+                    }
+                }
+                None => {
+                    panic!("Memo dependencies type mismatch");
+                }
+            },
+            Some(_) => {
+                panic!("Expected create_memo() hook, found something else");
+            }
+            None => {
+                let result = factory_fn(self.world, deps.clone());
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::Memo(Arc::new(Memo {
+                        result: result.clone(),
+                        deps,
+                    })));
+                result
+            }
+        }
+    }
+
+    /// Create a memoized value which is only recomputed when dependencies change. This version
+    /// uses a user-supplied comparison function to determine if the dependencies have changed.
+    ///
+    /// Arguments:
+    /// - `factory_fn`: The factory function which computes the memoized value.
+    /// - `deps`: The dependencies which trigger the effect.
+    pub fn create_memo_cmp<
+        R: Clone + Send + Sync + 'static,
+        S: Fn(&mut Cx, D) -> R + Send + Sync,
+        C: Fn(&D, &D) -> bool,
+        D: Clone + Send + Sync + 'static,
+    >(
+        &mut self,
+        factory_fn: S,
+        cmp: C,
+        deps: D,
+    ) -> R {
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::Memo(memo)) => match memo.downcast_ref::<Memo<R, D>>() {
+                Some(prev_memo) => {
+                    if !cmp(&prev_memo.deps, &deps) {
                         let result = factory_fn(self, deps.clone());
                         self.tracking
                             .borrow_mut()
@@ -226,6 +280,47 @@ impl<'p, 'w> Cx<'p, 'w> {
                     .borrow_mut()
                     .push_hook(HookState::Callback(Arc::new(result)));
                 result
+            }
+        }
+    }
+
+    /// Temporary hook used to create a new [`Mutable`] which is automatically updated
+    /// each time this hook is called. This is used for now until we get replaceable one-shot systems.
+    pub fn create_capture<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Clone + PartialEq + Send + Sync + 'static,
+    {
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::Mutable(cell, component)) => {
+                let result = Mutable {
+                    cell,
+                    component,
+                    marker: PhantomData,
+                };
+                result.set_clone(self.world, init);
+                result
+            }
+
+            Some(_) => {
+                panic!("Expected create_mutable() hook, found something else");
+            }
+            None => {
+                let owner = self.owner();
+                let cell = self
+                    .world_mut()
+                    .spawn(MutableCell::<T>(init))
+                    .set_parent(owner)
+                    .id();
+                let component = self.world_mut().init_component::<MutableCell<T>>();
+                self.tracking
+                    .borrow_mut()
+                    .push_hook(HookState::Mutable(cell, component));
+                Mutable {
+                    cell,
+                    component,
+                    marker: PhantomData,
+                }
             }
         }
     }

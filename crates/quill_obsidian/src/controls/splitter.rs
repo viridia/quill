@@ -32,7 +32,7 @@ fn style_vsplitter(ss: &mut StyleBuilder) {
         .flex_direction(ui::FlexDirection::Column)
         .gap(8)
         .width(9)
-        .background_color(colors::U2)
+        .background_color(colors::U1)
         .cursor(CursorIcon::ColResize);
 }
 

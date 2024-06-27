@@ -976,6 +976,7 @@ dependencies = [
  "bevy_mod_stylebuilder",
  "impl-trait-for-tuples",
  "quill_obsidian",
+ "quill_obsidian_inspect",
  "smallvec",
 ]
 
@@ -3177,6 +3178,21 @@ dependencies = [
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
  "bevy_quill",
+]
+
+[[package]]
+name = "quill_obsidian_graph"
+version = "0.1.0"
+
+[[package]]
+name = "quill_obsidian_inspect"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_mod_stylebuilder",
+ "bevy_quill",
+ "quill_obsidian",
 ]
 
 [[package]]

@@ -5,10 +5,15 @@ use crate::{
 };
 use bevy::{
     hierarchy::Parent,
+    log::warn,
     prelude::{Added, Component, Entity, With, World},
     utils::hashbrown::HashSet,
 };
-use std::sync::{Arc, Mutex};
+use impl_trait_for_tuples::*;
+use std::{
+    any::Any,
+    sync::{Arc, Mutex},
+};
 
 #[cfg(feature = "verbose")]
 use bevy::log::info;
@@ -62,6 +67,12 @@ pub trait View: Sync + Send + 'static {
         let holder = ViewStateCell::new(self);
         let thunk = holder.create_thunk();
         (holder, thunk, ViewRoot)
+    }
+
+    /// Return a unique identifier that identifies the concrete type of this view.
+    /// This is used to dynamically type-check type-erased views.
+    fn view_type_id(&self) -> std::any::TypeId {
+        std::any::TypeId::of::<Self>()
     }
 }
 
@@ -123,9 +134,19 @@ impl<V: View> ViewStateCell<V> {
 /// Note that it must be stateless since it is created statically, and passed around by static
 /// reference.
 ///
-/// The way this works is that instead of passing a reference to the view directly, we pass in
-/// the entity id for the entity that contains the `ViewState` component, and retrieve the view
-/// each time.
+/// In order for this to work, two ECS components are needed: [`ViewThunk`] and a second component
+/// to actually hold the concrete view, such as [`ViewStateCell`].
+///
+/// `ViewThunk` is a type-erased component that provides access to the concrete `View` via the
+/// `ViewAdapter`. `ViewStateCell` is a component that contains the actual `View` and it's state.
+/// Because `ViewStateCell` is generic, it cannot be queried directly (since it would require
+/// a separate query for every specialization), so we use `ViewThunk` as an adapter. `ViewAdapter`
+/// also can work with other component types that contain a `View` implementation.
+///
+/// The the methods of `ViewAdapter` and `ViewThunk` take an entity id to identify the view rather
+/// than `self``; the `self` parameter is only there to make the methods dyn-trait
+/// compatible. This allows the adapter to be created as a static object, since all of its state
+/// is external.
 ///
 /// See [`AnyViewAdapter`] and [`ViewThunk`].
 pub struct ViewAdapter<V: View> {
@@ -197,6 +218,7 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
     }
 }
 
+/// An ECS component which wraps a type-erasee [`ViewAdapter`].
 #[derive(Component)]
 pub struct ViewThunk(pub(crate) &'static dyn AnyViewAdapter);
 
@@ -222,6 +244,167 @@ impl View for () {
     fn raze(&self, _world: &mut World, _state: &mut Self::State) {}
 }
 
+impl<V: View> View for (V,) {
+    type State = V::State;
+
+    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
+        self.0.nodes(world, state)
+    }
+
+    fn build(&self, cx: &mut Cx) -> Self::State {
+        self.0.build(cx)
+    }
+
+    fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
+        self.0.rebuild(cx, state)
+    }
+
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.0.raze(world, state)
+    }
+}
+
+#[impl_for_tuples(2, 16)]
+#[tuple_types_custom_trait_bound(View)]
+impl View for Tuple {
+    for_tuples!( type State = ( #( Tuple::State ),* ); );
+
+    // #[inline(always)]
+    // fn len(&self) -> usize {
+    //     for_tuples!((#( 1 )+*))
+    // }
+
+    #[rustfmt::skip]
+    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
+        NodeSpan::Fragment(Box::new([
+            for_tuples!(#( self.Tuple.nodes(world, &state.Tuple) ),*)
+        ]))
+    }
+
+    fn build(&self, cx: &mut Cx) -> Self::State {
+        for_tuples!((#( self.Tuple.build(cx) ),*))
+    }
+
+    fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
+        let mut changed = false;
+        for_tuples!(#( changed |= self.Tuple.rebuild(cx, &mut state.Tuple); )*);
+        changed
+    }
+
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        for_tuples!(#( self.Tuple.raze(world, &mut state.Tuple); )*)
+    }
+
+    fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
+        let mut changed = false;
+        for_tuples!(#( changed |= self.Tuple.attach_children(world, &mut state.Tuple); )*);
+        changed
+    }
+}
+
+/// An optional [`View`], renders nothing if the view is `None`. Note that this is not dynamic,
+/// you can't switch back and forth between `Some` and `None` while the view is built.
+impl<V: View> View for Option<V> {
+    type State = Option<V::State>;
+
+    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
+        match (self, state) {
+            (Some(view), Some(state)) => view.nodes(world, state),
+            _ => NodeSpan::Empty,
+        }
+    }
+
+    fn build(&self, cx: &mut Cx) -> Self::State {
+        self.as_ref().map(|view| view.build(cx))
+    }
+
+    fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
+        match (self, state) {
+            (Some(view), Some(state)) => view.rebuild(cx, state),
+            (None, None) => false,
+            _ => panic!("Option<View>::rebuild(): state is out of sync"),
+        }
+    }
+
+    fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
+        match (self, state) {
+            (Some(view), Some(state)) => view.attach_children(world, state),
+            (None, None) => false,
+            _ => panic!("Option<View>::attach_children(): state is out of sync"),
+        }
+    }
+
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        match (self, state) {
+            (Some(view), Some(state)) => view.raze(world, state),
+            (None, None) => {}
+            _ => panic!("Option<View>::raze(): state is out of sync"),
+        }
+    }
+
+    fn view_type_id(&self) -> std::any::TypeId {
+        match self {
+            Some(view) => view.view_type_id(),
+            None => std::any::TypeId::of::<Option<V>>(),
+        }
+    }
+}
+
+pub(crate) type BoxedState = Box<dyn Any + Send + Sync>;
+
+/// A type-erased [`ViewTuple`].
+pub trait AnyView: Sync + Send + 'static {
+    fn nodes(&self, world: &World, state: &BoxedState) -> NodeSpan;
+    fn build(&self, cx: &mut Cx) -> BoxedState;
+    fn rebuild(&self, cx: &mut Cx, state: &mut BoxedState) -> bool;
+    #[allow(unused)]
+    fn attach_children(&self, world: &mut World, state: &mut BoxedState) -> bool;
+    fn raze(&self, world: &mut World, state: &mut BoxedState);
+    fn view_type_id(&self) -> std::any::TypeId;
+}
+
+impl<V: View> AnyView for V {
+    fn nodes(&self, world: &World, state: &BoxedState) -> NodeSpan {
+        match state.downcast_ref::<V::State>() {
+            Some(state) => View::nodes(self, world, state),
+            None => NodeSpan::Empty,
+        }
+    }
+
+    fn build(&self, cx: &mut Cx) -> BoxedState {
+        Box::new(View::build(self, cx))
+    }
+
+    fn rebuild(&self, cx: &mut Cx, state: &mut BoxedState) -> bool {
+        match state.downcast_mut::<V::State>() {
+            Some(state) => View::rebuild(self, cx, state),
+            None => panic!(
+                "View state type mismatch in rebuild(): type={}",
+                std::any::type_name::<V>()
+            ),
+        }
+    }
+
+    fn attach_children(&self, world: &mut World, state: &mut BoxedState) -> bool {
+        View::attach_children(self, world, state.downcast_mut::<V::State>().unwrap())
+    }
+
+    fn raze(&self, world: &mut World, state: &mut BoxedState) {
+        if let Some(state) = state.downcast_mut::<V::State>() {
+            View::raze(self, world, state);
+        } else {
+            warn!(
+                "Failed to downcast state in raze(): type={}",
+                std::any::type_name::<V>()
+            );
+        }
+    }
+
+    fn view_type_id(&self) -> std::any::TypeId {
+        View::view_type_id(self)
+    }
+}
+
 pub(crate) fn build_views(world: &mut World) {
     let mut roots = world.query_filtered::<(Entity, &ViewThunk), Added<ViewRoot>>();
     let roots_copy: Vec<Entity> = roots.iter(world).map(|(e, _)| e).collect();
@@ -237,11 +420,17 @@ pub(crate) fn build_views(world: &mut World) {
 }
 
 pub(crate) fn rebuild_views(world: &mut World) {
+    // Record the changed entities for debugging purposes.
+    if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
+        // Check for empty first to avoid setting mutation flag.
+        if !tracing.0.is_empty() {
+            tracing.0.clear();
+        }
+    }
+
     // let mut divergence_ct: usize = 0;
     // let mut prev_change_ct: usize = 0;
     let this_run = world.change_tick();
-
-    // let mut v = HashSet::new();
 
     // Scan changed resources
     let mut scopes = world.query::<(Entity, &mut TrackingScope, &ViewThunk)>();
@@ -258,10 +447,6 @@ pub(crate) fn rebuild_views(world: &mut World) {
 
     // Record the changed entities for debugging purposes.
     if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
-        // Check for empty first to avoid setting mutation flag.
-        if !tracing.0.is_empty() {
-            tracing.0.clear();
-        }
         if !changed.is_empty() {
             tracing.0.extend(changed.iter().copied());
         }
@@ -271,7 +456,9 @@ pub(crate) fn rebuild_views(world: &mut World) {
     for scope_entity in changed.iter() {
         // println!("Rebuilding view {:?}", scope_entity);
         // Call registered cleanup functions
-        let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
+        let Ok((_, mut scope, _)) = scopes.get_mut(world, *scope_entity) else {
+            continue;
+        };
         let mut cleanups = std::mem::take(&mut scope.cleanups);
         for cleanup_fn in cleanups.drain(..) {
             cleanup_fn(world);

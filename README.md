@@ -258,16 +258,17 @@ handle comparisons between items:
 
 ### Returning multiple nodes
 
-Normally a `ViewTemplate` returns a single view. If you want to return multiple views, use a `Fragment`:
+Normally a `ViewTemplate` returns a single `View`. If you want to return multiple views,
+use a tuple:
 
 ```rust
-Fragment::new((
+(
     "Hello, ",
     "World!"
-))
+)
 ```
 
-The children of the `Fragment` will be inserted inline in place of the `Fragment` node.
+This works because tuples of views are also views.
 
 ## Mutables: Local state
 

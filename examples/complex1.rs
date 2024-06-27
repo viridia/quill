@@ -7,7 +7,7 @@ mod common;
 use bevy::{color::palettes, prelude::*};
 use bevy_mod_picking::{debug::DebugPickingMode, DefaultPickingPlugins};
 use bevy_mod_stylebuilder::*;
-use bevy_quill::{ChildViews, Cx, Element, IntoChildViews, QuillPlugin, View, ViewTemplate};
+use bevy_quill::{Cx, Element, IntoViewChild, QuillPlugin, View, ViewChild, ViewTemplate};
 use common::*;
 use quill_obsidian::ObsidianUiPlugin;
 
@@ -43,8 +43,8 @@ fn style_test(ss: &mut StyleBuilder) {
 
 #[derive(Clone, PartialEq, Default)]
 struct ChildParamsTest {
-    slot1: ChildViews,
-    slot2: ChildViews,
+    slot1: ViewChild,
+    slot2: ViewChild,
 }
 
 impl ChildParamsTest {
@@ -52,13 +52,13 @@ impl ChildParamsTest {
         Self { ..default() }
     }
 
-    fn slot1(mut self, slot1: impl IntoChildViews) -> Self {
-        self.slot1 = slot1.into_child_views();
+    fn slot1(mut self, slot1: impl IntoViewChild) -> Self {
+        self.slot1 = slot1.into_view_child();
         self
     }
 
-    fn slot2(mut self, slot2: impl IntoChildViews) -> Self {
-        self.slot2 = slot2.into_child_views();
+    fn slot2(mut self, slot2: impl IntoViewChild) -> Self {
+        self.slot2 = slot2.into_view_child();
         self
     }
 }
@@ -75,7 +75,7 @@ impl ViewTemplate for ChildParamsTest {
 
 #[derive(Clone, PartialEq, Default)]
 struct NestedParamsTest {
-    slot1: ChildViews,
+    slot1: ViewChild,
 }
 
 impl NestedParamsTest {
@@ -83,8 +83,8 @@ impl NestedParamsTest {
         Self { ..default() }
     }
 
-    fn slot1(mut self, slot1: impl IntoChildViews) -> Self {
-        self.slot1 = slot1.into_child_views();
+    fn slot1(mut self, slot1: impl IntoViewChild) -> Self {
+        self.slot1 = slot1.into_view_child();
         self
     }
 }

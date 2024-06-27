@@ -14,6 +14,9 @@ verbose = [] # Enable verbose logging
 bevy = { git = "https://github.com/bevyengine/bevy.git", version = "0.14.0-dev" }
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
 bevy_mod_picking = { git = "https://github.com/tychedelia/bevy_mod_picking" }
+quill_obsidian = { path = "crates/quill_obsidian" }
+quill_obsidian_inspect = { path = "crates/quill_obsidian_inspect" }
+quill_obsidian_graph = { path = "crates/quill_obsidian_inspect_graph" }
 
 [dependencies]
 bevy = { workspace = true }
@@ -24,7 +27,7 @@ smallvec = "1.13.2"
 [dev-dependencies]
 quill_obsidian = { path = "crates/quill_obsidian" }
 bevy_mod_picking = { workspace = true }
-# obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
+quill_obsidian_inspect = { workspace = true }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
 

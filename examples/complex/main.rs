@@ -1,7 +1,7 @@
 //! Example of a comprehensive UI layout
 #![feature(impl_trait_in_assoc_type)]
 // mod node_graph_demo;
-// mod reflect_demo;
+mod reflect_demo;
 // mod transform_overlay;
 
 use bevy_mod_picking::{
@@ -34,8 +34,8 @@ use quill_obsidian::{
 //     focus::TabGroup,
 //     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 // };
-// use obsidian_ui_inspect::InspectorPlugin;
-// use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
+use quill_obsidian_inspect::InspectorPlugin;
+use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
 // use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;
@@ -176,15 +176,15 @@ fn main() {
         .init_resource::<TrackingScopeTracing>()
         .init_resource::<ClickLog>()
         // .init_resource::<DemoGraphRoot>()
-        // .insert_resource(TestStruct {
-        //     unlit: Some(true),
-        //     ..default()
-        // })
-        // .insert_resource(TestStruct2 {
-        //     nested: TestStruct::default(),
-        //     ..default()
-        // })
-        // .insert_resource(TestStruct3(true))
+        .insert_resource(TestStruct {
+            unlit: Some(true),
+            ..default()
+        })
+        .insert_resource(TestStruct2 {
+            nested: TestStruct::default(),
+            ..default()
+        })
+        .insert_resource(TestStruct3(true))
         .insert_resource(PanelWidth(200.))
         .insert_resource(PanelHeight(300.))
         .init_resource::<viewport::ViewportInset>()
@@ -196,7 +196,7 @@ fn main() {
             require_markers: true,
             ..default()
         })
-        // .add_plugins(InspectorPlugin)
+        .add_plugins(InspectorPlugin)
         .add_plugins((
             QuillPlugin,
             ObsidianUiPlugin,
@@ -416,9 +416,9 @@ impl ViewTemplate for DemoUi {
                                 //     ..default()
                                 // }
                             ),
-                        // ResourcePropertyInspector::<TestStruct>::new(),
-                        // ResourcePropertyInspector::<TestStruct2>::new(),
-                        // ResourcePropertyInspector::<TestStruct3>::new(),
+                        ResourcePropertyInspector::<TestStruct>::new(),
+                        ResourcePropertyInspector::<TestStruct2>::new(),
+                        ResourcePropertyInspector::<TestStruct3>::new(),
                         // ReactionsTable,
                         LogList,
                     )),
@@ -462,7 +462,7 @@ impl ViewTemplate for CenterPanel {
             .children((Cond::new(
                 *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
                 NodeGraphDemo {},
-                Fragment::new((
+                (
                     Element::<NodeBundle>::new()
                         .named("Preview")
                         .style(style_viewport)
@@ -475,7 +475,7 @@ impl ViewTemplate for CenterPanel {
                         ),
                     Cond::new(
                         *cx.use_resource::<State<EditorState>>().get() == EditorState::Split,
-                        Fragment::new((
+                        (
                             Splitter::new()
                                 .direction(SplitterDirection::Horizontal)
                                 .value(panel_height)
@@ -489,10 +489,10 @@ impl ViewTemplate for CenterPanel {
                                     panel_height,
                                 )
                                 .children(NodeGraphDemo {}),
-                        )),
+                        ),
                         (),
                     ),
-                )),
+                ),
             ),))
             .style(wrapper_style)
     }
@@ -506,7 +506,7 @@ impl ViewTemplate for LogList {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let log = cx.use_resource::<ClickLog>();
         ListView::new()
-            .children(For::each(&log.0, |msg| msg.clone()))
+            .children(For::each(log.0.clone(), |msg| msg.clone()))
             .style(style_scroll_area)
     }
 }

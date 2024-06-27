@@ -10,12 +10,11 @@ use crate::{
     node_span::NodeSpan,
     style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
     view::View,
-    view_tuple::ViewTuple,
 };
 
 /// A view which generates an entity bundle.
 #[derive(Default)]
-pub struct Element<B: Bundle + Default = NodeBundle, C: ViewTuple = (), E: EffectTuple = ()> {
+pub struct Element<B: Bundle + Default = NodeBundle, C: View = (), E: EffectTuple = ()> {
     /// Debug name for this element.
     debug_name: String,
 
@@ -55,7 +54,7 @@ impl<B: Bundle + Default> Element<B, (), ()> {
     }
 }
 
-impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
+impl<B: Bundle + Default, C: View, E: EffectTuple> Element<B, C, E> {
     /// Set the debug name for this element.
     pub fn named(mut self, name: &str) -> Self {
         self.debug_name = name.to_string();
@@ -63,7 +62,7 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
     }
 
     /// Set the child entities for this element.
-    pub fn children<C2: ViewTuple>(self, children: C2) -> Element<B, C2, E> {
+    pub fn children<C2: View>(self, children: C2) -> Element<B, C2, E> {
         Element {
             children,
             debug_name: self.debug_name,
@@ -189,7 +188,7 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple> Element<B, C, E> {
     }
 }
 
-impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Element<B, C, E> {
+impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B, C, E> {
     type State = (Entity, C::State, E::State);
 
     fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
@@ -226,8 +225,8 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
         let eff_state = effects::EffectTuple::apply(&self.effects, cx, display);
 
         // Build child nodes.
-        let children = self.children.build_spans(cx);
-        let nodes = self.children.span_nodes(cx.world(), &children);
+        let children = self.children.build(cx);
+        let nodes = self.children.nodes(cx.world(), &children);
         cx.world_mut()
             .entity_mut(display)
             .replace_children(&nodes.to_vec());
@@ -236,7 +235,7 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
 
     fn rebuild(&self, cx: &mut crate::cx::Cx, state: &mut Self::State) -> bool {
         effects::EffectTuple::reapply(&self.effects, cx, state.0, &mut state.2);
-        if self.children.rebuild_spans(cx, &mut state.1) {
+        if self.children.rebuild(cx, &mut state.1) {
             self.attach_children(cx.world_mut(), state);
         }
         // Note that we always return false, since the Element entity doesn't change.
@@ -254,13 +253,13 @@ impl<B: Bundle + Default, C: ViewTuple, E: EffectTuple + 'static> View for Eleme
             // then it's the responsibility of the caller to clean it up.
             world.entity_mut(state.0).despawn();
         }
-        self.children.raze_spans(world, &mut state.1);
+        self.children.raze(world, &mut state.1);
     }
 
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
         assert!(world.get_entity(state.0).is_some());
-        self.children.attach_descendants(world, &mut state.1);
-        let nodes = self.children.span_nodes(world, &state.1);
+        self.children.attach_children(world, &mut state.1);
+        let nodes = self.children.nodes(world, &state.1);
         world.entity_mut(state.0).replace_children(&nodes.to_vec());
         false
     }

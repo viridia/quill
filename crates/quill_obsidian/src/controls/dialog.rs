@@ -67,7 +67,7 @@ pub struct Dialog {
     pub open: bool,
 
     /// The content of the dialog.
-    pub children: ChildViews,
+    pub children: ViewChild,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<Callback>,
@@ -95,8 +95,8 @@ impl Dialog {
     }
 
     /// Sets the content of the dialog.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 
@@ -234,7 +234,7 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
 #[derive(Default, Clone, PartialEq)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: ChildViews,
+    pub children: ViewChild,
 }
 
 impl DialogHeader {
@@ -244,8 +244,8 @@ impl DialogHeader {
     }
 
     /// Set the content of the dialog header.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 }
@@ -271,7 +271,7 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
 #[derive(Default, Clone, PartialEq)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: ChildViews,
+    pub children: ViewChild,
 }
 
 impl DialogBody {
@@ -281,8 +281,8 @@ impl DialogBody {
     }
 
     /// Set the content of the dialog body.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 }
@@ -311,7 +311,7 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
 #[derive(Default, Clone, PartialEq)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: ChildViews,
+    pub children: ViewChild,
 }
 
 impl DialogFooter {
@@ -321,8 +321,8 @@ impl DialogFooter {
     }
 
     /// Set the content of the dialog footer.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 }

@@ -28,23 +28,29 @@ impl<Value: Clone, V: View> ListItem<Value, V> {
 #[doc(hidden)]
 pub struct ForEach<
     Item: Send + Clone,
+    Iter: IntoIterator<Item = Item> + Clone,
     V: View,
     Cmp: Fn(&Item, &Item) -> bool,
     F: Fn(&Item) -> V + Send,
     FB: View,
 > {
-    items: Vec<Item>,
+    iter: Iter,
     cmp: Cmp,
     each: F,
     fallback: Option<FB>,
 }
 
-impl<Item: Send + Clone, V: View, Cmp: Fn(&Item, &Item) -> bool, F: Fn(&Item) -> V + Send>
-    ForEach<Item, V, Cmp, F, ()>
+impl<
+        Item: Send + Clone,
+        Iter: IntoIterator<Item = Item> + Clone,
+        V: View,
+        Cmp: Fn(&Item, &Item) -> bool,
+        F: Fn(&Item) -> V + Send,
+    > ForEach<Item, Iter, V, Cmp, F, ()>
 {
-    pub fn new(items: Vec<Item>, cmp: Cmp, each: F) -> Self {
+    pub fn new(iter: Iter, cmp: Cmp, each: F) -> Self {
         Self {
-            items,
+            iter,
             cmp,
             each,
             fallback: None,
@@ -54,17 +60,18 @@ impl<Item: Send + Clone, V: View, Cmp: Fn(&Item, &Item) -> bool, F: Fn(&Item) ->
 
 impl<
         Item: Send + Clone,
+        Iter: IntoIterator<Item = Item> + Clone,
         V: View,
         Cmp: Fn(&Item, &Item) -> bool,
         F: Fn(&Item) -> V + Send,
         FB: View,
-    > ForEach<Item, V, Cmp, F, FB>
+    > ForEach<Item, Iter, V, Cmp, F, FB>
 where
     V::State: Clone,
 {
-    pub fn with_fallback<FB2: View>(self, fallback: FB2) -> ForEach<Item, V, Cmp, F, FB2> {
-        ForEach::<Item, V, Cmp, F, FB2> {
-            items: self.items,
+    pub fn with_fallback<FB2: View>(self, fallback: FB2) -> ForEach<Item, Iter, V, Cmp, F, FB2> {
+        ForEach::<Item, Iter, V, Cmp, F, FB2> {
+            iter: self.iter,
             each: self.each,
             cmp: self.cmp,
             fallback: Some(fallback),
@@ -213,11 +220,12 @@ where
 
 impl<
         Item: Send + Sync + Clone + 'static,
+        Iter: IntoIterator<Item = Item> + Clone + Send + Sync + 'static,
         V: View,
         Cmp: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         F: Fn(&Item) -> V + Send + Sync + 'static,
         FB: View,
-    > View for ForEach<Item, V, Cmp, F, FB>
+    > View for ForEach<Item, Iter, V, Cmp, F, FB>
 where
     V::State: Clone,
 {
@@ -240,7 +248,8 @@ where
     }
 
     fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
-        let next_len = self.items.len();
+        let items = self.iter.clone().into_iter().collect::<Vec<_>>();
+        let next_len = items.len();
         let mut next_state: Vec<ListItem<Item, V>> = Vec::with_capacity(next_len);
         let prev_len = state.0.len();
 
@@ -248,7 +257,7 @@ where
             cx,
             &mut state.0,
             0..prev_len,
-            &self.items,
+            &items,
             0..next_len,
             &mut next_state,
         );

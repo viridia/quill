@@ -19,7 +19,7 @@ use bevy::{
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{
-    Callback, ChildViews, Cx, Element, IntoChildViews, RunCallback, View, ViewTemplate,
+    Callback, ViewChild, Cx, Element, IntoViewChild, RunCallback, View, ViewTemplate,
 };
 
 /// The variant determines the button's color scheme
@@ -74,7 +74,7 @@ pub struct Button {
     pub disabled: bool,
 
     /// The content to display inside the button.
-    pub children: ChildViews,
+    pub children: ViewChild,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -126,8 +126,8 @@ impl Button {
     }
 
     /// Set the child views for this element.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 

@@ -248,9 +248,8 @@ impl ViewTemplate for GradientSlider {
         );
 
         let gradient_material = cx.create_memo(
-            |cx, _| {
-                let mut gradient_material_assets = cx
-                    .world_mut()
+            |world, _| {
+                let mut gradient_material_assets = world
                     .get_resource_mut::<Assets<GradientRectMaterial>>()
                     .unwrap();
                 gradient_material_assets.add(GradientRectMaterial {
@@ -264,10 +263,9 @@ impl ViewTemplate for GradientSlider {
 
         // Effect to update the material handle.
         cx.create_effect(
-            move |cx, (material, color_stops)| {
+            move |world, (material, color_stops)| {
                 let (num_color_stops, color_stops) = color_stops;
-                let mut ui_materials = cx
-                    .world_mut()
+                let mut ui_materials = world
                     .get_resource_mut::<Assets<GradientRectMaterial>>()
                     .unwrap();
                 let material = ui_materials.get_mut(material.id()).unwrap();

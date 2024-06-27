@@ -68,7 +68,7 @@ pub struct Checkbox {
     pub disabled: bool,
 
     /// The content to display inside the button.
-    pub label: ChildViews,
+    pub label: ViewChild,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -99,8 +99,8 @@ impl Checkbox {
     }
 
     /// Set the label of the checkbox.
-    pub fn label(mut self, label: impl IntoChildViews) -> Self {
-        self.label = label.into_child_views();
+    pub fn label(mut self, label: impl IntoViewChild) -> Self {
+        self.label = label.into_view_child();
         self
     }
 

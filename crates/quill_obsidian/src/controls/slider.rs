@@ -228,9 +228,8 @@ impl ViewTemplate for Slider {
 
         // Wrap material creation in a memo, we only want to create the material once.
         let material = cx.create_memo(
-            |cx, _| {
-                let mut ui_materials = cx
-                    .world_mut()
+            |world, _| {
+                let mut ui_materials = world
                     .get_resource_mut::<Assets<SliderRectMaterial>>()
                     .unwrap();
                 ui_materials.add(SliderRectMaterial {
@@ -380,7 +379,7 @@ impl ViewTemplate for Slider {
                     Element::<NodeBundle>::new().style(style_label).children((
                         Cond::new(
                             self.label.is_some(),
-                            Fragment::new((self.label.clone().unwrap_or_default(), Spacer)),
+                            (self.label.clone().unwrap_or_default(), Spacer),
                             (),
                         ),
                         match self.formatted_value {

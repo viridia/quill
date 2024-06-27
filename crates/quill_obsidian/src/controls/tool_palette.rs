@@ -33,7 +33,7 @@ pub struct ToolPalette {
     pub size: Size,
 
     /// The buttons to display.
-    pub children: ChildViews,
+    pub children: ViewChild,
 
     /// Additional styles to be applied to the palette.
     pub style: StyleHandle,
@@ -55,8 +55,8 @@ impl ToolPalette {
     }
 
     /// Set the child views for this element.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 
@@ -104,7 +104,7 @@ pub struct ToolButton {
     pub(crate) disabled: bool,
 
     /// The content to display inside the button.
-    pub(crate) children: ChildViews,
+    pub(crate) children: ViewChild,
 
     /// Callback called when clicked
     pub(crate) on_click: Option<Callback>,
@@ -138,8 +138,8 @@ impl ToolButton {
     }
 
     /// Set the child views for this element.
-    pub fn children(mut self, children: impl IntoChildViews) -> Self {
-        self.children = children.into_child_views();
+    pub fn children(mut self, children: impl IntoViewChild) -> Self {
+        self.children = children.into_view_child();
         self
     }
 

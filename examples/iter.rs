@@ -52,7 +52,7 @@ impl ViewTemplate for IterExample {
         let items = cx.use_resource::<List>();
         Element::<NodeBundle>::new().children((
             "Suits: ",
-            For::each(&items.items, |item| format!("[{}]", item)).with_fallback("No items"),
+            For::each(items.items.clone(), |item| format!("[{}]", item)).with_fallback("No items"),
         ))
     }
 }
@@ -89,6 +89,9 @@ fn update_counter(
         while list.items.len() > 10 {
             list.items.remove(0);
         }
+    } else if key.pressed(KeyCode::Minus) {
+        println!("-- Minus pressed --");
+        list.items.pop();
     }
 }
 
