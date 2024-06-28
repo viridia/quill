@@ -232,96 +232,87 @@ impl ViewTemplate for StructInspectorHeaderControls {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let target = self.target.clone();
-        let base_path = target.field_path.clone();
-        Dynamic::new(match target.reflect(cx).unwrap().reflect_ref() {
-            ReflectRef::Struct(st) => {
-                let num_fields = st.field_len();
-                let mut items: Vec<ViewChild> = Vec::new();
-                let registry = cx.world().resource::<AppTypeRegistry>().0.clone();
-                for findex in 0..num_fields {
-                    let field = st.field_at(findex).unwrap();
-                    let name = st.name_at(findex).unwrap();
-                    if field.reflect_kind() == ReflectKind::Enum
-                        && field
-                            .reflect_type_path()
-                            .starts_with("core::option::Option")
-                    {
-                        let ReflectRef::Enum(enum_ref) = field.reflect_ref() else {
-                            panic!("Expected ReflectRef::Enum");
-                        };
-                        let Some(TypeInfo::Enum(enum_info)) = field.get_represented_type_info()
-                        else {
-                            panic!("Expected TypeInfo::Enum");
-                        };
+        // Get the memoized field names of the struct, including only the missing optionals.
+        let missing = missing_fields(target, cx, self.target.field_path.clone());
 
-                        if enum_ref.variant_name() == "None" {
-                            let some_variant = enum_info.variant("Some").unwrap();
-                            let VariantInfo::Tuple(tuple_info) = some_variant else {
-                                panic!()
-                            };
-                            let some_field = tuple_info.field_at(0).unwrap();
-                            let some_type_id = some_field.type_id();
-                            let registry_lock = registry.read();
-                            let some_type = registry_lock.get_type_info(some_type_id).unwrap();
-                            let some_default =
-                                registry_lock.get_type_data::<ReflectDefault>(some_type_id);
-                            if some_default.is_some() {
-                                let mut path = base_path.clone();
-                                path.0.push(OffsetAccess {
-                                    access: bevy::reflect::Access::Field(name.to_string().into()),
-                                    offset: None,
-                                });
-                                items.push(
-                                    AddStructFieldItem {
-                                        field: Arc::new(Inspectable {
-                                            root: target.root.clone(),
-                                            name: name.to_string(),
-                                            value_path: path.clone(),
-                                            field_path: path,
-                                            can_remove: false,
-                                            attributes: None,
-                                        }),
-                                    }
-                                    .into_view_child(),
-                                );
-                            } else {
-                                println!(
-                                    "Can't find ReflectDefault for: {:?}",
-                                    some_type.type_path()
-                                );
-                            }
-                        }
-                    }
-                }
-
-                if !items.is_empty() {
-                    MenuButton::new()
-                        .children(
-                            Icon::new("obsidian_ui://icons/add_box.png")
-                                .color(Color::from(colors::DIM))
-                                .style(style_menu_icon),
-                        )
-                        .popup(
-                            MenuPopup::new()
-                                .align(FloatAlign::End)
-                                .children(Dynamic::new(items.into_view_child())),
-                        )
-                        .size(Size::Xs)
-                        .minimal(true)
-                        .into_view_child()
-                } else {
-                    ().into_view_child()
-                }
-            }
-            _ => {
-                println!(
-                    "Fallback: {}",
-                    target.reflect(cx).unwrap().reflect_type_path()
-                );
-                ().into_view_child()
-            }
-        })
+        Cond::new(
+            !missing.is_empty(),
+            MenuButton::new()
+                .children(
+                    Icon::new("obsidian_ui://icons/add_box.png")
+                        .color(Color::from(colors::DIM))
+                        .style(style_menu_icon),
+                )
+                .popup(MenuPopup::new().align(FloatAlign::End).children(For::each(
+                    missing,
+                    |item| AddStructFieldItem {
+                        field: item.clone(),
+                    },
+                )))
+                .size(Size::Xs)
+                .minimal(true),
+            (),
+        )
     }
+}
+
+fn missing_fields(
+    target: Arc<Inspectable>,
+    cx: &mut Cx,
+    base_path: bevy::reflect::ParsedPath,
+) -> Vec<Arc<Inspectable>> {
+    let st = target.reflect(cx).unwrap();
+    let ReflectRef::Struct(st) = st.reflect_ref() else {
+        return Vec::new();
+    };
+    let num_fields = st.field_len();
+    let mut items = Vec::with_capacity(num_fields);
+    let registry = cx.world().resource::<AppTypeRegistry>().0.clone();
+
+    // Filter out field names for fields with a value of `None`.
+    for findex in 0..num_fields {
+        let field = st.field_at(findex).unwrap();
+        // let info = st.get_represented_type_info().unwrap()
+        if field.reflect_kind() == ReflectKind::Enum
+            && field
+                .reflect_type_path()
+                .starts_with("core::option::Option")
+        {
+            let ReflectRef::Enum(enum_ref) = field.reflect_ref() else {
+                panic!("Expected ReflectRef::Enum");
+            };
+            if enum_ref.variant_name() == "None" {
+                let name = st.name_at(findex).unwrap();
+                let Some(TypeInfo::Enum(enum_info)) = field.get_represented_type_info() else {
+                    panic!("Expected TypeInfo::Enum");
+                };
+                let some_variant = enum_info.variant("Some").unwrap();
+                let VariantInfo::Tuple(tuple_info) = some_variant else {
+                    panic!()
+                };
+                let some_field = tuple_info.field_at(0).unwrap();
+                let some_type_id = some_field.type_id();
+                let registry_lock = registry.read();
+                let some_default = registry_lock.get_type_data::<ReflectDefault>(some_type_id);
+                if some_default.is_some() {
+                    let mut path = base_path.clone();
+                    path.0.push(OffsetAccess {
+                        access: bevy::reflect::Access::Field(name.to_string().into()),
+                        offset: None,
+                    });
+                    items.push(Arc::new(Inspectable {
+                        root: target.root.clone(),
+                        name: name.to_string(),
+                        value_path: path.clone(),
+                        field_path: path,
+                        can_remove: false,
+                        attributes: None,
+                    }));
+                }
+            }
+        }
+    }
+    items
 }
 
 #[derive(Clone)]
