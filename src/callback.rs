@@ -29,7 +29,7 @@ impl dyn AnyCallback + Send + Sync {
 
 impl<P: 'static> AnyCallback for Callback<P> {
     fn remove(&self, world: &mut World) {
-        println!("Removing callback");
+        // println!("Removing callback");
         world.remove_system(self.id).unwrap();
     }
     fn type_id(&self) -> TypeId {

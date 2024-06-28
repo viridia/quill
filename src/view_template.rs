@@ -147,7 +147,7 @@ impl<VT: ViewTemplate> ViewTemplateState<VT> {
     }
 
     fn raze(&mut self, world: &mut World) {
-        println!("Razing View Template: {}", std::any::type_name::<VT>());
+        // println!("Razing View Template: {}", std::any::type_name::<VT>());
         self.view.raze(world, &mut self.state);
     }
 

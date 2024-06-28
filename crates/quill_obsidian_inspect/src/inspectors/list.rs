@@ -205,9 +205,11 @@ impl ViewTemplate for ListItemInspector {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let factories = cx.use_resource::<InspectorFactoryRegistry>();
         // Either create an inspector for the field, or return an empty view.
-        factories
-            .create_inspector(cx, self.field.clone())
-            .unwrap_or_else(|| ().into_view_child())
+        Dynamic::new(
+            factories
+                .create_inspector(cx, self.field.clone())
+                .into_view_child(),
+        )
     }
 }
 
