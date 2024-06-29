@@ -244,23 +244,30 @@ impl ViewTemplate for ColorEdit {
                             })),
                     )),
             )),
-            match mode {
-                ColorMode::Rgb => RgbSliders {
+            Cond::new(
+                mode == ColorMode::Rgb,
+                RgbSliders {
                     state: state_capture,
                     on_change,
-                }
-                .into_view_child(),
-                ColorMode::Hsl => HslSliders {
+                },
+                (),
+            ),
+            Cond::new(
+                mode == ColorMode::Hsl,
+                HslSliders {
                     state: state_capture,
                     on_change,
-                }
-                .into_view_child(),
-                ColorMode::Recent => RecentColorsGrid {
+                },
+                (),
+            ),
+            Cond::new(
+                mode == ColorMode::Recent,
+                RecentColorsGrid {
                     state: state_capture,
                     on_change,
-                }
-                .into_view_child(),
-            },
+                },
+                (),
+            ),
         ))
     }
 }

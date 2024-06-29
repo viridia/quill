@@ -112,17 +112,8 @@ impl ViewTemplate for SwatchGrid {
             }
         });
 
-        let padding = cx.create_memo(
-            |_, (num_colors, num_cells)| {
-                let padding_len = if num_colors < num_cells {
-                    num_cells - num_colors
-                } else {
-                    0
-                };
-                (0..padding_len).collect::<Vec<_>>()
-            },
-            (self.colors.len(), num_cells),
-        );
+        let num_colors = self.colors.len().min(num_cells);
+        let padding_len = num_cells - num_colors;
 
         Element::<NodeBundle>::new()
             .named("SwatchGrid")
@@ -139,14 +130,14 @@ impl ViewTemplate for SwatchGrid {
             ))
             .children((
                 // Generate cells for each color
-                For::each(self.colors[0..num_cells].to_owned(), move |color| {
+                For::each(self.colors[0..num_colors].to_owned(), move |color| {
                     Swatch::new(*color)
                         .selected(selected == *color)
                         .style(style_swatch)
                         .on_click(on_click)
                 }),
                 // Pad with empty cells
-                For::index(&padding, move |_, _| {
+                For::each(0..padding_len, move |_| {
                     Element::<NodeBundle>::new().style(style_empty_slot)
                 }),
             ))
