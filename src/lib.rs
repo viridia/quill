@@ -21,7 +21,7 @@ mod view_child;
 mod view_template;
 
 use bevy::{
-    app::{App, Plugin, Update},
+    app::{App, Plugin, Startup, Update},
     prelude::IntoSystemConfigs,
 };
 use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
@@ -38,6 +38,7 @@ pub use mutable::*;
 pub use node_span::*;
 pub use portal::Portal;
 pub use r#for::For;
+use tracking_scope::cleanup_tracking_scopes;
 pub use tracking_scope::TrackingScope;
 pub use tracking_scope::TrackingScopeTracing;
 pub use view::*;
@@ -49,11 +50,13 @@ pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(StyleBuilderPlugin).add_systems(
-            Update,
-            (build_views, reaction_control_system, reattach_children)
-                .chain()
-                .before(StyleBuilderSystemSet),
-        );
+        app.add_plugins(StyleBuilderPlugin)
+            .add_systems(Startup, cleanup_tracking_scopes)
+            .add_systems(
+                Update,
+                (build_views, reaction_control_system, reattach_children)
+                    .chain()
+                    .before(StyleBuilderSystemSet),
+            );
     }
 }

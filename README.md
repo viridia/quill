@@ -15,7 +15,7 @@ building game editors.
 
 ## Getting started
 
-> :warning: Quill currently requires the unstable Rust feature `impl_trait_in_assoc_type`. This requirement will go away once the feature has been stabilized.
+> :warning: Quill currently requires the unstable Rust feature `impl_trait_in_assoc_type`. This requirement will go away once the feature has been stabilized, which is scheduled to happen sometime before the end of 2024.
 
 > :warning: Quill is currently in early development, and is likely to change as it evolves.
 
@@ -446,12 +446,19 @@ It's perfectly fine to have reactions that trigger other reactions. This often h
 in calls to `create_effect()`. However, what's not fine is to have a reaction that triggers _itself_.
 This will cause an infinite loop.
 
-To avoid this, RCS keeps track of the number of tracking scopes that need updating. As long as this
-number keeps decreasing, everything is fine. This means that we are "converging", that is, the
-set of reactions and dependencies is settling down into a stable state. The number of scopes can go
-up, or stay the same, but it should do so only rarely. This is a "divergence", and there's a hard
-limit on the number of divergences allowed each frame. The system will panic if this number is
-exceeded.
+To guard against this, RCS keeps track of the number of tracking scopes that need updating. As long as this
+number keeps decreasing, everything is fine: it means that we are "converging", that is, the
+set of reactions and dependencies is settling down into a quiescent state. It's also possible for the
+count of scopes that need updating to increase, or stay the same, but it should do so only rarely.
+This is a "divergence", and there's a hard limit on the number of divergences allowed each frame.
+The system will panic if this number is exceeded.
+
+To avoid problems with excessive divergence, you should try to write your templates in a way
+that cleanly separates reading from writing: the main body of the template does the reading,
+while callbacks and event handlers handle mutations. In the rare case where you need to perform
+a mutation during setup (like inserting a component into an entity), you should write the code
+in a way that ensures that this mutation is only performed once, and not repeated every time
+the template re-executes.
 
 **Dynamic Views** - sometimes you will want a `View` that is computed by an algorithm, that is,
 you'll have some formula which returns a different view depending on some state. The Obsidian

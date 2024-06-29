@@ -181,30 +181,29 @@ impl TrackingScope {
         self.hook_states = std::mem::take(&mut other.hook_states)
     }
 
-    /// Raze the entities and components that were created during the reaction.
-    pub(crate) fn raze(&mut self, world: &mut World) {
-        let mut deferred = DeferredWorld::from(world);
-        let mut cleanups = std::mem::take(&mut self.cleanups);
-        for cleanup_fn in cleanups.drain(..) {
-            cleanup_fn(&mut deferred);
-        }
-        for hook in self.hook_states.drain(..).rev() {
-            match hook {
-                HookState::Entity(ent) => {
-                    deferred.commands().add(DespawnEntityCmd(ent));
-                }
-                HookState::Mutable(mutable_ent, _) => {
-                    deferred.commands().add(DespawnEntityCmd(mutable_ent));
-                }
-                HookState::Callback(callback) => {
-                    deferred.commands().add(UnregisterCallbackCmd(callback));
-                }
-                HookState::Effect(_) | HookState::Memo(_) => {
-                    // Nothing to do
-                }
-            }
-        }
-    }
+    // / Raze the entities and components that were created during the reaction.
+    // pub(crate) fn cleanup(&mut self, mut deferred: DeferredWorld) {
+    //     let mut cleanups = std::mem::take(&mut self.cleanups);
+    //     for cleanup_fn in cleanups.drain(..) {
+    //         cleanup_fn(&mut deferred);
+    //     }
+    //     for hook in self.hook_states.drain(..).rev() {
+    //         match hook {
+    //             HookState::Entity(ent) => {
+    //                 deferred.commands().add(DespawnEntityCmd(ent));
+    //             }
+    //             HookState::Mutable(mutable_ent, _) => {
+    //                 deferred.commands().add(DespawnEntityCmd(mutable_ent));
+    //             }
+    //             HookState::Callback(callback) => {
+    //                 deferred.commands().add(UnregisterCallbackCmd(callback));
+    //             }
+    //             HookState::Effect(_) | HookState::Memo(_) => {
+    //                 // Nothing to do
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 struct DespawnEntityCmd(Entity);
@@ -213,6 +212,35 @@ impl Command for DespawnEntityCmd {
     fn apply(self, world: &mut World) {
         world.despawn(self.0);
     }
+}
+
+pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
+    world
+        .register_component_hooks::<TrackingScope>()
+        .on_remove(|mut world, entity, _component| {
+            let mut scope = world.get_mut::<TrackingScope>(entity).unwrap();
+            let mut cleanups = std::mem::take(&mut scope.cleanups);
+            let mut hooks = std::mem::take(&mut scope.hook_states);
+            for cleanup_fn in cleanups.drain(..) {
+                cleanup_fn(&mut world);
+            }
+            for hook in hooks.drain(..).rev() {
+                match hook {
+                    HookState::Entity(ent) => {
+                        world.commands().add(DespawnEntityCmd(ent));
+                    }
+                    HookState::Mutable(mutable_ent, _) => {
+                        world.commands().add(DespawnEntityCmd(mutable_ent));
+                    }
+                    HookState::Callback(callback) => {
+                        world.commands().add(UnregisterCallbackCmd(callback));
+                    }
+                    HookState::Effect(_) | HookState::Memo(_) => {
+                        // Nothing to do
+                    }
+                }
+            }
+        });
 }
 
 #[cfg(test)]
