@@ -453,6 +453,8 @@ pub(crate) fn rebuild_views(world: &mut World) {
     }
 
     // TODO: Run this in a loop and check for convergence.
+
+    // Do all cleanups first.
     for scope_entity in changed.iter() {
         // println!("Rebuilding view {:?}", scope_entity);
         // Call registered cleanup functions
@@ -463,9 +465,14 @@ pub(crate) fn rebuild_views(world: &mut World) {
         for cleanup_fn in cleanups.drain(..) {
             cleanup_fn(world);
         }
+    }
 
+    // Now rebuild all changed views and record depdendencies.
+    for scope_entity in changed.iter() {
         // Run the reaction
-        let (_, mut scope, view_cell) = scopes.get_mut(world, *scope_entity).unwrap();
+        let Ok((_, mut scope, view_cell)) = scopes.get_mut(world, *scope_entity) else {
+            continue;
+        };
         let mut next_scope = TrackingScope::new(this_run);
         next_scope.take_hooks(scope.as_mut());
         let output_changed = view_cell.0.rebuild(world, *scope_entity, &mut next_scope);

@@ -4,7 +4,10 @@ use std::{
 };
 
 use bevy::{
-    ecs::component::{ComponentId, Tick},
+    ecs::{
+        component::{ComponentId, Tick},
+        world::DeferredWorld,
+    },
     prelude::*,
     utils::HashSet,
 };
@@ -181,7 +184,8 @@ impl TrackingScope {
         for cleanup_fn in cleanups.drain(..) {
             cleanup_fn(world);
         }
-        for hook in self.hook_states.drain(..) {
+        // let deferred = DeferredWorld::from(world);
+        for hook in self.hook_states.drain(..).rev() {
             match hook {
                 HookState::Entity(ent) => {
                     world.entity_mut(ent).despawn();

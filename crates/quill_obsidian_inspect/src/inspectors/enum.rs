@@ -28,9 +28,7 @@ impl PartialEq for EnumInspector {
 
 impl ViewTemplate for EnumInspector {
     type View = impl View;
-    fn create(&self, cx: &mut Cx) -> Self::View {
-        let field = self.0.clone();
-        let factories = cx.use_resource::<InspectorFactoryRegistry>();
+    fn create(&self, _cx: &mut Cx) -> Self::View {
         (
             FieldLabel {
                 field: self.0.clone(),
@@ -38,72 +36,7 @@ impl ViewTemplate for EnumInspector {
             VariantSelector {
                 target: self.0.clone(),
             },
-            if let Some(reflect) = field.reflect(cx) {
-                if let ReflectRef::Enum(en) = reflect.reflect_ref() {
-                    let variant = en.variant_type();
-                    match variant {
-                        VariantType::Struct => {
-                            let mut fields: Vec<ViewChild> = Vec::new();
-                            for findex in 0..en.field_len() {
-                                let name = en.name_at(findex).unwrap().to_string();
-                                let mut path = field.value_path.clone();
-                                path.0.push(OffsetAccess {
-                                    access: bevy::reflect::Access::Field(name.clone().into()),
-                                    offset: None,
-                                });
-
-                                let access = Arc::new(Inspectable {
-                                    root: field.root.clone(),
-                                    name: name.clone(),
-                                    value_path: path,
-                                    field_path: field.value_path.clone(),
-                                    can_remove: false,
-                                    attributes: field.attributes,
-                                });
-                                if let Some(view_ref) = factories.create_inspector(cx, access) {
-                                    fields.push(view_ref);
-                                }
-                            }
-                            fields.into_view_child()
-                        }
-
-                        VariantType::Tuple => {
-                            let mut fields: Vec<ViewChild> = Vec::new();
-                            for findex in 0..en.field_len() {
-                                // let variant = en.field_at(findex).unwrap();
-                                let mut path = field.value_path.clone();
-                                path.0.push(OffsetAccess {
-                                    access: bevy::reflect::Access::TupleIndex(findex),
-                                    offset: None,
-                                });
-
-                                let access = Arc::new(Inspectable {
-                                    root: field.root.clone(),
-                                    name: if en.field_len() > 1 {
-                                        format!("{}", findex)
-                                    } else {
-                                        "".to_string()
-                                    },
-                                    value_path: path.clone(),
-                                    field_path: path,
-                                    can_remove: false,
-                                    attributes: field.attributes,
-                                });
-                                if let Some(view_ref) = factories.create_inspector(cx, access) {
-                                    fields.push(view_ref);
-                                }
-                            }
-                            fields.into_view_child()
-                        }
-
-                        VariantType::Unit => ().into_view_child(),
-                    }
-                } else {
-                    ().into_view_child()
-                }
-            } else {
-                ().into_view_child()
-            },
+            EnumContentInspector(self.0.clone()),
         )
     }
 }
@@ -135,57 +68,59 @@ impl ViewTemplate for VariantSelector {
         };
 
         let target = self.target.clone();
-        match target
-            .reflect(cx)
-            .unwrap()
-            .get_represented_type_info()
-            .unwrap()
-        {
-            TypeInfo::Enum(en) => {
-                let num_variants = en.variant_len();
-                let mut items: Vec<ViewChild> = Vec::new();
-                let registry = cx.world().resource::<AppTypeRegistry>().0.clone();
-                let registry_lock = registry.read();
-                for findex in 0..num_variants {
-                    let variant = en.variant_at(findex).unwrap();
-                    let variant_default = variant_default_value(variant, &registry_lock);
-                    if variant_default.is_none() {
-                        continue;
-                    }
-                    items.push(
-                        SetVariantItem {
-                            field: target.clone(),
-                            variant_name: variant.name().to_string(),
-                            variant_index: findex,
+        Dynamic::new(
+            match target
+                .reflect(cx)
+                .unwrap()
+                .get_represented_type_info()
+                .unwrap()
+            {
+                TypeInfo::Enum(en) => {
+                    let num_variants = en.variant_len();
+                    let mut items: Vec<ViewChild> = Vec::new();
+                    let registry = cx.world().resource::<AppTypeRegistry>().0.clone();
+                    let registry_lock = registry.read();
+                    for findex in 0..num_variants {
+                        let variant = en.variant_at(findex).unwrap();
+                        let variant_default = variant_default_value(variant, &registry_lock);
+                        if variant_default.is_none() {
+                            continue;
                         }
-                        .into_view_child(),
-                    );
-                }
+                        items.push(
+                            SetVariantItem {
+                                field: target.clone(),
+                                variant_name: variant.name().to_string(),
+                                variant_index: findex,
+                            }
+                            .into_view_child(),
+                        );
+                    }
 
-                if !items.is_empty() {
-                    let variant_name = variant_name.clone();
-                    MenuButton::new()
-                        .children(variant_name)
-                        .popup(
-                            MenuPopup::new()
-                                .side(FloatSide::Bottom)
-                                .align(FloatAlign::End)
-                                .children(items),
-                        )
-                        .size(Size::Sm)
-                        .into_view_child()
-                } else {
+                    if !items.is_empty() {
+                        let variant_name = variant_name.clone();
+                        MenuButton::new()
+                            .children(variant_name)
+                            .popup(
+                                MenuPopup::new()
+                                    .side(FloatSide::Bottom)
+                                    .align(FloatAlign::End)
+                                    .children(items),
+                            )
+                            .size(Size::Sm)
+                            .into_view_child()
+                    } else {
+                        ().into_view_child()
+                    }
+                }
+                _ => {
+                    println!(
+                        "Fallback: {}",
+                        target.reflect(cx).unwrap().reflect_type_path()
+                    );
                     ().into_view_child()
                 }
-            }
-            _ => {
-                println!(
-                    "Fallback: {}",
-                    target.reflect(cx).unwrap().reflect_type_path()
-                );
-                ().into_view_child()
-            }
-        }
+            },
+        )
     }
 }
 
@@ -268,5 +203,82 @@ fn variant_default_value(variant: &VariantInfo, registry: &TypeRegistry) -> Opti
         bevy::reflect::VariantInfo::Unit(_) => {
             Some(DynamicEnum::new(variant.name(), DynamicVariant::Unit))
         }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct EnumContentInspector(pub(crate) Arc<Inspectable>);
+
+impl ViewTemplate for EnumContentInspector {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let field = self.0.clone();
+        let factories = cx.use_resource::<InspectorFactoryRegistry>();
+        Dynamic::new(if let Some(reflect) = field.reflect(cx) {
+            if let ReflectRef::Enum(en) = reflect.reflect_ref() {
+                let variant = en.variant_type();
+                match variant {
+                    VariantType::Struct => {
+                        let mut fields: Vec<ViewChild> = Vec::new();
+                        for findex in 0..en.field_len() {
+                            let name = en.name_at(findex).unwrap().to_string();
+                            let mut path = field.value_path.clone();
+                            path.0.push(OffsetAccess {
+                                access: bevy::reflect::Access::Field(name.clone().into()),
+                                offset: None,
+                            });
+
+                            let access = Arc::new(Inspectable {
+                                root: field.root.clone(),
+                                name: name.clone(),
+                                value_path: path,
+                                field_path: field.value_path.clone(),
+                                can_remove: false,
+                                attributes: field.attributes,
+                            });
+                            if let Some(view_ref) = factories.create_inspector(cx, access) {
+                                fields.push(Dynamic::new(view_ref).into_view_child());
+                            }
+                        }
+                        fields.into_view_child()
+                    }
+
+                    VariantType::Tuple => {
+                        let mut fields: Vec<ViewChild> = Vec::new();
+                        for findex in 0..en.field_len() {
+                            // let variant = en.field_at(findex).unwrap();
+                            let mut path = field.value_path.clone();
+                            path.0.push(OffsetAccess {
+                                access: bevy::reflect::Access::TupleIndex(findex),
+                                offset: None,
+                            });
+
+                            let access = Arc::new(Inspectable {
+                                root: field.root.clone(),
+                                name: if en.field_len() > 1 {
+                                    format!("{}", findex)
+                                } else {
+                                    "".to_string()
+                                },
+                                value_path: path.clone(),
+                                field_path: path,
+                                can_remove: false,
+                                attributes: field.attributes,
+                            });
+                            if let Some(view_ref) = factories.create_inspector(cx, access) {
+                                fields.push(Dynamic::new(view_ref).into_view_child());
+                            }
+                        }
+                        fields.into_view_child()
+                    }
+
+                    VariantType::Unit => ().into_view_child(),
+                }
+            } else {
+                ().into_view_child()
+            }
+        } else {
+            ().into_view_child()
+        })
     }
 }
