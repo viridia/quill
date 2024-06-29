@@ -1,5 +1,6 @@
 use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, NodeSpan, View, ViewThunk};
 use bevy::{
+    core::Name,
     hierarchy::BuildWorldChildren,
     prelude::{Component, Entity, World},
 };
@@ -44,7 +45,12 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
     fn build(&self, cx: &mut Cx) -> Self::State {
         let tick = cx.world_mut().change_tick();
         let parent = cx.owner();
-        let child_entity = cx.world_mut().spawn_empty().set_parent(parent).id();
+        let child_entity = cx
+            .world_mut()
+            .spawn_empty()
+            .insert(Name::new(std::any::type_name::<Self>()))
+            .set_parent(parent)
+            .id();
 
         #[cfg(feature = "verbose")]
         info!("build() {}", child_entity);

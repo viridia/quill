@@ -4,6 +4,7 @@ use crate::{
     NodeSpan,
 };
 use bevy::{
+    core::{DebugName, Name},
     hierarchy::Parent,
     log::warn,
     prelude::{Added, Component, Entity, With, World},
@@ -419,100 +420,102 @@ pub(crate) fn build_views(world: &mut World) {
     }
 }
 
+const MAX_DIVERGENCE_CT: usize = 32;
+
+/// Reaction control system (RCS)
 pub(crate) fn rebuild_views(world: &mut World) {
     // Record the changed entities for debugging purposes.
-    if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
-        // Check for empty first to avoid setting mutation flag.
-        if !tracing.0.is_empty() {
-            tracing.0.clear();
+    let is_tracing = world.get_resource_mut::<TrackingScopeTracing>().is_some();
+    let mut all_reactions: Vec<Entity> = Vec::new();
+    let mut iteration_ct: usize = 0;
+    let mut divergence_ct: usize = 0;
+    let mut prev_change_ct: usize = 0;
+
+    loop {
+        let this_run = if iteration_ct > 0 {
+            world.increment_change_tick()
+        } else {
+            world.change_tick()
+        };
+
+        // Scan changed resources
+        let mut scopes = world.query::<(Entity, &mut TrackingScope, &ViewThunk)>();
+        let changed = scopes
+            .iter(world)
+            .filter_map(|(e, scope, _)| {
+                if scope.dependencies_changed(world, this_run) {
+                    Some(e)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        // Quit if there are no changes.
+        if changed.is_empty() {
+            break;
         }
-    }
 
-    // let mut divergence_ct: usize = 0;
-    // let mut prev_change_ct: usize = 0;
-    let this_run = world.change_tick();
+        if is_tracing {
+            all_reactions.extend(changed.clone());
+        }
 
-    // Scan changed resources
-    let mut scopes = world.query::<(Entity, &mut TrackingScope, &ViewThunk)>();
-    let changed = scopes
-        .iter(world)
-        .filter_map(|(e, scope, _)| {
-            if scope.dependencies_changed(world, this_run) {
-                Some(e)
-            } else {
-                None
+        // println!("Reaction iteration: {}", iteration_ct);
+
+        // Do all cleanups first.
+        for scope_entity in changed.iter() {
+            // println!("Rebuilding view {:?}", scope_entity);
+            // Call registered cleanup functions
+            let Ok((_, mut scope, _)) = scopes.get_mut(world, *scope_entity) else {
+                continue;
+            };
+            let mut cleanups = std::mem::take(&mut scope.cleanups);
+            for cleanup_fn in cleanups.drain(..) {
+                cleanup_fn(world);
             }
-        })
-        .collect::<Vec<_>>();
+        }
 
-    // Record the changed entities for debugging purposes.
+        // Now rebuild all changed views and record depdendencies.
+        for scope_entity in changed.iter() {
+            // if let Some(name) = world.get::<Name>(*scope_entity) {
+            //     println!("Updating {}", name);
+            // } else {
+            //     println!("Updating {}", *scope_entity);
+            // }
+            // Run the reaction
+            let Ok((_, mut scope, view_cell)) = scopes.get_mut(world, *scope_entity) else {
+                continue;
+            };
+            let mut next_scope = TrackingScope::new(this_run);
+            next_scope.take_hooks(scope.as_mut());
+            let output_changed = view_cell.0.rebuild(world, *scope_entity, &mut next_scope);
+            if output_changed {
+                #[cfg(feature = "verbose")]
+                info!("View output changed: {}", *scope_entity);
+                world.entity_mut(*scope_entity).insert(OutputChanged);
+            }
+
+            // Replace deps and cleanups in the current scope with the next scope.
+            let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
+            scope.take_deps(&mut next_scope);
+            scope.tick = this_run;
+        }
+
+        iteration_ct += 1;
+        let change_ct = changed.len();
+        if change_ct >= prev_change_ct {
+            divergence_ct += 1;
+            if divergence_ct > MAX_DIVERGENCE_CT {
+                panic!("Reactions failed to converge, num changes: {}", change_ct);
+            }
+        }
+        prev_change_ct = change_ct;
+    }
+
+    // Record the changed entities for diagnostic purposes.
     if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
-        if !changed.is_empty() {
-            tracing.0.extend(changed.iter().copied());
-        }
+        std::mem::swap(&mut tracing.0, &mut all_reactions);
     }
-
-    // TODO: Run this in a loop and check for convergence.
-
-    // Do all cleanups first.
-    for scope_entity in changed.iter() {
-        // println!("Rebuilding view {:?}", scope_entity);
-        // Call registered cleanup functions
-        let Ok((_, mut scope, _)) = scopes.get_mut(world, *scope_entity) else {
-            continue;
-        };
-        let mut cleanups = std::mem::take(&mut scope.cleanups);
-        for cleanup_fn in cleanups.drain(..) {
-            cleanup_fn(world);
-        }
-    }
-
-    // Now rebuild all changed views and record depdendencies.
-    for scope_entity in changed.iter() {
-        // Run the reaction
-        let Ok((_, mut scope, view_cell)) = scopes.get_mut(world, *scope_entity) else {
-            continue;
-        };
-        let mut next_scope = TrackingScope::new(this_run);
-        next_scope.take_hooks(scope.as_mut());
-        let output_changed = view_cell.0.rebuild(world, *scope_entity, &mut next_scope);
-        if output_changed {
-            #[cfg(feature = "verbose")]
-            info!("View output changed: {}", *scope_entity);
-            world.entity_mut(*scope_entity).insert(OutputChanged);
-        }
-
-        // Replace deps and cleanups in the current scope with the next scope.
-        let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
-        scope.take_deps(&mut next_scope);
-        scope.tick = this_run;
-    }
-
-    // loop {
-    //     // This is inside a loop because rendering may trigger further changes.
-
-    //     // This means that either a presenter was just added, or its props got modified by a parent.
-    //     let mut qf =
-    //         world.query_filtered::<Entity, (With<ViewHandle>, With<PresenterStateChanged>)>();
-    //     for e in qf.iter_mut(world) {
-    //         v.insert(e);
-    //     }
-
-    //     for e in v.iter() {
-    //         world.entity_mut(*e).remove::<PresenterStateChanged>();
-    //     }
-
-    //     // Most of the time changes will converge, that is, the number of changed presenters
-    //     // decreases each time through the loop. A "divergence" is when that fails to happen.
-    //     // We tolerate a maximum number of divergences before giving up.
-    //     let change_ct = v.len();
-    //     if change_ct >= prev_change_ct {
-    //         divergence_ct += 1;
-    //         if divergence_ct > MAX_DIVERGENCE_CT {
-    //             panic!("Reactions failed to converge, num changes: {}", change_ct);
-    //         }
-    //     }
-    //     prev_change_ct = change_ct;
 }
 
 pub(crate) fn reattach_children(world: &mut World) {

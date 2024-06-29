@@ -85,7 +85,9 @@ impl<'w, 'p> CreateBistableTransition for Cx<'w, 'p> {
         let mut entt = self.world_mut().entity_mut(entity);
         match entt.get_mut::<BistableTransitionStateMachine>() {
             Some(mut ee) => {
-                ee.open = open;
+                if ee.open != open {
+                    ee.open = open;
+                }
             }
             None => {
                 entt.insert((
