@@ -29,6 +29,7 @@ use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
 pub use callback::*;
 pub use cond::Cond;
 pub use cx::Cx;
+pub use cx::EffectOptions;
 pub use dynamic::Dynamic;
 pub use element::*;
 pub use for_each::ForEach;

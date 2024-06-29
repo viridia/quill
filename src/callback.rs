@@ -1,6 +1,9 @@
-use std::any::TypeId;
+use std::{any::TypeId, sync::Arc};
 
-use bevy::{ecs::system::SystemId, prelude::*};
+use bevy::{
+    ecs::{system::SystemId, world::Command},
+    prelude::*,
+};
 
 use crate::Cx;
 
@@ -63,5 +66,13 @@ impl RunCallback for World {
 impl<'p, 'w> RunCallback for Cx<'p, 'w> {
     fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
         self.world_mut().run_callback(callback, props);
+    }
+}
+
+pub(crate) struct UnregisterCallbackCmd(pub(crate) Arc<dyn AnyCallback + Send + Sync>);
+
+impl Command for UnregisterCallbackCmd {
+    fn apply(self, world: &mut World) {
+        self.0.remove(world)
     }
 }

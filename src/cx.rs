@@ -1,6 +1,7 @@
 use std::{cell::RefCell, marker::PhantomData, sync::Arc};
 
 use bevy::{
+    ecs::world::DeferredWorld,
     hierarchy::{BuildWorldChildren, Parent},
     prelude::{Component, Entity, IntoSystem, Resource, World},
 };
@@ -12,6 +13,20 @@ use crate::{tracking_scope::TrackingScope, ReadMutable};
 struct Memo<R: Clone, D: Clone> {
     result: R,
     deps: D,
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub struct EffectOptions {
+    /// Run the effect once when first called. Default true.
+    pub run_immediately: bool,
+}
+
+impl Default for EffectOptions {
+    fn default() -> Self {
+        Self {
+            run_immediately: true,
+        }
+    }
 }
 
 /// A context parameter that is passed to views and callbacks. It contains the reactive
@@ -126,6 +141,25 @@ impl<'p, 'w> Cx<'p, 'w> {
         effect_fn: S,
         deps: D,
     ) {
+        self.create_effect_ext(effect_fn, deps, EffectOptions::default())
+    }
+
+    /// Create an effect which runs each time the reactive context is executed, *and* the given
+    /// dependencies change. This version takes additional options.
+    ///
+    /// Arguments:
+    /// - `effect_fn`: The effect function to run.
+    /// - `deps`: The dependencies which trigger the effect.
+    /// - `options`: Additional options for running the effect.
+    pub fn create_effect_ext<
+        S: Fn(&mut World, D) + Send + Sync,
+        D: PartialEq + Clone + Send + Sync + 'static,
+    >(
+        &mut self,
+        effect_fn: S,
+        deps: D,
+        options: EffectOptions,
+    ) {
         let hook = self.tracking.borrow_mut().next_hook();
         match hook {
             Some(HookState::Effect(prev_deps)) => match prev_deps.downcast_ref::<D>() {
@@ -145,7 +179,9 @@ impl<'p, 'w> Cx<'p, 'w> {
                 panic!("Expected create_effect() hook, found something else");
             }
             None => {
-                effect_fn(self.world, deps.clone());
+                if options.run_immediately {
+                    effect_fn(self.world, deps.clone());
+                }
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Effect(Arc::new(deps)));
@@ -384,6 +420,12 @@ impl<'p, 'w> Cx<'p, 'w> {
                 _ => return None,
             }
         }
+    }
+
+    /// Add a cleanup function which is run once before the next reaction, or when the owner
+    /// entity for this context is despawned.
+    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut DeferredWorld) + Send + Sync + 'static) {
+        self.tracking.borrow_mut().add_cleanup(cleanup);
     }
 }
 

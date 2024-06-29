@@ -4,7 +4,8 @@ use crate::{
     NodeSpan,
 };
 use bevy::{
-    core::{DebugName, Name},
+    // core::{DebugName, Name},
+    ecs::world::DeferredWorld,
     hierarchy::Parent,
     log::warn,
     prelude::{Added, Component, Entity, With, World},
@@ -463,17 +464,7 @@ pub(crate) fn reaction_control_system(world: &mut World) {
         // println!("Reaction iteration: {}", iteration_ct);
 
         // Do all cleanups first.
-        for scope_entity in changed.iter() {
-            // println!("Rebuilding view {:?}", scope_entity);
-            // Call registered cleanup functions
-            let Ok((_, mut scope, _)) = scopes.get_mut(world, *scope_entity) else {
-                continue;
-            };
-            let mut cleanups = std::mem::take(&mut scope.cleanups);
-            for cleanup_fn in cleanups.drain(..) {
-                cleanup_fn(world);
-            }
-        }
+        run_cleanups(world, &changed);
 
         // Now rebuild all changed views and record depdendencies.
         for scope_entity in changed.iter() {
@@ -515,6 +506,20 @@ pub(crate) fn reaction_control_system(world: &mut World) {
     // Record the changed entities for diagnostic purposes.
     if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
         std::mem::swap(&mut tracing.0, &mut all_reactions);
+    }
+}
+
+// Call registered cleanup functions
+fn run_cleanups(world: &mut World, changed: &[Entity]) {
+    let mut deferred = DeferredWorld::from(world);
+    for scope_entity in changed.iter() {
+        let Some(mut scope) = deferred.get_mut::<TrackingScope>(*scope_entity) else {
+            continue;
+        };
+        let mut cleanups = std::mem::take(&mut scope.cleanups);
+        for cleanup_fn in cleanups.drain(..) {
+            cleanup_fn(&mut deferred);
+        }
     }
 }
 

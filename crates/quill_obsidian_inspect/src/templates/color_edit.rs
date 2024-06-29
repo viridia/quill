@@ -186,14 +186,6 @@ impl ViewTemplate for ColorEdit {
         let on_change = self.on_change;
         let state_capture = cx.create_capture(state);
 
-        // TODO: Recent Colors
-        // cx.on_cleanup(move |world| {
-        //     // Add color to recent colors.
-        //     let color = state.get(world).rgb;
-        //     let mut recent_colors = world.get_resource_mut::<RecentColors>().unwrap();
-        //     recent_colors.add(color);
-        // });
-
         Element::<NodeBundle>::new().style(style_grid).children((
             Element::<NodeBundle>::new().style(style_top_row).children((
                 Swatch::new(state.rgb).style(style_swatch),

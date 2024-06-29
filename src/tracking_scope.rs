@@ -6,13 +6,13 @@ use std::{
 use bevy::{
     ecs::{
         component::{ComponentId, Tick},
-        world::DeferredWorld,
+        world::{Command, DeferredWorld},
     },
     prelude::*,
     utils::HashSet,
 };
 
-use crate::AnyCallback;
+use crate::{AnyCallback, UnregisterCallbackCmd};
 
 /// Tracks the sequence of hook calls within a reaction.
 #[derive(Clone)]
@@ -49,7 +49,7 @@ pub struct TrackingScope {
 
     /// List of cleanup functions to call when the scope is dropped.
     #[allow(clippy::type_complexity)]
-    pub(crate) cleanups: Vec<Box<dyn FnOnce(&mut World) + 'static + Sync + Send>>,
+    pub(crate) cleanups: Vec<Box<dyn FnOnce(&mut DeferredWorld) + 'static + Sync + Send>>,
 }
 
 /// A resource which, if inserted, displays the view entities that have reacted this frame.
@@ -99,7 +99,10 @@ impl TrackingScope {
     }
 
     /// Add a cleanup function which will be run once before the next reaction.
-    pub(crate) fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
+    pub(crate) fn add_cleanup(
+        &mut self,
+        cleanup: impl FnOnce(&mut DeferredWorld) + 'static + Sync + Send,
+    ) {
         self.cleanups.push(Box::new(cleanup));
     }
 
@@ -180,27 +183,35 @@ impl TrackingScope {
 
     /// Raze the entities and components that were created during the reaction.
     pub(crate) fn raze(&mut self, world: &mut World) {
+        let mut deferred = DeferredWorld::from(world);
         let mut cleanups = std::mem::take(&mut self.cleanups);
         for cleanup_fn in cleanups.drain(..) {
-            cleanup_fn(world);
+            cleanup_fn(&mut deferred);
         }
-        // let deferred = DeferredWorld::from(world);
         for hook in self.hook_states.drain(..).rev() {
             match hook {
                 HookState::Entity(ent) => {
-                    world.entity_mut(ent).despawn();
+                    deferred.commands().add(DespawnEntityCmd(ent));
                 }
                 HookState::Mutable(mutable_ent, _) => {
-                    world.entity_mut(mutable_ent).despawn();
+                    deferred.commands().add(DespawnEntityCmd(mutable_ent));
                 }
                 HookState::Callback(callback) => {
-                    callback.remove(world);
+                    deferred.commands().add(UnregisterCallbackCmd(callback));
                 }
                 HookState::Effect(_) | HookState::Memo(_) => {
-                    // Do nothing
+                    // Nothing to do
                 }
             }
         }
+    }
+}
+
+struct DespawnEntityCmd(Entity);
+
+impl Command for DespawnEntityCmd {
+    fn apply(self, world: &mut World) {
+        world.despawn(self.0);
     }
 }
 

@@ -87,6 +87,9 @@ pub struct MenuButton {
 
     /// The tab index of the button (default 0).
     pub tab_index: i32,
+
+    /// Callback which is called when the open state of the popup changes.
+    pub on_state_change: Option<Callback<bool>>,
 }
 
 impl MenuButton {
@@ -160,6 +163,12 @@ impl MenuButton {
         self.tab_index = tab_index;
         self
     }
+
+    /// Set a callback to be called when the popup opens or closes.
+    pub fn on_state_change(mut self, callback: Callback<bool>) -> Self {
+        self.on_state_change = Some(callback);
+        self
+    }
 }
 
 impl ViewTemplate for MenuButton {
@@ -177,6 +186,19 @@ impl ViewTemplate for MenuButton {
 
         let size = self.size;
         let popup = self.popup.clone();
+        let on_state_change = self.on_state_change;
+
+        cx.create_effect_ext(
+            |world, open| {
+                if let Some(cb) = on_state_change {
+                    world.run_callback(cb, open)
+                }
+            },
+            open.get(cx),
+            EffectOptions {
+                run_immediately: false,
+            },
+        );
 
         cx.insert(MenuAnchor(id_anchor));
         cx.insert(On::<MenuCloseEvent>::run(move |world: &mut World| {

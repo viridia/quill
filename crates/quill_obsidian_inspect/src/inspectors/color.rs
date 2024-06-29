@@ -27,7 +27,7 @@ fn style_menu_icon(ss: &mut StyleBuilder) {
 
 use crate::{
     templates::{
-        color_edit::{ColorEdit, ColorEditState, ColorMode},
+        color_edit::{ColorEdit, ColorEditState, ColorMode, RecentColors},
         field_label::FieldLabel,
     },
     Inspectable,
@@ -102,7 +102,19 @@ impl ViewTemplate for SrgbaInspector {
                     )
                     .size(Size::Xxs)
                     .minimal(true)
-                    .no_caret(true),
+                    .no_caret(true)
+                    .on_state_change(cx.create_callback(
+                        move |open: In<bool>, world: &mut World| {
+                            // When popup closes, we're done editing, so add to recent colors.
+                            if !*open {
+                                // Add color to recent colors.
+                                let color = state.get(world).rgb;
+                                let mut recent_colors =
+                                    world.get_resource_mut::<RecentColors>().unwrap();
+                                recent_colors.add(color);
+                            }
+                        },
+                    )),
             )),
         )
     }
