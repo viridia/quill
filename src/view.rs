@@ -423,7 +423,7 @@ pub(crate) fn build_views(world: &mut World) {
 const MAX_DIVERGENCE_CT: usize = 32;
 
 /// Reaction control system (RCS)
-pub(crate) fn rebuild_views(world: &mut World) {
+pub(crate) fn reaction_control_system(world: &mut World) {
     // Record the changed entities for debugging purposes.
     let is_tracing = world.get_resource_mut::<TrackingScopeTracing>().is_some();
     let mut all_reactions: Vec<Entity> = Vec::new();

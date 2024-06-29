@@ -50,7 +50,7 @@ impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(StyleBuilderPlugin).add_systems(
             Update,
-            (build_views, rebuild_views, reattach_children)
+            (build_views, reaction_control_system, reattach_children)
                 .chain()
                 .before(StyleBuilderSystemSet),
         );
