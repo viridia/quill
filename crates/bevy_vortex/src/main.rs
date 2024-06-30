@@ -9,6 +9,7 @@ use bevy_mod_picking::{
     DefaultPickingPlugins,
 };
 use bevy_mod_stylebuilder::*;
+use bevy_quill_obsidian_graph::{GraphDisplay, ObsidianGraphPlugin};
 use quill_obsidian::{
     colors,
     controls::{
@@ -47,6 +48,7 @@ fn style_main(ss: &mut StyleBuilder) {
 fn style_aside(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .background_color(colors::U2)
+        .z_index(-1)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
@@ -74,38 +76,14 @@ fn style_column_group(ss: &mut StyleBuilder) {
 }
 
 fn style_viewport(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.)
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd)
-        .border_left(1)
-        .border_color(Color::BLACK)
-        .pointer_events(false);
-}
-
-fn style_log(ss: &mut StyleBuilder) {
-    ss.background_color("#0008")
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Row)
-        .align_self(ui::AlignSelf::Stretch)
-        .height(ui::Val::Percent(30.))
-        .margin(8);
-}
-
-fn style_log_inner(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd)
-        .align_self(ui::AlignSelf::Stretch)
+    ss.align_self(ui::AlignSelf::Stretch)
+        .min_height(100)
+        .min_width(100)
         .flex_grow(1.)
-        .flex_basis(0)
-        .overflow(ui::OverflowAxis::Clip)
-        .gap(3)
-        .margin(8);
-}
-
-fn style_scroll_area(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.0);
+        .border(1)
+        .border_color(Color::BLACK)
+        .pointer_events(false)
+        .aspect_ratio(1.);
 }
 
 #[derive(Resource)]
@@ -128,7 +106,6 @@ pub enum EditorState {
 #[derive(Resource)]
 pub struct PreviewEntities {
     camera: Entity,
-    overlay: Entity,
 }
 
 #[derive(Resource, Default)]
@@ -149,7 +126,7 @@ fn main() {
         //     ..default()
         // })
         // .insert_resource(TestStruct3(true))
-        .insert_resource(PanelWidth(200.))
+        .insert_resource(PanelWidth(300.))
         .insert_resource(PanelHeight(300.))
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
@@ -161,12 +138,7 @@ fn main() {
             ..default()
         })
         // .add_plugins(InspectorPlugin)
-        .add_plugins((
-            QuillPlugin,
-            ObsidianUiPlugin,
-            // overlays::OverlaysPlugin,
-            // BackdropBackend,
-        ))
+        .add_plugins((QuillPlugin, ObsidianUiPlugin, ObsidianGraphPlugin))
         .add_systems(Startup, (setup, setup_ui.pipe(setup_view_root)))
         .add_systems(
             Update,
@@ -384,7 +356,16 @@ impl ViewTemplate for DemoUi {
                         // ResourcePropertyInspector::<TestStruct2>::new(),
                         // ResourcePropertyInspector::<TestStruct3>::new(),
                         // ReactionsTable,
-                        LogList,
+                        Element::<NodeBundle>::new()
+                            .named("Preview")
+                            .style(style_viewport)
+                            .style_dyn(
+                                move |width, sb: &mut StyleBuilder| {
+                                    sb.width(width - 16.).max_width(width - 16.);
+                                },
+                                panel_width,
+                            )
+                            .insert((viewport::ViewportInsetElement, Pickable::IGNORE)),
                     )),
                 Splitter::new()
                     .direction(SplitterDirection::Vertical)
@@ -426,53 +407,27 @@ impl ViewTemplate for CenterPanel {
             .children((Cond::new(
                 *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
                 NodeGraphDemo {},
-                (
-                    Element::<NodeBundle>::new()
-                        .named("Preview")
-                        .style(style_viewport)
-                        .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
-                        .children(
-                            Element::<NodeBundle>::new()
-                                .named("Log")
-                                .style(style_log)
-                                .children(Element::<NodeBundle>::new().style(style_log_inner)),
-                        ),
-                    Cond::new(
-                        *cx.use_resource::<State<EditorState>>().get() == EditorState::Split,
-                        (
-                            Splitter::new()
-                                .direction(SplitterDirection::Horizontal)
-                                .value(panel_height)
-                                .on_change(drag_call_back),
-                            Element::<NodeBundle>::new()
-                                .style(graph_view_style)
-                                .style_dyn(
-                                    move |height, sb| {
-                                        sb.height(ui::Val::Px(height));
-                                    },
-                                    panel_height,
-                                )
-                                .children(NodeGraphDemo {}),
-                        ),
-                        (),
-                    ),
-                ),
+                NodeGraphDemo {},
             ),))
             .style(wrapper_style)
     }
 }
 
-#[derive(Clone, PartialEq)]
-struct LogList;
+// #[derive(Clone, PartialEq)]
+// struct LogList;
 
-impl ViewTemplate for LogList {
-    type View = impl View;
-    fn create(&self, cx: &mut Cx) -> Self::View {
-        let log = cx.use_resource::<ClickLog>();
-        ListView::new()
-            .children(For::each(log.0.clone(), |msg| msg.clone()))
-            .style(style_scroll_area)
-    }
+// impl ViewTemplate for LogList {
+//     type View = impl View;
+//     fn create(&self, cx: &mut Cx) -> Self::View {
+//         let log = cx.use_resource::<ClickLog>();
+//         ListView::new()
+//             .children(For::each(log.0.clone(), |msg| msg.clone()))
+//             .style(style_scroll_area)
+//     }
+// }
+
+fn style_node_graph(ss: &mut StyleBuilder) {
+    ss.flex_grow(1.).border_left(1).border_color(Color::BLACK);
 }
 
 #[derive(Clone, PartialEq)]
@@ -481,7 +436,7 @@ struct NodeGraphDemo;
 impl ViewTemplate for NodeGraphDemo {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
-        // ()
+        GraphDisplay::new().style(style_node_graph)
     }
 }
 
@@ -511,59 +466,6 @@ impl ViewTemplate for NodeGraphDemo {
 //                 },
 //             ))
 //             .style(style_scroll_area)
-//     }
-// }
-
-// fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
-//     let id = cx.create_entity();
-//     let hovering = cx.create_hover_signal(id);
-//     // let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
-//     let color: Signal<LinearRgba> = cx.create_derived(move |cx| {
-//         if hovering.get(cx) {
-//             colors::ACCENT.into()
-//         } else {
-//             colors::U1.into()
-//         }
-//     });
-
-//     overlays::OverlayShape::for_entity(id, |_cx, sb| {
-//         sb.with_stroke_width(0.3)
-//             .stroke_circle(Vec2::new(0., 0.), 5., 64)
-//             .stroke_polygon(
-//                 &[Vec2::new(-4., -4.), Vec2::new(0., -4.), Vec2::new(-4., 0.)],
-//                 overlays::PolygonOptions {
-//                     start_marker: overlays::StrokeMarker::Arrowhead,
-//                     end_marker: overlays::StrokeMarker::Arrowhead,
-//                     // dash_length: 0.1,
-//                     // gap_length: 0.1,
-//                     closed: true,
-//                     ..default()
-//                 },
-//             );
-//     })
-//     .with_color_signal(color)
-//     .with_pickable(true)
-//     // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))
-//     .insert(TargetCamera(cx.props))
-// }
-
-// struct TransformOverlayDemo;
-
-// impl ViewTemplate for TransformOverlayDemo {
-//     fn create(&self, cx: &mut Cx) -> impl IntoView {
-//         let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
-
-//         let on_change = Some(cx.create_callback(move |cx, new_pos| {
-//             let selected = selected.get(cx).unwrap();
-//             let mut entity = cx.world_mut().entity_mut(selected);
-//             let mut transform = entity.get_mut::<Transform>().unwrap();
-//             transform.translation = new_pos;
-//         }));
-
-//         TransformOverlay {
-//             target: selected,
-//             on_change,
-//         }
 //     }
 // }
 
@@ -656,8 +558,7 @@ fn setup_ui(mut commands: Commands) -> Entity {
     commands
         .spawn((Camera2dBundle {
             camera: Camera {
-                // HUD goes on top of 3D
-                order: 1,
+                order: -1,
                 clear_color: ClearColorConfig::None,
                 ..default()
             },
@@ -682,8 +583,7 @@ fn enter_preview_mode(mut commands: Commands) {
         .id();
 
     // let overlay = commands.spawn(TransformOverlayDemo.to_root()).id();
-    let overlay = commands.spawn_empty().id();
-    commands.insert_resource(PreviewEntities { camera, overlay });
+    commands.insert_resource(PreviewEntities { camera });
 }
 
 fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {

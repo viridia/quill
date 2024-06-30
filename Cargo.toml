@@ -16,7 +16,7 @@ bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
 bevy_mod_picking = { git = "https://github.com/tychedelia/bevy_mod_picking" }
 quill_obsidian = { path = "crates/quill_obsidian" }
 quill_obsidian_inspect = { path = "crates/quill_obsidian_inspect" }
-quill_obsidian_graph = { path = "crates/quill_obsidian_inspect_graph" }
+bevy_quill_obsidian_graph = { path = "crates/bevy_quill_obsidian_graph" }
 
 [dependencies]
 bevy = { workspace = true }

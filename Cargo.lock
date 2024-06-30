@@ -981,6 +981,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_quill_obsidian_graph"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_mod_stylebuilder",
+ "bevy_quill",
+ "quill_obsidian",
+]
+
+[[package]]
 name = "bevy_reflect"
 version = "0.14.0-dev"
 source = "git+https://github.com/bevyengine/bevy.git#ee2487a6e2b91d6df3cb8ecf98cc71e19965a87d"
@@ -1258,6 +1269,7 @@ dependencies = [
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
  "bevy_quill",
+ "bevy_quill_obsidian_graph",
  "quill_obsidian",
 ]
 
@@ -3190,10 +3202,6 @@ dependencies = [
  "bevy_mod_stylebuilder",
  "bevy_quill",
 ]
-
-[[package]]
-name = "quill_obsidian_graph"
-version = "0.1.0"
 
 [[package]]
 name = "quill_obsidian_inspect"

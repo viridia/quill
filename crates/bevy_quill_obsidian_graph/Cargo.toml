@@ -1,5 +1,5 @@
 [package]
-name = "bevy_vortex"
+name = "bevy_quill_obsidian_graph"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,4 +9,3 @@ bevy_mod_picking = { workspace = true }
 bevy_mod_stylebuilder = { workspace = true }
 bevy_quill = { path = "../.." }
 quill_obsidian = { workspace = true }
-bevy_quill_obsidian_graph = { workspace = true }
