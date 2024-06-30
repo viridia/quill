@@ -1,12 +1,7 @@
 //! Example of a simple UI layout
 #![feature(impl_trait_in_assoc_type)]
 
-use bevy::{
-    asset::io::{file::FileAssetReader, AssetSource},
-    color::palettes,
-    prelude::*,
-    ui,
-};
+use bevy::{color::palettes, prelude::*, ui};
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
@@ -45,11 +40,6 @@ fn style_swatch(ss: &mut StyleBuilder) {
 
 fn main() {
     App::new()
-        .register_asset_source(
-            "obsidian_ui",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("crates/quill_obsidian/assets"))),
-        )
         .add_plugins((
             DefaultPlugins,
             DefaultPickingPlugins,

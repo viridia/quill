@@ -239,7 +239,7 @@ impl ViewTemplate for StructInspectorHeaderControls {
             !missing.is_empty(),
             MenuButton::new()
                 .children(
-                    Icon::new("obsidian_ui://icons/add_box.png")
+                    Icon::new("embedded://quill_obsidian/assets/icons/add_box.png")
                         .color(Color::from(colors::DIM))
                         .style(style_menu_icon),
                 )

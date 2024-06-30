@@ -82,7 +82,7 @@ impl ViewTemplate for SrgbaInspector {
                 Spacer,
                 MenuButton::new()
                     .children(
-                        Icon::new("obsidian_ui://icons/tune.png")
+                        Icon::new("embedded://quill_obsidian/assets/icons/tune.png")
                             .size(Vec2::splat(16.0))
                             .style(style_menu_icon)
                             .color(Color::from(colors::DIM)),

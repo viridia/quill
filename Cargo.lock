@@ -1251,6 +1251,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_vortex"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_mod_stylebuilder",
+ "bevy_quill",
+ "quill_obsidian",
+]
+
+[[package]]
 name = "bevy_window"
 version = "0.14.0-dev"
 source = "git+https://github.com/bevyengine/bevy.git#ee2487a6e2b91d6df3cb8ecf98cc71e19965a87d"

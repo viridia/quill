@@ -1,0 +1,11 @@
+[package]
+name = "bevy_vortex"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { workspace = true }
+bevy_mod_picking = { workspace = true }
+bevy_mod_stylebuilder = { workspace = true }
+bevy_quill = { path = "../.." }
+quill_obsidian = { workspace = true }

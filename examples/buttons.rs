@@ -1,11 +1,7 @@
 //! Demo of button variations.
 #![feature(impl_trait_in_assoc_type)]
 
-use bevy::{
-    asset::io::{file::FileAssetReader, AssetSource},
-    prelude::*,
-    ui,
-};
+use bevy::{prelude::*, ui};
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
@@ -38,11 +34,6 @@ fn style_row(ss: &mut StyleBuilder) {
 
 fn main() {
     App::new()
-        .register_asset_source(
-            "obsidian_ui",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("crates/quill_obsidian/assets"))),
-        )
         .add_plugins((
             DefaultPlugins,
             DefaultPickingPlugins,
@@ -185,38 +176,39 @@ impl ViewTemplate for ButtonsDemo {
                 )),
                 "IconButton",
                 Element::<NodeBundle>::new().style(style_row).children((
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").on_click(click),
-                    // IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                        .on_click(click),
+                    // IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                     //     .variant(ButtonVariant::Primary),
-                    // IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    // IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                     //     .variant(ButtonVariant::Danger),
-                    // IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    // IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                     //     .variant(ButtonVariant::Selected),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .on_click(click)
                         .minimal(true),
                 )),
                 "IconButton Size",
                 Element::<NodeBundle>::new().style(style_row).children((
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xl)
                         .on_click(click),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Lg)
                         .on_click(click),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Md)
                         .on_click(click),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Sm)
                         .on_click(click),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xs)
                         .on_click(click),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xxs)
                         .on_click(click),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xxxs)
                         .on_click(click),
                 )),

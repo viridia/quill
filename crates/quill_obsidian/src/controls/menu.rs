@@ -310,7 +310,7 @@ impl ViewTemplate for MenuButton {
                 Cond::new(
                     self.no_caret,
                     (),
-                    Icon::new("obsidian_ui://icons/chevron_down.png")
+                    Icon::new("embedded://quill_obsidian/assets/icons/chevron_down.png")
                         .color(Color::from(colors::DIM))
                         .style(|ss: &mut StyleBuilder| {
                             ss.margin_right(4);

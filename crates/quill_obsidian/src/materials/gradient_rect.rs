@@ -14,6 +14,6 @@ pub(crate) struct GradientRectMaterial {
 
 impl UiMaterial for GradientRectMaterial {
     fn fragment_shader() -> ShaderRef {
-        "obsidian_ui://shaders/gradient_rect.wgsl".into()
+        "embedded://quill_obsidian/assets/shaders/gradient_rect.wgsl".into()
     }
 }

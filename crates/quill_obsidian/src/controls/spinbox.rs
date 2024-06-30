@@ -46,7 +46,7 @@ fn style_spinbox_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::FlexEnd)
         .height(ui::Val::Percent(100.))
-        .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
+        .font("embedded://quill_obsidian/assets/fonts/Open_Sans/static/OpenSans-Medium.ttf")
         .font_size(16)
         .overflow(ui::OverflowAxis::Hidden)
         .padding((3, 0))
@@ -244,7 +244,7 @@ impl ViewTemplate for SpinBox {
                 .children((
                     Cond::new(
                         show_buttons,
-                        IconButton::new("obsidian_ui://icons/chevron_left.png")
+                        IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                             .corners(RoundedCorners::Left)
                             .style(style_spinbox_button)
                             .minimal(true)
@@ -337,7 +337,7 @@ impl ViewTemplate for SpinBox {
                         }),
                     Cond::new(
                         show_buttons,
-                        IconButton::new("obsidian_ui://icons/chevron_right.png")
+                        IconButton::new("embedded://quill_obsidian/assets/icons/chevron_right.png")
                             .corners(RoundedCorners::Right)
                             .minimal(true)
                             .style(style_spinbox_button)

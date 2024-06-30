@@ -1,5 +1,5 @@
 #![feature(impl_trait_in_assoc_type, associated_type_defaults)]
-use bevy::prelude::*;
+use bevy::{asset::embedded_asset, prelude::*};
 
 mod rounded_corners;
 
@@ -52,6 +52,21 @@ pub use hooks::is_hover::UseIsHover as _;
 
 impl Plugin for ObsidianUiPlugin {
     fn build(&self, app: &mut App) {
+        embedded_asset!(app, "assets/fonts/Open_Sans/static/OpenSans-Medium.ttf");
+        embedded_asset!(app, "assets/icons/add_box.png");
+        embedded_asset!(app, "assets/icons/add.png");
+        embedded_asset!(app, "assets/icons/checkmark.png");
+        embedded_asset!(app, "assets/icons/chevron_down.png");
+        embedded_asset!(app, "assets/icons/chevron_left.png");
+        embedded_asset!(app, "assets/icons/chevron_right.png");
+        embedded_asset!(app, "assets/icons/close.png");
+        embedded_asset!(app, "assets/icons/disc.png");
+        embedded_asset!(app, "assets/icons/gradient_thumb.png");
+        embedded_asset!(app, "assets/icons/remove.png");
+        embedded_asset!(app, "assets/icons/tune.png");
+        embedded_asset!(app, "assets/shaders/gradient_rect.wgsl");
+        embedded_asset!(app, "assets/shaders/swatch_rect.wgsl");
+        embedded_asset!(app, "assets/shaders/slider_rect.wgsl");
         app.add_plugins((
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             UiMaterialPlugin::<SliderRectMaterial>::default(),

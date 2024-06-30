@@ -12,6 +12,6 @@ pub(crate) struct SwatchRectMaterial {
 
 impl UiMaterial for SwatchRectMaterial {
     fn fragment_shader() -> ShaderRef {
-        "obsidian_ui://shaders/swatch_rect.wgsl".into()
+        "embedded://quill_obsidian/assets/shaders/swatch_rect.wgsl".into()
     }
 }

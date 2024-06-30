@@ -41,7 +41,7 @@ fn style_checkbox_border(ss: &mut StyleBuilder) {
 
 fn style_checkbox_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
-        .background_image("obsidian_ui://textures/checkmark.png")
+        .background_image("embedded://quill_obsidian/assets/icons/checkmark.png")
         // .background_color(colors::FOREGROUND)
         .position(ui::PositionType::Absolute)
         .left(2)

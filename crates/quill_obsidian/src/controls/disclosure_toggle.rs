@@ -184,7 +184,7 @@ impl ViewTemplate for DisclosureToggle {
                 focused,
             )
             .children(
-                Icon::new("obsidian_ui://icons/chevron_right.png")
+                Icon::new("embedded://quill_obsidian/assets/icons/chevron_right.png")
                     .color({
                         match (self.disabled, hovering) {
                             (true, _) => Color::from(colors::DIM).with_alpha(0.2),

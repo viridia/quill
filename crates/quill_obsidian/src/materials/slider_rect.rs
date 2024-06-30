@@ -16,6 +16,6 @@ pub struct SliderRectMaterial {
 
 impl UiMaterial for SliderRectMaterial {
     fn fragment_shader() -> ShaderRef {
-        "obsidian_ui://shaders/slider_rect.wgsl".into()
+        "embedded://quill_obsidian/assets/shaders/slider_rect.wgsl".into()
     }
 }

@@ -131,12 +131,12 @@ impl ViewTemplate for ListInspectorHeaderControls {
         });
 
         (
-            IconButton::new("obsidian_ui://icons/remove.png")
+            IconButton::new("embedded://quill_obsidian/assets/icons/remove.png")
                 .size(Size::Xs)
                 .disabled(pop_disabled)
                 .minimal(true)
                 .on_click(pop),
-            IconButton::new("obsidian_ui://icons/add.png")
+            IconButton::new("embedded://quill_obsidian/assets/icons/add.png")
                 .size(Size::Xs)
                 .minimal(true)
                 .on_click(push),

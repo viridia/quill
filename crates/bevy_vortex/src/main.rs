@@ -1,8 +1,5 @@
 //! Example of a comprehensive UI layout
 #![feature(impl_trait_in_assoc_type)]
-// mod node_graph_demo;
-mod reflect_demo;
-// mod transform_overlay;
 
 use bevy_mod_picking::{
     backends::raycast::{RaycastBackendSettings, RaycastPickable},
@@ -21,14 +18,10 @@ use quill_obsidian::{
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
-use quill_obsidian_inspect::InspectorPlugin;
-use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
-// use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;
 
 use bevy::{
-    asset::io::{file::FileAssetReader, AssetSource},
     color::palettes,
     prelude::*,
     render::{
@@ -115,12 +108,6 @@ fn style_scroll_area(ss: &mut StyleBuilder) {
     ss.flex_grow(1.0);
 }
 
-// fn style_log_entry(ss: &mut StyleBuilder) {
-//     ss.display(ui::Display::Flex)
-//         .justify_content(ui::JustifyContent::SpaceBetween)
-//         .align_self(ui::AlignSelf::Stretch);
-// }
-
 #[derive(Resource)]
 pub struct PanelWidth(f32);
 
@@ -149,24 +136,19 @@ pub struct ClickLog(pub Vec<String>);
 
 fn main() {
     App::new()
-        .register_asset_source(
-            "demo",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("examples/complex/assets"))),
-        )
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
         .init_resource::<ClickLog>()
         // .init_resource::<DemoGraphRoot>()
-        .insert_resource(TestStruct {
-            unlit: Some(true),
-            ..default()
-        })
-        .insert_resource(TestStruct2 {
-            nested: TestStruct::default(),
-            ..default()
-        })
-        .insert_resource(TestStruct3(true))
+        // .insert_resource(TestStruct {
+        //     unlit: Some(true),
+        //     ..default()
+        // })
+        // .insert_resource(TestStruct2 {
+        //     nested: TestStruct::default(),
+        //     ..default()
+        // })
+        // .insert_resource(TestStruct3(true))
         .insert_resource(PanelWidth(200.))
         .insert_resource(PanelHeight(300.))
         .init_resource::<viewport::ViewportInset>()
@@ -178,7 +160,7 @@ fn main() {
             require_markers: true,
             ..default()
         })
-        .add_plugins(InspectorPlugin)
+        // .add_plugins(InspectorPlugin)
         .add_plugins((
             QuillPlugin,
             ObsidianUiPlugin,
@@ -398,9 +380,9 @@ impl ViewTemplate for DemoUi {
                                 //     ..default()
                                 // }
                             ),
-                        ResourcePropertyInspector::<TestStruct>::new(),
-                        ResourcePropertyInspector::<TestStruct2>::new(),
-                        ResourcePropertyInspector::<TestStruct3>::new(),
+                        // ResourcePropertyInspector::<TestStruct>::new(),
+                        // ResourcePropertyInspector::<TestStruct2>::new(),
+                        // ResourcePropertyInspector::<TestStruct3>::new(),
                         // ReactionsTable,
                         LogList,
                     )),

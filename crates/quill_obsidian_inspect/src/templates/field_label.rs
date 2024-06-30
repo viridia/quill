@@ -50,7 +50,7 @@ impl ViewTemplate for FieldLabel {
                 name,
                 Cond::new(
                     can_remove,
-                    IconButton::new("obsidian_ui://icons/close.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/close.png")
                         .size(Size::Xs)
                         .minimal(true)
                         .on_click(remove),
@@ -130,7 +130,7 @@ impl ViewTemplate for FieldLabelWide {
                 self.buttons.clone(),
                 Cond::new(
                     can_remove,
-                    IconButton::new("obsidian_ui://icons/close.png")
+                    IconButton::new("embedded://quill_obsidian/assets/icons/close.png")
                         .size(Size::Xs)
                         .minimal(true)
                         .on_click(remove),

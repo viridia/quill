@@ -49,7 +49,7 @@ fn style_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .height(ui::Val::Percent(100.))
-        .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
+        .font("embedded://quill_obsidian/assets/fonts/Open_Sans/static/OpenSans-Medium.ttf")
         .font_size(16)
         .padding((6, 0))
         .color(colors::FOREGROUND);
@@ -368,7 +368,7 @@ impl ViewTemplate for Slider {
                 .children((
                     Cond::new(
                         show_buttons,
-                        IconButton::new("obsidian_ui://icons/chevron_left.png")
+                        IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
                             .corners(RoundedCorners::Left)
                             .style(style_slider_button)
                             .minimal(true)
@@ -389,7 +389,7 @@ impl ViewTemplate for Slider {
                     )),
                     Cond::new(
                         show_buttons,
-                        IconButton::new("obsidian_ui://icons/chevron_right.png")
+                        IconButton::new("embedded://quill_obsidian/assets/icons/chevron_right.png")
                             .corners(RoundedCorners::Right)
                             .minimal(true)
                             .style(style_slider_button)

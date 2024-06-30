@@ -115,7 +115,7 @@ fn style_track(ss: &mut StyleBuilder) {
 }
 
 fn style_thumb(ss: &mut StyleBuilder) {
-    ss.background_image("obsidian_ui://textures/gradient_thumb.png")
+    ss.background_image("embedded://quill_obsidian/assets/icons/gradient_thumb.png")
         .position(ui::PositionType::Absolute)
         .top(0)
         .bottom(0)
