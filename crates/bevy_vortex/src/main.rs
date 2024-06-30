@@ -1,6 +1,10 @@
 //! Example of a comprehensive UI layout
 #![feature(impl_trait_in_assoc_type)]
 
+mod catalog;
+mod operator;
+mod ops;
+
 use bevy_mod_picking::{
     backends::raycast::{RaycastBackendSettings, RaycastPickable},
     debug::DebugPickingMode,
@@ -10,11 +14,13 @@ use bevy_mod_picking::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_quill_obsidian_graph::{GraphDisplay, ObsidianGraphPlugin};
+use catalog::CatalogView;
+use ops::OperatorsPlugin;
 use quill_obsidian::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogBody, DialogFooter, DialogHeader, ListView,
-        Slider, Splitter, SplitterDirection, ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogBody, DialogFooter, DialogHeader, Slider,
+        Splitter, SplitterDirection, ToolButton, ToolPalette,
     },
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
@@ -138,7 +144,12 @@ fn main() {
             ..default()
         })
         // .add_plugins(InspectorPlugin)
-        .add_plugins((QuillPlugin, ObsidianUiPlugin, ObsidianGraphPlugin))
+        .add_plugins((
+            QuillPlugin,
+            ObsidianUiPlugin,
+            ObsidianGraphPlugin,
+            OperatorsPlugin,
+        ))
         .add_systems(Startup, (setup, setup_ui.pipe(setup_view_root)))
         .add_systems(
             Update,
@@ -224,6 +235,7 @@ impl ViewTemplate for DemoUi {
                         panel_width,
                     )
                     .children((
+                        CatalogView,
                         ToolPalette::new().columns(3).children((
                             ToolButton::new()
                                 .children("Preview")
@@ -386,45 +398,17 @@ fn wrapper_style(ss: &mut StyleBuilder) {
         .flex_direction(FlexDirection::Column);
 }
 
-fn graph_view_style(ss: &mut StyleBuilder) {
-    ss.display(Display::Flex).width(ui::Val::Percent(100.));
-}
-
 #[derive(Clone, PartialEq)]
 struct CenterPanel;
 
 impl ViewTemplate for CenterPanel {
     type View = impl View;
-    fn create(&self, cx: &mut Cx) -> Self::View {
-        let panel_height = cx.use_resource::<PanelHeight>().0;
-
-        let drag_call_back = cx.create_callback(|value: In<f32>, world: &mut World| {
-            let mut panel_height = world.get_resource_mut::<PanelHeight>().unwrap();
-            panel_height.0 = value.max(200.);
-        });
-
+    fn create(&self, _cx: &mut Cx) -> Self::View {
         Element::<NodeBundle>::new()
-            .children((Cond::new(
-                *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
-                NodeGraphDemo {},
-                NodeGraphDemo {},
-            ),))
+            .children(NodeGraphDemo {})
             .style(wrapper_style)
     }
 }
-
-// #[derive(Clone, PartialEq)]
-// struct LogList;
-
-// impl ViewTemplate for LogList {
-//     type View = impl View;
-//     fn create(&self, cx: &mut Cx) -> Self::View {
-//         let log = cx.use_resource::<ClickLog>();
-//         ListView::new()
-//             .children(For::each(log.0.clone(), |msg| msg.clone()))
-//             .style(style_scroll_area)
-//     }
-// }
 
 fn style_node_graph(ss: &mut StyleBuilder) {
     ss.flex_grow(1.).border_left(1).border_color(Color::BLACK);
@@ -439,35 +423,6 @@ impl ViewTemplate for NodeGraphDemo {
         GraphDisplay::new().style(style_node_graph)
     }
 }
-
-// #[derive(Clone, PartialEq)]
-// struct ReactionsTable;
-
-// impl ViewTemplate for ReactionsTable {
-//     type View = impl View;
-//     fn create(&self, _cx: &mut Cx) -> Self::View {
-//         ListView::new()
-//             .children(For::each(
-//                 |cx| {
-//                     let tracing = cx.use_resource::<TrackingScopeTracing>();
-//                     tracing.0.clone().into_iter()
-//                 },
-//                 |ent| {
-//                     text_computed({
-//                         let e = *ent;
-//                         move |cx| {
-//                             if let Some(name) = cx.world().get::<Name>(e) {
-//                                 name.to_string()
-//                             } else {
-//                                 e.to_string()
-//                             }
-//                         }
-//                     })
-//                 },
-//             ))
-//             .style(style_scroll_area)
-//     }
-// }
 
 // Setup 3d shapes
 fn setup(

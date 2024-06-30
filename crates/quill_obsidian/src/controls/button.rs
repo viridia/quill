@@ -19,7 +19,7 @@ use bevy::{
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{
-    Callback, ViewChild, Cx, Element, IntoViewChild, RunCallback, View, ViewTemplate,
+    Callback, Cx, Element, IntoViewChild, RunCallback, View, ViewChild, ViewTemplate,
 };
 
 /// The variant determines the button's color scheme
@@ -104,6 +104,17 @@ impl Button {
     /// Set the button color variant.
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
+        self
+    }
+
+    /// Method which switches between `default` and `selected` style variants based on a boolean.
+    /// Often used for toggle buttons or toolbar items.
+    pub fn selected(mut self, selected: bool) -> Self {
+        self.variant = if selected {
+            ButtonVariant::Selected
+        } else {
+            ButtonVariant::Default
+        };
         self
     }
 
