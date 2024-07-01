@@ -14,11 +14,14 @@ use crate::operator::{DisplayName, OperatorCategory, OperatorClass, ReflectOpera
 pub struct SelectedCatalogEntry(pub Option<&'static str>);
 
 #[derive(Clone, PartialEq, Eq)]
-struct CatalogEntry {
+pub struct CatalogEntry {
     category: OperatorCategory,
     display_name: &'static str,
     path: &'static str,
 }
+
+#[derive(Resource, Default)]
+pub struct OperatorCatalog(pub Vec<CatalogEntry>);
 
 impl PartialOrd for CatalogEntry {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -40,47 +43,19 @@ impl Ord for CatalogEntry {
 pub struct CatalogView;
 
 fn style_catalog(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.);
+    ss.flex_grow(1.).min_height(100);
 }
 
 impl ViewTemplate for CatalogView {
     type View = impl View;
 
     fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
-        let registry = cx.use_resource::<AppTypeRegistry>();
-        let entries = cx.create_memo_cmp(
-            |_, registry| {
-                let registry_lock = registry.read();
-                let mut entries: Vec<CatalogEntry> = Vec::new();
-                for rtype in registry_lock.iter() {
-                    if rtype.data::<ReflectOperator>().is_some() {
-                        let TypeInfo::Struct(st) = rtype.type_info() else {
-                            panic!("Vortex operator must be a struct!")
-                        };
-                        let display_name = match st.get_attribute::<DisplayName>() {
-                            Some(dname) => dname.0,
-                            None => st.type_path_table().short_path(),
-                        };
-                        let category = match st.get_attribute::<OperatorClass>() {
-                            Some(cls) => cls.0.clone(),
-                            None => panic!("`OperatorClass` attribute is required on operators."),
-                        };
-                        entries.push(CatalogEntry {
-                            category,
-                            display_name,
-                            path: st.type_path(),
-                        });
-                    }
-                }
-                entries.sort();
-                entries
-            },
-            |r0, r1| std::ptr::eq(r0, r1),
-            registry.clone(),
-        );
+        let catalog = cx.use_resource::<OperatorCatalog>();
         ListView::new()
             .style(style_catalog)
-            .children(For::each(entries, |entry| CatalogRow(entry.clone())))
+            .children(For::each(catalog.0.clone(), |entry| {
+                CatalogRow(entry.clone())
+            }))
     }
 }
 
@@ -143,5 +118,37 @@ impl ViewTemplate for CatalogRow {
                     .style((text_strong, style_catalog_operator_name))
                     .children(self.0.display_name),
             ))
+    }
+}
+
+pub fn build_operator_catalog(
+    mut catalog: ResMut<OperatorCatalog>,
+    registry: Res<AppTypeRegistry>,
+) {
+    if registry.is_changed() || catalog.0.is_empty() {
+        let registry_lock = registry.read();
+        let mut entries: Vec<CatalogEntry> = Vec::new();
+        for rtype in registry_lock.iter() {
+            if rtype.data::<ReflectOperator>().is_some() {
+                let TypeInfo::Struct(st) = rtype.type_info() else {
+                    panic!("Vortex operator must be a struct!")
+                };
+                let display_name = match st.get_attribute::<DisplayName>() {
+                    Some(dname) => dname.0,
+                    None => st.type_path_table().short_path(),
+                };
+                let category = match st.get_attribute::<OperatorClass>() {
+                    Some(cls) => cls.0.clone(),
+                    None => panic!("`OperatorClass` attribute is required on operators."),
+                };
+                entries.push(CatalogEntry {
+                    category,
+                    display_name,
+                    path: st.type_path(),
+                });
+            }
+        }
+        entries.sort();
+        catalog.0.clone_from(&entries);
     }
 }
