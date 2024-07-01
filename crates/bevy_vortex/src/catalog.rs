@@ -1,11 +1,19 @@
-use bevy::{prelude::AppTypeRegistry, reflect::TypeInfo};
+use bevy::{
+    prelude::*,
+    reflect::TypeInfo,
+    ui::{self, node_bundles::NodeBundle},
+};
+use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use quill_obsidian::controls::ListView;
+use quill_obsidian::{colors, controls::ListView, typography::text_strong};
 
 use crate::operator::{DisplayName, OperatorCategory, OperatorClass, ReflectOperator};
 
-#[derive(Clone, PartialEq)]
+#[derive(Resource)]
+pub struct SelectedCatalogEntry(pub Option<&'static str>);
+
+#[derive(Clone, PartialEq, Eq)]
 struct CatalogEntry {
     category: OperatorCategory,
     display_name: &'static str,
@@ -14,20 +22,20 @@ struct CatalogEntry {
 
 impl PartialOrd for CatalogEntry {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        let category_cmp = self.category.partial_cmp(&other.category);
-        if category_cmp.is_some() && category_cmp != Some(std::cmp::Ordering::Equal) {
-            return category_cmp;
-        }
-
-        let display_name_cmp = self.display_name.partial_cmp(other.display_name);
-        if display_name_cmp.is_some() && display_name_cmp != Some(std::cmp::Ordering::Equal) {
-            return display_name_cmp;
-        }
-
-        self.path.partial_cmp(other.path)
+        Some(self.cmp(other))
     }
 }
 
+impl Ord for CatalogEntry {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.category
+            .cmp(&other.category)
+            .then_with(|| self.display_name.cmp(other.display_name))
+            .then_with(|| self.path.cmp(other.path))
+    }
+}
+
+/// Displays the list of available operators, by category.
 #[derive(Clone, PartialEq)]
 pub struct CatalogView;
 
@@ -40,32 +48,100 @@ impl ViewTemplate for CatalogView {
 
     fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
         let registry = cx.use_resource::<AppTypeRegistry>();
-        let registry_lock = registry.0.read();
-        let mut entries: Vec<CatalogEntry> = Vec::new();
-        for rtype in registry_lock.iter() {
-            if let Some(oper) = rtype.data::<ReflectOperator>() {
-                let TypeInfo::Struct(st) = rtype.type_info() else {
-                    panic!("Vortex operator must be a struct!")
-                };
-                let display_name = match st.get_attribute::<DisplayName>() {
-                    Some(dname) => dname.0,
-                    None => st.type_path_table().short_path(),
-                };
-                let category = match st.get_attribute::<OperatorClass>() {
-                    Some(cls) => cls.0.clone(),
-                    None => panic!("`OperatorClass` attribute is required on operators."),
-                };
-                entries.push(CatalogEntry {
-                    category,
-                    display_name,
-                    path: st.type_path(),
-                });
-                // println!("Found {}", );
-            }
-        }
-        drop(registry_lock);
+        let entries = cx.create_memo_cmp(
+            |_, registry| {
+                let registry_lock = registry.read();
+                let mut entries: Vec<CatalogEntry> = Vec::new();
+                for rtype in registry_lock.iter() {
+                    if rtype.data::<ReflectOperator>().is_some() {
+                        let TypeInfo::Struct(st) = rtype.type_info() else {
+                            panic!("Vortex operator must be a struct!")
+                        };
+                        let display_name = match st.get_attribute::<DisplayName>() {
+                            Some(dname) => dname.0,
+                            None => st.type_path_table().short_path(),
+                        };
+                        let category = match st.get_attribute::<OperatorClass>() {
+                            Some(cls) => cls.0.clone(),
+                            None => panic!("`OperatorClass` attribute is required on operators."),
+                        };
+                        entries.push(CatalogEntry {
+                            category,
+                            display_name,
+                            path: st.type_path(),
+                        });
+                    }
+                }
+                entries.sort();
+                entries
+            },
+            |r0, r1| std::ptr::eq(r0, r1),
+            registry.clone(),
+        );
         ListView::new()
             .style(style_catalog)
-            .children(For::each(entries, |entry| entry.display_name))
+            .children(For::each(entries, |entry| CatalogRow(entry.clone())))
+    }
+}
+
+fn style_catalog_row(ss: &mut StyleBuilder) {
+    ss.align_self(ui::AlignSelf::Stretch)
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row);
+}
+
+fn style_catalog_operator_class(ss: &mut StyleBuilder) {
+    ss.width(ui::Val::Percent(30.))
+        .padding(2)
+        .display(ui::Display::Flex)
+        .justify_content(ui::JustifyContent::FlexEnd)
+        .color(colors::DIM)
+        .overflow(ui::OverflowAxis::Clip);
+}
+
+fn style_catalog_operator_name(ss: &mut StyleBuilder) {
+    ss.flex_grow(1.)
+        .padding(2)
+        .color(colors::FOREGROUND)
+        .overflow(ui::OverflowAxis::Clip);
+}
+
+#[derive(Clone, PartialEq)]
+struct CatalogRow(CatalogEntry);
+
+impl ViewTemplate for CatalogRow {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let selected = cx.use_resource::<SelectedCatalogEntry>();
+        let is_selected = Some(self.0.path) == selected.0;
+        let path = self.0.path;
+        Element::<NodeBundle>::new()
+            .style(style_catalog_row)
+            .style_dyn(
+                |selected, sb| {
+                    sb.background_color(if selected {
+                        colors::TEXT_SELECT
+                    } else {
+                        colors::TRANSPARENT
+                    });
+                },
+                is_selected,
+            )
+            .insert_dyn(
+                move |_| {
+                    On::<Pointer<Click>>::run(move |mut selected: ResMut<SelectedCatalogEntry>| {
+                        selected.0 = Some(path);
+                    })
+                },
+                (),
+            )
+            .children((
+                Element::<NodeBundle>::new()
+                    .style(style_catalog_operator_class)
+                    .children(self.0.category.to_local_string()),
+                Element::<NodeBundle>::new()
+                    .style((text_strong, style_catalog_operator_name))
+                    .children(self.0.display_name),
+            ))
     }
 }

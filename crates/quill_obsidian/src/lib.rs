@@ -52,7 +52,15 @@ pub struct ObsidianUiPlugin;
 
 impl Plugin for ObsidianUiPlugin {
     fn build(&self, app: &mut App) {
+        embedded_asset!(app, "assets/fonts/Open_Sans/static/OpenSans-Bold.ttf");
+        embedded_asset!(app, "assets/fonts/Open_Sans/static/OpenSans-BoldItalic.ttf");
         embedded_asset!(app, "assets/fonts/Open_Sans/static/OpenSans-Medium.ttf");
+        embedded_asset!(
+            app,
+            "assets/fonts/Open_Sans/static/OpenSans-MediumItalic.ttf"
+        );
+        embedded_asset!(app, "assets/fonts/Open_Sans/static/OpenSans-Regular.ttf");
+        embedded_asset!(app, "assets/fonts/Open_Sans/static/OpenSans-Italic.ttf");
         embedded_asset!(app, "assets/icons/add_box.png");
         embedded_asset!(app, "assets/icons/add.png");
         embedded_asset!(app, "assets/icons/checkmark.png");

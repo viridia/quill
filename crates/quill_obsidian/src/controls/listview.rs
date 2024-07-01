@@ -1,4 +1,4 @@
-use bevy::{prelude::*, ui};
+use bevy::ui;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 
@@ -15,7 +15,9 @@ fn style_listview(ss: &mut StyleBuilder) {
 fn style_listview_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .align_items(ui::AlignItems::Stretch);
+        .align_items(ui::AlignItems::Stretch)
+        .align_self(ui::AlignSelf::Stretch)
+        .justify_self(ui::JustifySelf::Stretch);
 }
 
 /// A scrollable list of items.
@@ -51,13 +53,9 @@ impl ViewTemplate for ListView {
     type View = ScrollView;
     fn create(&self, _cx: &mut Cx) -> Self::View {
         ScrollView::new()
-            .children(
-                Element::<NodeBundle>::new()
-                    .named("ListView")
-                    .style(style_listview_inner)
-                    .children(self.children.clone()),
-            )
+            .children(self.children.clone())
             .style((style_listview, self.style.clone()))
+            .content_style(style_listview_inner)
             .scroll_enable_y(true)
     }
 }

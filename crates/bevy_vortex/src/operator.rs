@@ -4,7 +4,7 @@ use bevy::{
 };
 
 /// Groupings for operators
-#[derive(Debug, Clone, Reflect, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Reflect, PartialEq, Eq, PartialOrd, Ord)]
 pub enum OperatorCategory {
     Input,
     Output,
@@ -12,6 +12,19 @@ pub enum OperatorCategory {
     Generator,
     Filter,
     Math,
+}
+
+impl OperatorCategory {
+    pub fn to_local_string(&self) -> &'static str {
+        match self {
+            OperatorCategory::Input => "Input",
+            OperatorCategory::Output => "Output",
+            OperatorCategory::Pattern => "Pattern",
+            OperatorCategory::Generator => "Generator",
+            OperatorCategory::Filter => "Filter",
+            OperatorCategory::Math => "Math",
+        }
+    }
 }
 
 /// Defines an operational component in a node graph.

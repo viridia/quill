@@ -14,7 +14,7 @@ use bevy_mod_picking::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_quill_obsidian_graph::{GraphDisplay, ObsidianGraphPlugin};
-use catalog::CatalogView;
+use catalog::{CatalogView, SelectedCatalogEntry};
 use ops::OperatorsPlugin;
 use quill_obsidian::{
     colors,
@@ -122,6 +122,7 @@ fn main() {
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
         .init_resource::<ClickLog>()
+        .insert_resource(SelectedCatalogEntry(None))
         // .init_resource::<DemoGraphRoot>()
         // .insert_resource(TestStruct {
         //     unlit: Some(true),
