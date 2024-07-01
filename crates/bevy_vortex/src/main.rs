@@ -17,7 +17,7 @@ use preview::{
 };
 use quill_obsidian::{
     colors,
-    controls::{Slider, Splitter, SplitterDirection},
+    controls::{Splitter, SplitterDirection},
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin,
 };
@@ -48,17 +48,6 @@ fn style_aside(ss: &mut StyleBuilder) {
         .pointer_events(true);
 }
 
-fn style_slider(ss: &mut StyleBuilder) {
-    ss.align_self(ui::AlignSelf::Stretch);
-}
-
-fn style_column_group(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .align_items(ui::AlignItems::FlexStart)
-        .gap(8);
-}
-
 fn style_viewport(ss: &mut StyleBuilder) {
     ss.align_self(ui::AlignSelf::Stretch)
         .min_height(100)
@@ -73,20 +62,8 @@ fn style_viewport(ss: &mut StyleBuilder) {
 #[derive(Resource)]
 pub struct PanelWidth(f32);
 
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub enum EditorState {
-    #[default]
-    Preview,
-    Graph,
-    Split,
-}
-
-#[derive(Resource, Default)]
-pub struct ClickLog(pub Vec<String>);
-
 fn main() {
     App::new()
-        .init_resource::<ClickLog>()
         .init_resource::<OperatorCatalog>()
         .insert_resource(SelectedCatalogEntry(None))
         // .init_resource::<DemoGraphRoot>()
@@ -103,7 +80,6 @@ fn main() {
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
-        .insert_state(EditorState::Preview)
         .insert_state(PreviewMode::Square)
         .add_computed_state::<PreviewMode3d>()
         .insert_resource(DebugPickingMode::Disabled)
@@ -153,10 +129,6 @@ impl Plugin for VortexPlugin {
     }
 }
 
-/// A marker component for our shapes so we can query them separately from the ground plane
-#[derive(Component)]
-struct Shape;
-
 fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
     commands.spawn(DemoUi(*camera).to_root());
 }
@@ -168,8 +140,6 @@ impl ViewTemplate for DemoUi {
     type View = impl View;
 
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let red = cx.create_mutable::<f32>(128.);
-
         let panel_width = cx.use_resource::<PanelWidth>().0;
         let camera = self.0;
 
@@ -190,24 +160,6 @@ impl ViewTemplate for DemoUi {
                     .children((
                         CatalogView,
                         PreviewControls,
-                        Element::<NodeBundle>::new()
-                            .style(style_column_group)
-                            .children(
-                                Slider::new()
-                                    .min(0.)
-                                    .max(255.)
-                                    .value(red.get(cx))
-                                    .style(style_slider)
-                                    .precision(1)
-                                    .on_change(cx.create_callback(
-                                        move |value: In<f32>, world: &mut World| {
-                                            let mut log =
-                                                world.get_resource_mut::<ClickLog>().unwrap();
-                                            log.0.push(format!("Slider value: {}", *value));
-                                            red.set(world, *value);
-                                        },
-                                    )),
-                            ),
                         Element::<NodeBundle>::new()
                             .named("Preview")
                             .style(style_viewport)
