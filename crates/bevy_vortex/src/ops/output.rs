@@ -15,6 +15,10 @@ pub struct Output {
 }
 
 impl Operator for Output {
+    fn to_boxed_clone(&self) -> Box<dyn Operator> {
+        Box::new(self.clone())
+    }
+
     fn gen(&self) {
         // todo!()
     }

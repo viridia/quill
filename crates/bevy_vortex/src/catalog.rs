@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    reflect::{TypeInfo, TypeRegistration, TypeRegistryArc},
+    reflect::TypeInfo,
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_mod_picking::prelude::*;

@@ -1271,6 +1271,7 @@ dependencies = [
  "bevy_quill",
  "bevy_quill_obsidian_graph",
  "quill_obsidian",
+ "smallvec",
 ]
 
 [[package]]

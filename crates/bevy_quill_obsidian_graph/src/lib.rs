@@ -2,6 +2,7 @@
 
 mod graph;
 mod materials;
+mod node;
 
 use bevy::{
     app::{App, Plugin},
@@ -11,6 +12,7 @@ use bevy::{
 
 pub use graph::GraphDisplay;
 use materials::{DotGridMaterial, DrawPathMaterial};
+pub use node::{InputTerminalDisplay, NodeDisplay, OutputTerminalDisplay};
 
 /// Plugin for the Obsidian UI library.
 pub struct ObsidianGraphPlugin;

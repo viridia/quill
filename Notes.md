@@ -23,3 +23,16 @@
   - Uniform vs. Source?
   - Category
   - Icons for preview modes: sphere, ring, etc.
+
+```rust
+impl<T: MyTrait + Reflect + Clone> FromType<T> for ReflectMyTrait {
+  fn from_type() -> Self {
+    Self {
+      get_obj: |value: &dyn Reflect| {
+         let value = value.downcast_ref::<T>().unwrap();
+         Arc::new(RwLock::new(value.clone()))
+      }
+    }
+  }
+}
+```

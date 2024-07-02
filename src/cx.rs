@@ -322,6 +322,8 @@ impl<'p, 'w> Cx<'p, 'w> {
 
     /// Temporary hook used to create a new [`Mutable`] which is automatically updated
     /// each time this hook is called. This is used for now until we get replaceable one-shot systems.
+    ///
+    /// You cannot create multiple captures of the same type within a single tracking scope.
     pub fn create_capture<T>(&mut self, init: T) -> Mutable<T>
     where
         T: Clone + PartialEq + Send + Sync + 'static,

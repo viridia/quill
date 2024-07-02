@@ -7,7 +7,6 @@ mod reflect_demo;
 use bevy_mod_picking::{
     backends::raycast::{RaycastBackendSettings, RaycastPickable},
     debug::DebugPickingMode,
-    picking_core::Pickable,
     prelude::*,
     DefaultPickingPlugins,
 };
@@ -80,37 +79,6 @@ fn style_column_group(ss: &mut StyleBuilder) {
         .gap(8);
 }
 
-fn style_viewport(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.)
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd)
-        .border_left(1)
-        .border_color(Color::BLACK)
-        .pointer_events(false);
-}
-
-fn style_log(ss: &mut StyleBuilder) {
-    ss.background_color("#0008")
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Row)
-        .align_self(ui::AlignSelf::Stretch)
-        .height(ui::Val::Percent(30.))
-        .margin(8);
-}
-
-fn style_log_inner(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd)
-        .align_self(ui::AlignSelf::Stretch)
-        .flex_grow(1.)
-        .flex_basis(0)
-        .overflow(ui::OverflowAxis::Clip)
-        .gap(3)
-        .margin(8);
-}
-
 fn style_scroll_area(ss: &mut StyleBuilder) {
     ss.flex_grow(1.0);
 }
@@ -138,7 +106,7 @@ pub enum EditorState {
 #[derive(Resource)]
 pub struct PreviewEntities {
     camera: Entity,
-    overlay: Entity,
+    _overlay: Entity,
 }
 
 #[derive(Resource, Default)]
@@ -419,16 +387,12 @@ fn wrapper_style(ss: &mut StyleBuilder) {
         .flex_direction(FlexDirection::Column);
 }
 
-fn graph_view_style(ss: &mut StyleBuilder) {
-    ss.display(Display::Flex).width(ui::Val::Percent(100.));
-}
-
 #[derive(Clone, PartialEq)]
 struct CenterPanel;
 
 impl ViewTemplate for CenterPanel {
     type View = impl View;
-    fn create(&self, cx: &mut Cx) -> Self::View {
+    fn create(&self, _cx: &mut Cx) -> Self::View {
         Element::<NodeBundle>::new()
             .children((
                 NodeGraphDemo {},
@@ -686,7 +650,10 @@ fn enter_preview_mode(mut commands: Commands) {
 
     // let overlay = commands.spawn(TransformOverlayDemo.to_root()).id();
     let overlay = commands.spawn_empty().id();
-    commands.insert_resource(PreviewEntities { camera, overlay });
+    commands.insert_resource(PreviewEntities {
+        camera,
+        _overlay: overlay,
+    });
 }
 
 fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
