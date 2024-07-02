@@ -1,14 +1,20 @@
+use std::ops::Mul;
+
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild, ViewChild};
-use quill_obsidian::{colors, hooks::UseIsHover};
+use quill_obsidian::{
+    colors,
+    hooks::{UseElementRect, UseIsHover},
+};
 
 fn style_node_graph_node(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::Stretch)
-        .position(ui::PositionType::Absolute);
+        .position(ui::PositionType::Absolute)
+        .visible(false);
 }
 
 const NODE_BORDER_RADIUS: f32 = 5.;
@@ -146,18 +152,22 @@ impl ViewTemplate for NodeDisplay {
         let hovering = cx.is_hovered(id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
         let on_drag = self.on_drag;
+        let rect = cx.use_element_rect(id);
 
         Element::<NodeBundle>::for_entity(id)
             .named("NodeGraph::Node")
             .style(style_node_graph_node)
             .effect(
-                move |cx, ent, position| {
-                    // Update node position.
-                    let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
-                    style.left = ui::Val::Px(position.x as f32);
-                    style.top = ui::Val::Px(position.y as f32);
+                move |cx, ent, (position, size)| {
+                    if size.x > 0 && size.y > 0 {
+                        let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
+                        style.left = ui::Val::Px((position.x - size.x) as f32);
+                        style.top = ui::Val::Px((position.y - size.y) as f32);
+                        let mut visibility = cx.world_mut().get_mut::<Visibility>(ent).unwrap();
+                        *visibility = Visibility::Visible;
+                    }
                 },
-                position,
+                (position, rect.size().mul(0.5).as_ivec2()),
             )
             .children((
                 Element::<NodeBundle>::new()

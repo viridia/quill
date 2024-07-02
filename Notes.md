@@ -11,7 +11,6 @@
 
 ## Vortex notes
 
-- Get scroll region center.
 - Make node positions center-relative.
 - Tab groups
 - Catalog view
