@@ -204,6 +204,16 @@ impl ViewTemplate for Button {
                 },
                 self.style.clone(),
             ))
+            .style_dyn(
+                |disabled, sb| {
+                    sb.color(if disabled {
+                        colors::FOREGROUND.with_alpha(0.2)
+                    } else {
+                        colors::FOREGROUND
+                    });
+                },
+                self.disabled,
+            )
             .insert_dyn(TabIndex, self.tab_index)
             // The reason we do this is to avoid capturing `disabled` in the bevy_mod_picking event
             // handlers, as this would require removing and inserting them every time the disabled

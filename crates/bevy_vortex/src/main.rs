@@ -1,15 +1,20 @@
-//! Example of a comprehensive UI layout
 #![feature(impl_trait_in_assoc_type)]
 
+mod add_node;
 mod catalog;
+mod graph;
+mod graph_view;
 mod operator;
 mod ops;
 mod preview;
 
+use add_node::AddNodeButton;
 use bevy_mod_picking::{debug::DebugPickingMode, picking_core::Pickable, DefaultPickingPlugins};
 use bevy_mod_stylebuilder::*;
-use bevy_quill_obsidian_graph::{GraphDisplay, ObsidianGraphPlugin};
+use bevy_quill_obsidian_graph::ObsidianGraphPlugin;
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
+use graph::GraphResource;
+use graph_view::GraphView;
 use ops::OperatorsPlugin;
 use preview::{
     enter_mode_cuboid, enter_mode_sphere, enter_mode_tetra, enter_mode_torus, enter_preview_3d,
@@ -65,17 +70,13 @@ pub struct PanelWidth(f32);
 fn main() {
     App::new()
         .init_resource::<OperatorCatalog>()
+        .init_resource::<GraphResource>()
         .insert_resource(SelectedCatalogEntry(None))
         // .init_resource::<DemoGraphRoot>()
         // .insert_resource(TestStruct {
         //     unlit: Some(true),
         //     ..default()
         // })
-        // .insert_resource(TestStruct2 {
-        //     nested: TestStruct::default(),
-        //     ..default()
-        // })
-        // .insert_resource(TestStruct3(true))
         .insert_resource(PanelWidth(300.))
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
@@ -83,7 +84,6 @@ fn main() {
         .insert_state(PreviewMode::Square)
         .add_computed_state::<PreviewMode3d>()
         .insert_resource(DebugPickingMode::Disabled)
-        // .add_plugins(InspectorPlugin)
         .add_plugins((
             QuillPlugin,
             ObsidianUiPlugin,
@@ -158,6 +158,7 @@ impl ViewTemplate for DemoUi {
                         panel_width,
                     )
                     .children((
+                        AddNodeButton,
                         CatalogView,
                         PreviewControls,
                         Element::<NodeBundle>::new()
@@ -197,22 +198,8 @@ impl ViewTemplate for CenterPanel {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
         Element::<NodeBundle>::new()
-            .children(NodeGraphDemo {})
+            .children(GraphView)
             .style(wrapper_style)
-    }
-}
-
-fn style_node_graph(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.).border_left(1).border_color(Color::BLACK);
-}
-
-#[derive(Clone, PartialEq)]
-struct NodeGraphDemo;
-
-impl ViewTemplate for NodeGraphDemo {
-    type View = impl View;
-    fn create(&self, _cx: &mut Cx) -> Self::View {
-        GraphDisplay::new().style(style_node_graph)
     }
 }
 
@@ -229,35 +216,6 @@ fn setup_ui(mut commands: Commands) -> Entity {
         },))
         .id()
 }
-
-// /// Creates a colorful test pattern
-// fn uv_debug_texture() -> Image {
-//     const TEXTURE_SIZE: usize = 8;
-
-//     let mut palette: [u8; 32] = [
-//         255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255, 121, 255, 102, 255, 102, 255,
-//         198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
-//     ];
-
-//     let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
-//     for y in 0..TEXTURE_SIZE {
-//         let offset = TEXTURE_SIZE * y * 4;
-//         texture_data[offset..(offset + TEXTURE_SIZE * 4)].copy_from_slice(&palette);
-//         palette.rotate_right(4);
-//     }
-
-//     Image::new_fill(
-//         Extent3d {
-//             width: TEXTURE_SIZE as u32,
-//             height: TEXTURE_SIZE as u32,
-//             depth_or_array_layers: 1,
-//         },
-//         TextureDimension::D2,
-//         &texture_data,
-//         TextureFormat::Rgba8UnormSrgb,
-//         RenderAssetUsages::default(),
-//     )
-// }
 
 pub fn close_on_esc(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if input.just_pressed(KeyCode::Escape) {

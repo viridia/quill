@@ -45,21 +45,19 @@ impl InheritableFontStyles {
 #[derive(Component)]
 pub struct UseInheritedTextStyles;
 
-#[allow(clippy::type_complexity)]
 pub(crate) fn update_text_styles(
     mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,
     inherited: Query<Ref<InheritableFontStyles>>,
     parents: Query<&Parent>,
-    server: Res<AssetServer>,
 ) {
     let inherited_changed = inherited.iter().any(|cmp| cmp.is_changed());
     for (entity, mut text) in query.iter_mut() {
-        let style = match compute_inherited_style(entity, &inherited, &parents, &server) {
-            Some(value) => value,
-            None => continue,
-        };
-
         if text.is_changed() || inherited_changed {
+            let style = match compute_inherited_style(entity, &inherited, &parents) {
+                Some(value) => value,
+                None => continue,
+            };
+
             let styles_changed = text.sections.iter().any(|section| {
                 section.style.font != style.font
                     || section.style.font_size != style.font_size
@@ -78,7 +76,6 @@ fn compute_inherited_style(
     entity: Entity,
     inherited: &Query<Ref<InheritableFontStyles>, ()>,
     parents: &Query<&Parent, ()>,
-    server: &Res<AssetServer>,
 ) -> Option<TextStyle> {
     let mut styles = InheritableFontStyles::default();
     let mut ancestor = entity;
@@ -96,14 +93,6 @@ fn compute_inherited_style(
             ancestor = parent.get();
         } else {
             break;
-        }
-    }
-    if let Some(ref handle) = styles.font {
-        match server.load_state(handle) {
-            bevy::asset::LoadState::Loaded => {}
-            _ => {
-                return None;
-            }
         }
     }
     let style = TextStyle {

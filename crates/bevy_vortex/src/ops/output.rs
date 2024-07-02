@@ -6,7 +6,7 @@ use crate::operator::{
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
-#[reflect(Operator, @OperatorClass(OperatorCategory::Output), @OperatorDescription("
+#[reflect(Operator, Default, @OperatorClass(OperatorCategory::Output), @OperatorDescription("
 Displays the output of the shader.
 "))]
 pub struct Output {

@@ -6,7 +6,7 @@ use crate::operator::{
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
-#[reflect(Operator, @OperatorClass(OperatorCategory::Filter), @OperatorDescription("
+#[reflect(Operator, Default, @OperatorClass(OperatorCategory::Filter), @OperatorDescription("
 Converts the input Linear RGBA color to grayscale.
 "))]
 pub struct Grayscale {

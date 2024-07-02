@@ -11,7 +11,7 @@ pub enum OperatorCategory {
     Pattern,
     Generator,
     Filter,
-    Math,
+    Converter,
 }
 
 impl OperatorCategory {
@@ -22,14 +22,14 @@ impl OperatorCategory {
             OperatorCategory::Pattern => "Pattern",
             OperatorCategory::Generator => "Generator",
             OperatorCategory::Filter => "Filter",
-            OperatorCategory::Math => "Math",
+            OperatorCategory::Converter => "Converter",
         }
     }
 }
 
 /// Defines an operational component in a node graph.
 #[reflect_trait]
-pub trait Operator {
+pub trait Operator: Send + Sync {
     /// Returns the names of all .wgsl imports needed for this operator to compile.
     fn get_imports(&self) -> HashSet<String> {
         HashSet::default()

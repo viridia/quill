@@ -2,19 +2,20 @@ use std::sync::{Arc, RwLock};
 
 use bevy::{
     math::IVec2,
-    prelude::Resource,
+    prelude::{default, Resource},
     utils::{HashMap, HashSet},
 };
 
 use crate::operator::Operator;
 
-#[derive(Resource)]
-pub struct GraphResource(Graph);
+#[derive(Resource, Default)]
+pub struct GraphResource(pub(crate) Graph);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GraphNodeId(usize);
 
 /// A Vortex node graph.
+#[derive(Default)]
 pub struct Graph {
     next_id: usize,
     nodes: HashMap<GraphNodeId, GraphNode>,
@@ -24,38 +25,65 @@ pub struct Graph {
 }
 
 impl Graph {
+    /// Lookup a node by NodeId
+    pub fn get_node(&self, id: GraphNodeId) -> Option<&GraphNode> {
+        self.nodes.get(&id)
+    }
+
+    /// Return an iterator of the nodes in the graph.
+    pub fn iter_nodes(&self) -> bevy::utils::hashbrown::hash_map::Iter<GraphNodeId, GraphNode> {
+        self.nodes.iter()
+    }
+
+    /// Return an iterator of the connections in the graph.
+    pub fn iter_connections(&self) -> bevy::utils::hashbrown::hash_set::Iter<Connection> {
+        self.connections.iter()
+    }
+
+    /// Create a new node, given an operator.
+    pub fn create_node(
+        &mut self,
+        operator: Arc<RwLock<dyn Operator>>,
+        position: IVec2,
+        action: &mut UndoAction,
+    ) -> GraphNodeId {
+        let node = GraphNode {
+            position,
+            operator,
+            inputs: default(),
+            outputs: default(),
+        };
+        self.add_node(node, action)
+    }
+
     /// Add a node to the graph.
     pub fn add_node(&mut self, node: GraphNode, action: &mut UndoAction) -> GraphNodeId {
         self.next_id += 1;
         let id = GraphNodeId(self.next_id);
-        action
-            .actions
-            .push(GraphUndoAction::AddNode(id, node.clone()));
+        action.actions.push(UndoMutation::AddNode(id, node.clone()));
         // self.add_undo_action(GraphUndoAction::AddNode(id, node.clone()));
         self.nodes.insert(id, node);
         id
     }
 
-    /// Remove a node from the graph.
+    /// Remove a node from the graph. The node's connections must be removed first, it will
+    /// panic if this has not been done.
     pub fn delete_node(&mut self, node_id: GraphNodeId, action: &mut UndoAction) {
         if let Some(node) = self.nodes.remove(&node_id) {
             // Verify that there are no connections to this node.
-            assert!(self
+            assert!(!self
                 .connections
                 .iter()
-                .find(|c| c.0.node == node_id || c.1.node == node_id)
-                .is_none());
+                .any(|c| c.0.node == node_id || c.1.node == node_id));
             action
                 .actions
-                .push(GraphUndoAction::RemoveNode(node_id, node.clone()));
+                .push(UndoMutation::RemoveNode(node_id, node.clone()));
         }
     }
 
     /// Add a connection to the graph.
     pub fn add_connection(&mut self, connection: Connection, action: &mut UndoAction) {
-        action
-            .actions
-            .push(GraphUndoAction::AddConnection(connection));
+        action.actions.push(UndoMutation::AddConnection(connection));
         // self.add_undo_action(GraphUndoAction::AddConnection(connection));
         self.connections.insert(connection);
     }
@@ -64,14 +92,15 @@ impl Graph {
     pub fn remove_connection(&mut self, connection: Connection, action: &mut UndoAction) {
         action
             .actions
-            .push(GraphUndoAction::RemoveConnection(connection));
+            .push(UndoMutation::RemoveConnection(connection));
         self.connections.remove(&connection);
     }
 
-    // fn add_undo_action(&mut self, action: GraphUndoAction) {
-    //     self.redo_stack.clear();
-    //     self.undo_stack.push(action);
-    // }
+    /// Add a new unfo action to the undo stack. Also clears the redo stack.
+    pub fn add_undo_action(&mut self, action: UndoAction) {
+        self.redo_stack.clear();
+        self.undo_stack.push(action);
+    }
 }
 
 /// A node within a node graph. The behavior and attributes of the node are determined by the
@@ -82,7 +111,7 @@ pub struct GraphNode {
     /// Position of node relative to graph origin.
     position: IVec2,
     /// Operator for this node.
-    op: Arc<RwLock<dyn Operator>>,
+    operator: Arc<RwLock<dyn Operator>>,
     /// List of input terminals, derived from operator, with computed positions.
     inputs: Vec<InputTerminal>,
     /// List of output terminatesl, derived from operator, with computed positions.
@@ -134,12 +163,23 @@ pub enum ConnectionDataType {
     Color,
 }
 
+/// Represents a user-level action which can be undone or redone.
 pub struct UndoAction {
     label: &'static str,
-    actions: Vec<GraphUndoAction>,
+    actions: Vec<UndoMutation>,
 }
 
-pub enum GraphUndoAction {
+impl UndoAction {
+    pub fn new(label: &'static str) -> Self {
+        Self {
+            label,
+            actions: default(),
+        }
+    }
+}
+
+/// Represents a single mutation within an [`UndoAction`].
+pub enum UndoMutation {
     AddNode(GraphNodeId, GraphNode),
     RemoveNode(GraphNodeId, GraphNode),
     AddConnection(Connection),

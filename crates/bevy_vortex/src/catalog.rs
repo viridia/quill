@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    reflect::TypeInfo,
+    reflect::{TypeInfo, TypeRegistration, TypeRegistryArc},
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_mod_picking::prelude::*;
@@ -20,9 +20,6 @@ pub struct CatalogEntry {
     path: &'static str,
 }
 
-#[derive(Resource, Default)]
-pub struct OperatorCatalog(pub Vec<CatalogEntry>);
-
 impl PartialOrd for CatalogEntry {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
@@ -37,6 +34,9 @@ impl Ord for CatalogEntry {
             .then_with(|| self.path.cmp(other.path))
     }
 }
+
+#[derive(Resource, Default)]
+pub struct OperatorCatalog(pub Vec<CatalogEntry>);
 
 /// Displays the list of available operators, by category.
 #[derive(Clone, PartialEq)]

@@ -206,9 +206,9 @@ pub fn exit_preview_3d(mut commands: Commands, query: Query<Entity, With<Preview
     }
 }
 
-pub fn enter_mode_square(mut commands: Commands) {}
+// pub fn enter_mode_square(mut commands: Commands) {}
 
-pub fn exit_mode_square(mut commands: Commands) {}
+// pub fn exit_mode_square(mut commands: Commands) {}
 
 pub fn exit_mode_shape3d(mut commands: Commands, query: Query<Entity, With<Shape>>) {
     for shape in query.iter() {
