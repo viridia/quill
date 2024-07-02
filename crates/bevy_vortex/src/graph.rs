@@ -52,7 +52,7 @@ impl Graph {
             outputs: default(),
         };
         let entity = commands.spawn(node).id();
-        action.actions.push(UndoMutation::AddNode(id, entity));
+        action.mutations.push(UndoMutation::AddNode(id, entity));
         self.nodes.insert(id, entity);
         id
     }
@@ -75,21 +75,24 @@ impl Graph {
             // Remove the node from the world and put it on the undo stack.
             let node = node_entity.take::<GraphNode>().unwrap();
             node_entity.despawn();
-            action.actions.push(UndoMutation::RemoveNode(node_id, node));
+            action
+                .mutations
+                .push(UndoMutation::RemoveNode(node_id, node));
         }
     }
 
     /// Add a connection to the graph.
     pub fn add_connection(&mut self, connection: Connection, action: &mut UndoAction) {
-        action.actions.push(UndoMutation::AddConnection(connection));
-        // self.add_undo_action(GraphUndoAction::AddConnection(connection));
+        action
+            .mutations
+            .push(UndoMutation::AddConnection(connection));
         self.connections.insert(connection);
     }
 
     /// Remove a connection from the graph.
     pub fn remove_connection(&mut self, connection: Connection, action: &mut UndoAction) {
         action
-            .actions
+            .mutations
             .push(UndoMutation::RemoveConnection(connection));
         self.connections.remove(&connection);
     }
@@ -184,14 +187,14 @@ pub enum ConnectionDataType {
 /// Represents a user-level action which can be undone or redone.
 pub struct UndoAction {
     label: &'static str,
-    actions: Vec<UndoMutation>,
+    mutations: Vec<UndoMutation>,
 }
 
 impl UndoAction {
     pub fn new(label: &'static str) -> Self {
         Self {
             label,
-            actions: default(),
+            mutations: default(),
         }
     }
 }

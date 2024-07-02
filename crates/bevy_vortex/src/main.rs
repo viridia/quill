@@ -14,7 +14,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill_obsidian_graph::ObsidianGraphPlugin;
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use graph::GraphResource;
-use graph_view::GraphView;
+use graph_view::{GraphView, GraphViewId};
 use ops::OperatorsPlugin;
 use preview::{
     enter_mode_cuboid, enter_mode_sphere, enter_mode_tetra, enter_mode_torus, enter_preview_3d,
@@ -72,16 +72,11 @@ fn main() {
         .init_resource::<OperatorCatalog>()
         .init_resource::<GraphResource>()
         .insert_resource(SelectedCatalogEntry(None))
-        // .init_resource::<DemoGraphRoot>()
-        // .insert_resource(TestStruct {
-        //     unlit: Some(true),
-        //     ..default()
-        // })
         .insert_resource(PanelWidth(300.))
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
-        .insert_state(PreviewMode::Square)
+        .insert_state(PreviewMode::Cuboid)
         .add_computed_state::<PreviewMode3d>()
         .insert_resource(DebugPickingMode::Disabled)
         .add_plugins((
@@ -130,18 +125,22 @@ impl Plugin for VortexPlugin {
 }
 
 fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
-    commands.spawn(DemoUi(*camera).to_root());
+    commands.spawn(VortexUi(*camera).to_root());
 }
 
 #[derive(Clone, PartialEq)]
-struct DemoUi(Entity);
+struct VortexUi(Entity);
 
-impl ViewTemplate for DemoUi {
+impl ViewTemplate for VortexUi {
     type View = impl View;
 
     fn create(&self, cx: &mut Cx) -> Self::View {
+        let graph_view_id = cx.create_entity();
         let panel_width = cx.use_resource::<PanelWidth>().0;
         let camera = self.0;
+
+        // Insert the view id as a context variable.
+        cx.insert(GraphViewId(graph_view_id));
 
         Element::<NodeBundle>::new()
             .named("Main")
@@ -177,7 +176,7 @@ impl ViewTemplate for DemoUi {
                     .value(panel_width)
                     .on_change(cx.create_callback(|value: In<f32>, world: &mut World| {
                         let mut panel_width = world.get_resource_mut::<PanelWidth>().unwrap();
-                        panel_width.0 = value.max(200.);
+                        panel_width.0 = value.clamp(200., 800.);
                     })),
                 CenterPanel,
             ))

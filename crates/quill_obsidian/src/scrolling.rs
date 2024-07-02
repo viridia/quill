@@ -53,6 +53,21 @@ impl ScrollArea {
         self.scroll_left = x.min(self.content_size.x - self.visible_size.x).max(0.);
         self.scroll_top = y.min(self.content_size.y - self.visible_size.y).max(0.);
     }
+
+    /// Current scroll position
+    pub fn scroll_position(&self) -> Vec2 {
+        Vec2::new(self.scroll_left, self.scroll_top)
+    }
+
+    /// Size of the content rect
+    pub fn content_size(&self) -> Vec2 {
+        self.content_size
+    }
+
+    /// Visible size
+    pub fn visible_size(&self) -> Vec2 {
+        self.visible_size
+    }
 }
 
 /// Marker component indicating this entity is the scrolling content area.

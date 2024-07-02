@@ -94,6 +94,9 @@ pub struct ScrollView {
     pub scroll_enable_x: bool,
     /// Whether to enable vertical scrolling.
     pub scroll_enable_y: bool,
+    /// Optional entity id to use for the scrolling element. This is useful for querying the
+    /// current scroll position.
+    pub entity: Option<Entity>,
 }
 
 impl ScrollView {
@@ -131,6 +134,13 @@ impl ScrollView {
         self.scroll_enable_y = enable;
         self
     }
+
+    /// Set the entity id to use for the scrolling element.
+    /// This is useful for querying the current scroll position.
+    pub fn entity(mut self, entity: Option<Entity>) -> Self {
+        self.entity = entity;
+        self
+    }
 }
 
 impl ViewTemplate for ScrollView {
@@ -139,7 +149,11 @@ impl ViewTemplate for ScrollView {
         // A widget which displays a scrolling view of its children.
         let enable_x = self.scroll_enable_x;
         let enable_y = self.scroll_enable_y;
-        let id_scroll_area = cx.create_entity();
+        let id_scroll_area = if let Some(entity) = self.entity {
+            entity
+        } else {
+            cx.create_entity()
+        };
         let id_scrollbar_x = cx.create_entity();
         let id_scrollbar_y = cx.create_entity();
         let drag_state = cx.create_mutable::<DragState>(DragState::default());

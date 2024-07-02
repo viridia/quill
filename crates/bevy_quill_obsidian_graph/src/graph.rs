@@ -28,6 +28,10 @@ pub struct GraphDisplay {
 
     /// Additional styles to be applied to the graph element.
     pub style: StyleHandle,
+
+    /// Optional entity id to use for the scrolling element. This is useful for querying the
+    /// current scroll position.
+    pub entity: Option<Entity>,
 }
 
 impl GraphDisplay {
@@ -47,6 +51,13 @@ impl GraphDisplay {
         self.style = style.into_handle();
         self
     }
+
+    /// Set the entity id to use for the scrolling element.
+    /// This is useful for querying the current scroll position.
+    pub fn entity(mut self, entity: Entity) -> Self {
+        self.entity = Some(entity);
+        self
+    }
 }
 
 impl ViewTemplate for GraphDisplay {
@@ -62,6 +73,7 @@ impl ViewTemplate for GraphDisplay {
         });
 
         ScrollView::new()
+            .entity(self.entity)
             .children(
                 Element::<MaterialNodeBundle<DotGridMaterial>>::new()
                     .named("NodeGraph::Scroll")

@@ -1,5 +1,6 @@
 #![feature(impl_trait_in_assoc_type, associated_type_defaults)]
 
+mod edge;
 mod graph;
 mod materials;
 mod node;
@@ -10,6 +11,7 @@ use bevy::{
     ui::UiMaterialPlugin,
 };
 
+pub use edge::EdgeDisplay;
 pub use graph::GraphDisplay;
 use materials::{DotGridMaterial, DrawPathMaterial};
 pub use node::{InputTerminalDisplay, NodeDisplay, OutputTerminalDisplay};

@@ -11,18 +11,18 @@
 
 ## Vortex notes
 
+- Get scroll region center.
+- Make node positions center-relative.
 - Tab groups
 - Catalog view
   - Catalog panel
   - Selection
-  - Dragging
   - Double-click.
 - Operators
   - Attributes
-  - Buffered?
+  - Buffered Nodes (for Blur)?
   - Uniform vs. Source?
-  - Category
-  - Icons for preview modes: sphere, ring, etc.
+    - Uniform is a node type.
 
 ```rust
 impl<T: MyTrait + Reflect + Clone> FromType<T> for ReflectMyTrait {

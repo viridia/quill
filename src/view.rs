@@ -266,7 +266,7 @@ impl<V: View> View for (V,) {
     }
 }
 
-#[impl_for_tuples(2, 16)]
+#[impl_for_tuples(2, 32)]
 #[tuple_types_custom_trait_bound(View)]
 impl View for Tuple {
     for_tuples!( type State = ( #( Tuple::State ),* ); );
