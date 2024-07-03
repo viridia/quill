@@ -139,7 +139,7 @@ impl ViewTemplate for Dialog {
                             (
                                 // Click on backdrop sends close signal.
                                 On::<Pointer<Click>>::run(move |world: &mut World| {
-                                    println!("Click on backdrop");
+                                    // println!("Click on backdrop");
                                     if let Some(on_close) = on_close {
                                         world.run_callback(on_close, ());
                                     }

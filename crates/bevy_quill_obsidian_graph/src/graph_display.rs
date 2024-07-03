@@ -1,9 +1,10 @@
 use bevy::{prelude::*, ui};
+use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 use quill_obsidian::{colors, controls::ScrollView};
 
-use crate::materials::DotGridMaterial;
+use crate::{materials::DotGridMaterial, Gesture, GraphEvent};
 
 fn style_node_graph(ss: &mut StyleBuilder) {
     ss.background_color(colors::U1);
@@ -77,6 +78,46 @@ impl ViewTemplate for GraphDisplay {
             .children(
                 Element::<MaterialNodeBundle<DotGridMaterial>>::new()
                     .named("NodeGraph::Scroll")
+                    .insert_dyn(
+                        move |_| {
+                            (
+                                On::<Pointer<DragStart>>::run(move |mut event: ListenerMut<Pointer<DragStart>>,
+                                    mut writer: EventWriter<GraphEvent>| {
+                                        event.stop_propagation();
+                                        writer.send(GraphEvent {
+                                            target: event.target(),
+                                            gesture: Gesture::SelectClear,
+                                            action: crate::GestureAction::End,
+                                        });
+                                }),
+                                On::<Pointer<DragEnd>>::run(move |mut event: ListenerMut<Pointer<DragEnd>>,
+                                    mut writer: EventWriter<GraphEvent>| {
+                                        event.stop_propagation();
+                                    // drag_state.set(
+                                    //     world,
+                                    //     DragState {
+                                    //         dragging: false,
+                                    //         offset: position_capture.get(world),
+                                    //     },
+                                    // );
+                                }),
+                                On::<Pointer<Drag>>::run({
+                                    move |mut event: ListenerMut<Pointer<Drag>>,
+                                    mut writer: EventWriter<GraphEvent>
+                                    | {
+                                        // event.stop_propagation();
+                                        // let gesture = Gesture::Move(event.distance);
+                                        // writer.send(GraphEvent {
+                                        //     target: id,
+                                        //     gesture,
+                                        //     action: crate::GestureAction::Move,
+                                        // });
+                                    }
+                                }),
+                            )
+                        },
+                        (),
+                    )
                     .insert(material.clone())
                     .style(style_node_graph_scroll)
                     .children(self.children.clone()),

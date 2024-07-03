@@ -9,12 +9,17 @@ mod ops;
 mod preview;
 
 use add_node::AddNodeButton;
-use bevy_mod_picking::{debug::DebugPickingMode, picking_core::Pickable, DefaultPickingPlugins};
+use bevy_mod_picking::{
+    debug::DebugPickingMode,
+    picking_core::Pickable,
+    prelude::{Listener, On},
+    DefaultPickingPlugins,
+};
 use bevy_mod_stylebuilder::*;
-use bevy_quill_obsidian_graph::ObsidianGraphPlugin;
+use bevy_quill_obsidian_graph::{Gesture, GestureAction, GraphEvent, ObsidianGraphPlugin};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
-use graph::GraphResource;
-use graph_view::{GraphView, GraphViewId};
+use graph::{GraphNode, GraphResource, Selected};
+use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
 use preview::{
     enter_mode_cuboid, enter_mode_sphere, enter_mode_tetra, enter_mode_torus, enter_preview_3d,
@@ -71,7 +76,7 @@ fn main() {
     App::new()
         .init_resource::<OperatorCatalog>()
         .init_resource::<GraphResource>()
-        .insert_resource(SelectedCatalogEntry(None))
+        .init_resource::<SelectedCatalogEntry>()
         .insert_resource(PanelWidth(300.))
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
@@ -141,6 +146,7 @@ impl ViewTemplate for VortexUi {
 
         // Insert the view id as a context variable.
         cx.insert(GraphViewId(graph_view_id));
+        cx.insert(DragState::default());
 
         Element::<NodeBundle>::new()
             .named("Main")
@@ -197,6 +203,82 @@ impl ViewTemplate for CenterPanel {
     type View = impl View;
     fn create(&self, _cx: &mut Cx) -> Self::View {
         Element::<NodeBundle>::new()
+            .insert_dyn(
+                |_| {
+                    On::<GraphEvent>::run(
+                        |event: Listener<GraphEvent>,
+                         mut catalog_selection: ResMut<SelectedCatalogEntry>,
+                         mut query_drag_state: Query<&mut DragState>,
+                         mut query_graph_nodes: Query<(
+                            Entity,
+                            &mut GraphNode,
+                            &mut Selected,
+                        )>| {
+                            match event.gesture {
+                                // Move nodes by dragging.
+                                Gesture::Move(position) => {
+                                    let offset = position.as_ivec2();
+                                    match event.action {
+                                        GestureAction::Start | GestureAction::Move => {
+                                            query_drag_state.single_mut().offset = offset;
+                                        }
+                                        GestureAction::End => {
+                                            for (_, mut node, selected) in
+                                                query_graph_nodes.iter_mut()
+                                            {
+                                                if selected.0 {
+                                                    node.position += offset;
+                                                }
+                                            }
+                                            query_drag_state.single_mut().offset = IVec2::default();
+                                        }
+                                        GestureAction::Cancel => {
+                                            query_drag_state.single_mut().offset = IVec2::default();
+                                        }
+                                    }
+                                }
+
+                                // bevy_quill_obsidian_graph::Gesture::Create(_) => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::ReconnectStart { edge, to } => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::ReconnectEnd { edge, to } => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::ConnectInput { terminal, to } => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::ConnectEnd { terminal, to } => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::ConnectCancel => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
+                                // bevy_quill_obsidian_graph::Gesture::SelectRect(_) => todo!(),
+                                Gesture::SelectAdd(node) => {
+                                    catalog_selection.0 = None;
+                                    if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
+                                        selected.0 = true;
+                                    }
+                                }
+                                Gesture::SelectRemove(node) => {
+                                    if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
+                                        selected.0 = false;
+                                    }
+                                }
+                                Gesture::SelectToggle(node) => {
+                                    catalog_selection.0 = None;
+                                    if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
+                                        selected.0 = !selected.0;
+                                    }
+                                }
+                                Gesture::SelectClear => {
+                                    for (_, _, mut selected) in query_graph_nodes.iter_mut() {
+                                        if selected.0 {
+                                            selected.0 = false;
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    println!("Graph event received: {:?}", event.gesture)
+                                }
+                            }
+                        },
+                    )
+                },
+                (),
+            )
             .children(GraphView)
             .style(wrapper_style)
     }

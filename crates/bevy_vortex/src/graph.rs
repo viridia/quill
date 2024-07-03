@@ -1,11 +1,13 @@
 use bevy::{
+    hierarchy::BuildChildren,
     math::IVec2,
     prelude::{default, Commands, Component, Entity, Resource, World},
+    reflect::{Reflect, TypeInfo},
     utils::{HashMap, HashSet},
 };
 use smallvec::SmallVec;
 
-use crate::operator::Operator;
+use crate::operator::{Operator, OperatorInput, OperatorOutput};
 
 #[derive(Resource, Default)]
 pub struct GraphResource(pub(crate) Graph);
@@ -44,14 +46,16 @@ impl Graph {
     ) -> GraphNodeId {
         self.next_id += 1;
         let id = GraphNodeId(self.next_id);
-        let node = GraphNode {
+        let entity = commands.spawn_empty().id();
+        let mut node = GraphNode {
             id,
             position,
             operator,
             inputs: default(),
             outputs: default(),
         };
-        let entity = commands.spawn(node).id();
+        node.create_terminals(commands, entity);
+        commands.entity(entity).insert((node, Selected(false)));
         action.mutations.push(UndoMutation::AddNode(id, entity));
         self.nodes.insert(id, entity);
         id
@@ -104,6 +108,11 @@ impl Graph {
     }
 }
 
+/// Component indicating whether a graph node is selected.
+/// Note: this used to be a marker, but currently we don't support reactions on markers.
+#[derive(Component)]
+pub struct Selected(pub bool);
+
 /// A node within a node graph. The behavior and attributes of the node are determined by the
 /// operator.
 // #[derive(Clone)]
@@ -125,6 +134,52 @@ impl GraphNode {
     pub fn title(&self) -> &str {
         self.operator.reflect_short_type_path()
     }
+
+    pub fn operator_reflect(&self) -> &dyn Reflect {
+        self.operator.as_reflect()
+    }
+
+    /// For each node input or output, create an entry which holds the entity used to position
+    /// that terminal on the graph view.
+    fn create_terminals(&mut self, commands: &mut Commands, parent: Entity) {
+        assert!(self.inputs.is_empty());
+        assert!(self.outputs.is_empty());
+        let reflect = self.operator_reflect();
+        let info = reflect.get_represented_type_info().unwrap();
+        let TypeInfo::Struct(st_info) = info else {
+            panic!("Expected StructInfo");
+        };
+
+        let num_fields = st_info.field_len();
+        for findex in 0..num_fields {
+            let field = st_info.field_at(findex).unwrap();
+            let attrs = field.custom_attributes();
+            let name = field.name();
+            if attrs.contains::<OperatorInput>() {
+                self.inputs.push(InputTerminal {
+                    name,
+                    id: commands.spawn_empty().set_parent(parent).id(),
+                    data_type: ConnectionDataType::Scalar,
+                })
+            } else if attrs.contains::<OperatorOutput>() {
+                self.outputs.push(OutputTerminal {
+                    name,
+                    id: commands.spawn_empty().set_parent(parent).id(),
+                    data_type: ConnectionDataType::Scalar,
+                })
+            }
+        }
+    }
+
+    /// Locate the input terminal with the specified name.
+    pub fn get_input_terminal(&self, name: &'static str) -> Option<&InputTerminal> {
+        self.inputs.iter().find(|t| t.name == name)
+    }
+
+    /// Locate the output terminal with the specified name.
+    pub fn get_output_terminal(&self, name: &'static str) -> Option<&OutputTerminal> {
+        self.outputs.iter().find(|t| t.name == name)
+    }
 }
 
 impl Clone for GraphNode {
@@ -140,21 +195,35 @@ impl Clone for GraphNode {
 }
 
 #[derive(Clone)]
-struct InputTerminal {
+pub struct InputTerminal {
+    /// Name of this field
+    name: &'static str,
+    /// Entity used to position the terminal.
+    id: Entity,
     /// Data type for this connection
     data_type: ConnectionDataType,
-    /// Y-position along left edge of node.
-    position: f32,
+}
+
+impl InputTerminal {
+    pub fn id(&self) -> Entity {
+        self.id
+    }
 }
 
 #[derive(Clone)]
-struct OutputTerminal {
+pub struct OutputTerminal {
+    /// Name of this field
+    name: &'static str,
+    /// Entity used to position the terminal.
+    id: Entity,
     /// Data type for this connection
     data_type: ConnectionDataType,
-    /// Y-position along right edge of node.
-    position: f32,
-    /// Text label for this terminal
-    label: &'static str,
+}
+
+impl OutputTerminal {
+    pub fn id(&self) -> Entity {
+        self.id
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

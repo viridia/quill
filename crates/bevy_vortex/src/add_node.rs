@@ -1,14 +1,15 @@
 use bevy::{
+    log::warn,
     math::{IVec2, Vec2},
-    prelude::{AppTypeRegistry, Commands, Query, Res, ResMut},
+    prelude::*,
     reflect::std_traits::ReflectDefault,
 };
 use bevy_quill::prelude::*;
-use quill_obsidian::{prelude::*, scrolling::ScrollArea};
+use quill_obsidian::{controls::Button, scrolling::ScrollArea};
 
 use crate::{
     catalog::SelectedCatalogEntry,
-    graph::{GraphResource, UndoAction},
+    graph::{GraphNode, GraphResource, Selected, UndoAction},
     graph_view::GraphViewId,
     operator::ReflectOperator,
 };
@@ -24,14 +25,19 @@ impl ViewTemplate for AddNodeButton {
         let graph_view_id = cx.use_inherited_component::<GraphViewId>().unwrap().0;
 
         let on_add = cx.create_callback(
-            move |selected: Res<SelectedCatalogEntry>,
+            move |selection: Res<SelectedCatalogEntry>,
                   registry: Res<AppTypeRegistry>,
                   scrollarea_query: Query<&ScrollArea>,
                   mut graph: ResMut<GraphResource>,
                   mut commands: Commands| {
-                // Need access to scroll region center.
                 let registry_lock = registry.read();
-                if let Some(operator_type) = registry_lock.get_with_type_path(selected.0.unwrap()) {
+                let Some(selected_operator_path) = selection.0 else {
+                    warn!("No selection");
+                    return;
+                };
+                if let Some(operator_type) =
+                    registry_lock.get_with_type_path(selected_operator_path)
+                {
                     let rd = operator_type.data::<ReflectDefault>().unwrap();
                     let value = rd.default();
                     let reflect_operator = registry_lock

@@ -10,10 +10,10 @@ use crate::operator::{
 Converts the input Linear RGBA color to grayscale.
 "))]
 pub struct Grayscale {
-    #[reflect(@OperatorInput, @DisplayName("in"))]
-    pub input: LinearRgba,
-    #[reflect(@OperatorOutput)]
+    #[reflect(@OperatorOutput, @DisplayName("Out"))]
     pub output: LinearRgba,
+    #[reflect(@OperatorInput, @DisplayName("In"))]
+    pub input: LinearRgba,
 }
 
 impl Operator for Grayscale {

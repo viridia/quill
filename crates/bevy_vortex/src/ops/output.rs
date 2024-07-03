@@ -10,7 +10,7 @@ use crate::operator::{
 Displays the output of the shader.
 "))]
 pub struct Output {
-    #[reflect(@OperatorInput, @DisplayName("in"))]
+    #[reflect(@OperatorInput, @DisplayName("Color"))]
     pub input: LinearRgba,
 }
 

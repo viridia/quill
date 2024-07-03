@@ -8,9 +8,12 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 use quill_obsidian::{colors, controls::ListView, typography::text_strong};
 
-use crate::operator::{DisplayName, OperatorCategory, OperatorClass, ReflectOperator};
+use crate::{
+    graph::{GraphNode, Selected},
+    operator::{DisplayName, OperatorCategory, OperatorClass, ReflectOperator},
+};
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct SelectedCatalogEntry(pub Option<&'static str>);
 
 #[derive(Clone, PartialEq, Eq)]
@@ -104,7 +107,13 @@ impl ViewTemplate for CatalogRow {
             )
             .insert_dyn(
                 move |_| {
-                    On::<Pointer<Click>>::run(move |mut selected: ResMut<SelectedCatalogEntry>| {
+                    On::<Pointer<Click>>::run(
+                        move |mut selected: ResMut<SelectedCatalogEntry>,
+                        mut graph_nodes: Query<&mut Selected, With<GraphNode>>| {
+                        // Clear node selection
+                        for mut selected in graph_nodes.iter_mut() {
+                            selected.0 = false;
+                        }
                         selected.0 = Some(path);
                     })
                 },
