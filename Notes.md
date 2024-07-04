@@ -8,6 +8,7 @@
 - impl_trait_for_tuples for effect tuples.
 - Recent colors in color edit.
   - Needs preferences API
+- Change window title.
 
 ## Vortex notes
 
@@ -28,8 +29,6 @@
   - Buffered Nodes (for Blur)?
   - Uniform vs. Source?
     - Uniform is a node type.
-
-Drag events:
 
 ```rust
 impl<T: MyTrait + Reflect + Clone> FromType<T> for ReflectMyTrait {
