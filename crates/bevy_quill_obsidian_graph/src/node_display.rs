@@ -6,6 +6,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild, ViewChild};
 use quill_obsidian::{
     colors,
+    cursor::StyleBuilderCursor,
     hooks::{UseElementRect, UseIsHover},
 };
 
@@ -38,7 +39,8 @@ fn style_node_graph_node_title(ss: &mut StyleBuilder) {
             bottom_right: ui::Val::Px(0.),
         })
         .background_color(colors::Y_GREEN.darker(0.05))
-        .padding((6, 2));
+        .padding((6, 2))
+        .cursor(CursorIcon::Grab);
 }
 
 fn style_node_graph_node_content(ss: &mut StyleBuilder) {
@@ -151,6 +153,7 @@ impl ViewTemplate for NodeDisplay {
         Element::<NodeBundle>::for_entity(id)
             .named("NodeGraph::Node")
             .style(style_node_graph_node)
+            .insert_dyn(move |_| node_event_handlers(id, node_id), ())
             .effect(
                 move |cx, ent, (position, size)| {
                     if size.x > 0 && size.y > 0 {
@@ -180,7 +183,7 @@ impl ViewTemplate for NodeDisplay {
                         },
                         self.selected,
                     )
-                    .insert_dyn(move |_| event_handlers(id, node_id), ())
+                    .insert_dyn(move |_| title_event_handlers(id), ())
                     .children(self.title.clone()),
                 Element::<NodeBundle>::new()
                     .style(style_node_graph_node_content)
@@ -207,34 +210,47 @@ impl ViewTemplate for NodeDisplay {
 }
 
 #[allow(clippy::type_complexity)]
-fn event_handlers(
-    id: Entity,
-    node_id: Entity,
-) -> (
-    On<Pointer<Down>>,
-    On<Pointer<DragStart>>,
-    On<Pointer<DragEnd>>,
-    On<Pointer<Drag>>,
-) {
+fn node_event_handlers(id: Entity, node_id: Entity) -> (On<Pointer<Down>>, On<Pointer<DragStart>>) {
     (
         On::<Pointer<Down>>::run(
-            move |mut event: ListenerMut<Pointer<Down>>, mut writer: EventWriter<GraphEvent>| {
+            move |mut event: ListenerMut<Pointer<Down>>,
+                  mut writer: EventWriter<GraphEvent>,
+                  keys: Res<ButtonInput<KeyCode>>| {
                 event.stop_propagation();
-                writer.send(GraphEvent {
-                    target: id,
-                    gesture: Gesture::SelectClear,
-                    action: crate::GestureAction::End,
-                });
-                writer.send(GraphEvent {
-                    target: id,
-                    gesture: Gesture::SelectAdd(node_id),
-                    action: crate::GestureAction::End,
-                });
+                let is_shift = keys.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]);
+                let is_ctrl =
+                    keys.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight, KeyCode::Meta]);
+                if is_ctrl {
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::SelectToggle(node_id),
+                        action: crate::GestureAction::End,
+                    });
+                } else {
+                    if !is_shift {
+                        writer.send(GraphEvent {
+                            target: id,
+                            gesture: Gesture::SelectClear,
+                            action: crate::GestureAction::End,
+                        });
+                    }
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::SelectAdd(node_id),
+                        action: crate::GestureAction::End,
+                    });
+                }
             },
         ),
         On::<Pointer<DragStart>>::run(move |mut event: ListenerMut<Pointer<DragStart>>| {
             event.stop_propagation();
         }),
+    )
+}
+
+#[allow(clippy::type_complexity)]
+fn title_event_handlers(id: Entity) -> (On<Pointer<DragEnd>>, On<Pointer<Drag>>) {
+    (
         On::<Pointer<DragEnd>>::run(
             move |mut event: ListenerMut<Pointer<DragEnd>>, mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();

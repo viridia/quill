@@ -11,8 +11,9 @@
 
 ## Vortex notes
 
-- Node dragging
-- Tab groups
+- Drag to connect
+- Rect select
+- Keyboard
 - Catalog view
   - Double-click.
 - Operators
