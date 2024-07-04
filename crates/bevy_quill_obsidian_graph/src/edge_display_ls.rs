@@ -4,12 +4,11 @@ use bevy::{
     prelude::*,
     render::{mesh::PrimitiveTopology, render_asset::RenderAssetUsages},
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
-    ui,
 };
 use bevy_quill::prelude::*;
 use bevy_quill_obsidian::colors;
 
-use crate::materials::{DrawPathMaterial, DrawablePath, LineMaterial};
+use crate::materials::LineMaterial;
 
 /// Displays a stroked path between two nodes.
 #[derive(Clone, PartialEq)]
