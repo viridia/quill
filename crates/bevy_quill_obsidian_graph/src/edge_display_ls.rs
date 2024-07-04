@@ -7,7 +7,7 @@ use bevy::{
     ui,
 };
 use bevy_quill::prelude::*;
-use quill_obsidian::colors;
+use bevy_quill_obsidian::colors;
 
 use crate::materials::{DrawPathMaterial, DrawablePath, LineMaterial};
 

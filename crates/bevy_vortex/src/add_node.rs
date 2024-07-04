@@ -5,7 +5,7 @@ use bevy::{
     reflect::std_traits::ReflectDefault,
 };
 use bevy_quill::prelude::*;
-use quill_obsidian::{controls::Button, scrolling::ScrollArea};
+use bevy_quill_obsidian::{controls::Button, scrolling::ScrollArea};
 
 use crate::{
     catalog::SelectedCatalogEntry,

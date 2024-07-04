@@ -16,6 +16,12 @@ use bevy_mod_picking::{
     DefaultPickingPlugins,
 };
 use bevy_mod_stylebuilder::*;
+use bevy_quill_obsidian::{
+    colors,
+    controls::{Splitter, SplitterDirection},
+    focus::TabGroup,
+    typography, viewport, ObsidianUiPlugin,
+};
 use bevy_quill_obsidian_graph::{Gesture, GraphEvent, ObsidianGraphPlugin};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use graph::{GraphNode, GraphResource, Selected};
@@ -24,12 +30,6 @@ use ops::OperatorsPlugin;
 use preview::{
     enter_mode_cuboid, enter_mode_sphere, enter_mode_tetra, enter_mode_torus, enter_preview_3d,
     exit_mode_shape3d, exit_preview_3d, rotate_shapes, PreviewControls, PreviewMode, PreviewMode3d,
-};
-use quill_obsidian::{
-    colors,
-    controls::{Splitter, SplitterDirection},
-    focus::TabGroup,
-    typography, viewport, ObsidianUiPlugin,
 };
 
 use bevy::{asset::embedded_asset, prelude::*, ui};

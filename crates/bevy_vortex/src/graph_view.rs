@@ -5,11 +5,11 @@ use crate::{
 use bevy::{color::Color, prelude::*, reflect::TypeInfo};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild};
+use bevy_quill_obsidian::colors;
 use bevy_quill_obsidian_graph::{
     ConnectionAnchor, ConnectionTarget, EdgeDisplay, GraphDisplay, InputTerminalDisplay,
     NodeDisplay, OutputTerminalDisplay,
 };
-use quill_obsidian::colors;
 
 fn style_node_graph(ss: &mut StyleBuilder) {
     ss.flex_grow(1.)

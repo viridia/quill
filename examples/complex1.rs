@@ -8,8 +8,8 @@ use bevy::{color::palettes, prelude::*};
 use bevy_mod_picking::{debug::DebugPickingMode, DefaultPickingPlugins};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{Cx, Element, IntoViewChild, QuillPlugin, View, ViewChild, ViewTemplate};
+use bevy_quill_obsidian::ObsidianUiPlugin;
 use common::*;
-use quill_obsidian::ObsidianUiPlugin;
 
 fn main() {
     App::new()

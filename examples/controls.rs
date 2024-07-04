@@ -5,7 +5,7 @@ use bevy::{color::palettes, prelude::*, ui};
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use quill_obsidian::{
+use bevy_quill_obsidian::{
     colors,
     controls::{
         Button, ButtonVariant, Checkbox, ColorGradient, Dialog, DialogFooter, DialogHeader,

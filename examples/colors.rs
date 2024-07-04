@@ -5,7 +5,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use quill_obsidian::{colors, controls::Swatch, ObsidianUiPlugin};
+use bevy_quill_obsidian::{colors, controls::Swatch, ObsidianUiPlugin};
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Grid)

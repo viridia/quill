@@ -2,7 +2,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use quill_obsidian::{colors, controls::ScrollView};
+use bevy_quill_obsidian::{colors, controls::ScrollView};
 
 use crate::{materials::DotGridMaterial, Gesture, GraphEvent};
 

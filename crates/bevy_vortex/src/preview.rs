@@ -1,7 +1,7 @@
 use bevy::{color::palettes, prelude::*, ui};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
 use bevy_quill::*;
-use quill_obsidian::{
+use bevy_quill_obsidian::{
     controls::{Button, ToolIconButton, ToolPalette},
     viewport, RoundedCorners,
 };

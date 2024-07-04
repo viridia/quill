@@ -6,7 +6,7 @@ use bevy::{
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use quill_obsidian::{colors, controls::ListView, typography::text_strong};
+use bevy_quill_obsidian::{colors, controls::ListView, typography::text_strong};
 
 use crate::{
     graph::{GraphNode, Selected},

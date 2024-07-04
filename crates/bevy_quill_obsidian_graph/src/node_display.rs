@@ -4,7 +4,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild, ViewChild};
-use quill_obsidian::{
+use bevy_quill_obsidian::{
     colors,
     cursor::StyleBuilderCursor,
     hooks::{UseElementRect, UseIsHover},

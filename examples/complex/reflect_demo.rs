@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 use bevy_quill::*;
-use quill_obsidian_inspect::{InspectableResource, Inspector, Precision, ValueRange};
+use bevy_quill_obsidian_inspect::{InspectableResource, Inspector, Precision, ValueRange};
 
 #[derive(Debug, Reflect, Clone, Default)]
 pub enum TestEnum {

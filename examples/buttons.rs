@@ -5,7 +5,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use quill_obsidian::{
+use bevy_quill_obsidian::{
     colors,
     controls::{Button, ButtonVariant, IconButton},
     size::Size,
@@ -176,39 +176,39 @@ impl ViewTemplate for ButtonsDemo {
                 )),
                 "IconButton",
                 Element::<NodeBundle>::new().style(style_row).children((
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .on_click(click),
-                    // IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    // IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                     //     .variant(ButtonVariant::Primary),
-                    // IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    // IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                     //     .variant(ButtonVariant::Danger),
-                    // IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    // IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                     //     .variant(ButtonVariant::Selected),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .on_click(click)
                         .minimal(true),
                 )),
                 "IconButton Size",
                 Element::<NodeBundle>::new().style(style_row).children((
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xl)
                         .on_click(click),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Lg)
                         .on_click(click),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Md)
                         .on_click(click),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Sm)
                         .on_click(click),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xs)
                         .on_click(click),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xxs)
                         .on_click(click),
-                    IconButton::new("embedded://quill_obsidian/assets/icons/chevron_left.png")
+                    IconButton::new("embedded://bevy_quill_obsidian/assets/icons/chevron_left.png")
                         .size(Size::Xxxs)
                         .on_click(click),
                 )),

@@ -14,8 +14,8 @@ verbose = [] # Enable verbose logging
 bevy = "0.14.0"
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
 bevy_mod_picking = "0.20.0-rc.1"
-quill_obsidian = { path = "crates/quill_obsidian" }
-quill_obsidian_inspect = { path = "crates/quill_obsidian_inspect" }
+bevy_quill_obsidian = { path = "crates/bevy_quill_obsidian" }
+bevy_quill_obsidian_inspect = { path = "crates/bevy_quill_obsidian_inspect" }
 bevy_quill_obsidian_graph = { path = "crates/bevy_quill_obsidian_graph" }
 
 [dependencies]
@@ -25,8 +25,8 @@ impl-trait-for-tuples = "0.2.2"
 smallvec = "1.13.2"
 
 [dev-dependencies]
-quill_obsidian = { path = "crates/quill_obsidian" }
+bevy_quill_obsidian = { path = "crates/bevy_quill_obsidian" }
 bevy_mod_picking = { workspace = true }
-quill_obsidian_inspect = { workspace = true }
+bevy_quill_obsidian_inspect = { workspace = true }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }

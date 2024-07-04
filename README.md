@@ -10,7 +10,7 @@ quite different, owing to the need to build on the foundations of Bevy ECS.
 
 Quill is relatively unopinionated about styling, layout or ECS hierarchies - you can use it to
 build a traditional 2D game UI, gizmo-like overlays in 3D, or reactive scenes. However, Quill
-comes with a separate crate, `quill_obsidian` which provides a set of opininated widgets for
+comes with a separate crate, `bevy_quill_obsidian` which provides a set of opininated widgets for
 building game editors.
 
 ## Getting started

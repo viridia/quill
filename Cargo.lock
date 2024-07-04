@@ -995,10 +995,20 @@ dependencies = [
  "bevy",
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
+ "bevy_quill_obsidian",
+ "bevy_quill_obsidian_inspect",
  "impl-trait-for-tuples",
- "quill_obsidian",
- "quill_obsidian_inspect",
  "smallvec",
+]
+
+[[package]]
+name = "bevy_quill_obsidian"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_mod_stylebuilder",
+ "bevy_quill",
 ]
 
 [[package]]
@@ -1009,7 +1019,18 @@ dependencies = [
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
  "bevy_quill",
- "quill_obsidian",
+ "bevy_quill_obsidian",
+]
+
+[[package]]
+name = "bevy_quill_obsidian_inspect"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_mod_stylebuilder",
+ "bevy_quill",
+ "bevy_quill_obsidian",
 ]
 
 [[package]]
@@ -1305,8 +1326,8 @@ dependencies = [
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
  "bevy_quill",
+ "bevy_quill_obsidian",
  "bevy_quill_obsidian_graph",
- "quill_obsidian",
  "smallvec",
 ]
 
@@ -3231,27 +3252,6 @@ name = "profiling"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43d84d1d7a6ac92673717f9f6d1518374ef257669c24ebc5ac25d5033828be58"
-
-[[package]]
-name = "quill_obsidian"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_mod_picking",
- "bevy_mod_stylebuilder",
- "bevy_quill",
-]
-
-[[package]]
-name = "quill_obsidian_inspect"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_mod_picking",
- "bevy_mod_stylebuilder",
- "bevy_quill",
- "quill_obsidian",
-]
 
 [[package]]
 name = "quote"

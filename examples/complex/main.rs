@@ -11,7 +11,7 @@ use bevy_mod_picking::{
     DefaultPickingPlugins,
 };
 use bevy_mod_stylebuilder::*;
-use quill_obsidian::{
+use bevy_quill_obsidian::{
     colors,
     controls::{
         Button, ButtonVariant, Checkbox, Dialog, DialogBody, DialogFooter, DialogHeader, ListView,
@@ -20,7 +20,7 @@ use quill_obsidian::{
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
-use quill_obsidian_inspect::InspectorPlugin;
+use bevy_quill_obsidian_inspect::InspectorPlugin;
 use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
 // use transform_overlay::TransformOverlay;
 

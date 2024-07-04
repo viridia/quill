@@ -2,7 +2,7 @@ use bevy::{ecs::system::SystemParam, prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, ViewChild};
-use quill_obsidian::{colors, hooks::UseIsHover};
+use bevy_quill_obsidian::{colors, hooks::UseIsHover};
 
 use crate::{ConnectionTarget, DragMode, Gesture, GestureState, GraphEvent};
 
