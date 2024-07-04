@@ -10,7 +10,7 @@ use quill_obsidian::{
     hooks::{UseElementRect, UseIsHover},
 };
 
-use crate::{Gesture, GraphEvent};
+use crate::{DragMode, Gesture, GestureState, GraphEvent};
 
 fn style_node_graph_node(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
@@ -224,20 +224,17 @@ fn node_event_handlers(id: Entity, node_id: Entity) -> (On<Pointer<Down>>, On<Po
                     writer.send(GraphEvent {
                         target: id,
                         gesture: Gesture::SelectToggle(node_id),
-                        action: crate::GestureAction::End,
                     });
                 } else {
                     if !is_shift {
                         writer.send(GraphEvent {
                             target: id,
                             gesture: Gesture::SelectClear,
-                            action: crate::GestureAction::End,
                         });
                     }
                     writer.send(GraphEvent {
                         target: id,
                         gesture: Gesture::SelectAdd(node_id),
-                        action: crate::GestureAction::End,
                     });
                 }
             },
@@ -252,24 +249,26 @@ fn node_event_handlers(id: Entity, node_id: Entity) -> (On<Pointer<Down>>, On<Po
 fn title_event_handlers(id: Entity) -> (On<Pointer<DragEnd>>, On<Pointer<Drag>>) {
     (
         On::<Pointer<DragEnd>>::run(
-            move |mut event: ListenerMut<Pointer<DragEnd>>, mut writer: EventWriter<GraphEvent>| {
+            move |mut event: ListenerMut<Pointer<DragEnd>>,
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
-                let gesture = Gesture::Move(event.distance);
+                gesture_state.mode = DragMode::None;
                 writer.send(GraphEvent {
                     target: id,
-                    gesture,
-                    action: crate::GestureAction::End,
+                    gesture: Gesture::Move(event.distance, true),
                 });
             },
         ),
         On::<Pointer<Drag>>::run({
-            move |mut event: ListenerMut<Pointer<Drag>>, mut writer: EventWriter<GraphEvent>| {
+            move |mut event: ListenerMut<Pointer<Drag>>,
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
-                let gesture = Gesture::Move(event.distance);
+                gesture_state.mode = DragMode::Move;
                 writer.send(GraphEvent {
                     target: id,
-                    gesture,
-                    action: crate::GestureAction::Move,
+                    gesture: Gesture::Move(event.distance, false),
                 });
             }
         }),

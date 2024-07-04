@@ -64,14 +64,16 @@ impl GraphDisplay {
 impl ViewTemplate for GraphDisplay {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let mut ui_materials = cx
-            .world_mut()
-            .get_resource_mut::<Assets<DotGridMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(DotGridMaterial {
-            color_bg: LinearRgba::from(colors::U1).to_vec4(),
-            color_fg: LinearRgba::from(colors::U3).to_vec4(),
-        });
+        let material = cx.create_memo(
+            |world, _| {
+                let mut ui_materials = world.get_resource_mut::<Assets<DotGridMaterial>>().unwrap();
+                ui_materials.add(DotGridMaterial {
+                    color_bg: LinearRgba::from(colors::U1).to_vec4(),
+                    color_fg: LinearRgba::from(colors::U3).to_vec4(),
+                })
+            },
+            (),
+        );
 
         ScrollView::new()
             .entity(self.entity)
@@ -87,11 +89,10 @@ impl ViewTemplate for GraphDisplay {
                                         writer.send(GraphEvent {
                                             target: event.target(),
                                             gesture: Gesture::SelectClear,
-                                            action: crate::GestureAction::End,
                                         });
                                 }),
                                 On::<Pointer<DragEnd>>::run(move |mut event: ListenerMut<Pointer<DragEnd>>,
-                                    mut writer: EventWriter<GraphEvent>| {
+                                    mut _writer: EventWriter<GraphEvent>| {
                                         event.stop_propagation();
                                     // drag_state.set(
                                     //     world,

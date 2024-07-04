@@ -7,6 +7,7 @@ use quill_obsidian::colors;
 use crate::materials::{DrawPathMaterial, DrawablePath};
 
 /// Displays a stroked path between two nodes.
+#[derive(Clone, PartialEq)]
 pub struct EdgeDisplay {
     /// Pixel position of the source terminal.
     pub src_pos: IVec2,

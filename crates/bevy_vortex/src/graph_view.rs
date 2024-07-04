@@ -6,7 +6,8 @@ use bevy::{color::Color, prelude::*, reflect::TypeInfo};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild};
 use bevy_quill_obsidian_graph::{
-    GraphDisplay, InputTerminalDisplay, NodeDisplay, OutputTerminalDisplay,
+    ConnectionAnchor, ConnectionTarget, EdgeDisplay, GraphDisplay, InputTerminalDisplay,
+    NodeDisplay, OutputTerminalDisplay,
 };
 use quill_obsidian::colors;
 
@@ -26,6 +27,8 @@ pub struct GraphViewId(pub(crate) Entity);
 pub struct DragState {
     /// Offset while dragging nodes
     pub(crate) offset: IVec2,
+    pub(crate) connect_from: Option<ConnectionAnchor>,
+    pub(crate) connect_to: Option<ConnectionTarget>,
 }
 
 /// View template for graph. Entity is the id for the graph view.
@@ -42,7 +45,26 @@ impl ViewTemplate for GraphView {
         GraphDisplay::new()
             .entity(graph_view_id)
             .style(style_node_graph)
-            .children((For::each(node_ids, |node| GraphNodeView(*node)),))
+            .children((
+                For::each(node_ids, |node| GraphNodeView(*node)),
+                ConnectionProxyView,
+                EdgeDisplay {
+                    src_pos: IVec2::new(50, 50),
+                    dst_pos: IVec2::new(400, 50),
+                },
+                EdgeDisplay {
+                    src_pos: IVec2::new(50, 60),
+                    dst_pos: IVec2::new(400, 70),
+                },
+                EdgeDisplay {
+                    src_pos: IVec2::new(50, 70),
+                    dst_pos: IVec2::new(400, 170),
+                },
+                EdgeDisplay {
+                    src_pos: IVec2::new(50, 170),
+                    dst_pos: IVec2::new(400, 70),
+                },
+            ))
     }
 }
 
@@ -141,4 +163,68 @@ impl ViewTemplate for GraphNodePropertyView {
             display_name.into_view_child()
         }
     }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct ConnectionProxyView;
+
+impl ViewTemplate for ConnectionProxyView {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let drag_state = cx.use_inherited_component::<DragState>().unwrap();
+        let (src_pos, dst_pos) = match drag_state.connect_from {
+            Some(ConnectionAnchor::OutputTerminal(term)) => (
+                get_terminal_position(cx, term),
+                get_target_position(cx, drag_state.connect_to),
+            ),
+            Some(ConnectionAnchor::InputTerminal(term)) => (
+                get_target_position(cx, drag_state.connect_to),
+                get_terminal_position(cx, term),
+            ),
+            Some(ConnectionAnchor::EdgeSource(edge)) => todo!(),
+            Some(ConnectionAnchor::EdgeSink(edge)) => todo!(),
+            None => (IVec2::default(), IVec2::default()),
+        };
+        // println!("src_pos: {src_pos}, dst_pos: {dst_pos}");
+        Cond::new(
+            drag_state.connect_from.is_some() && drag_state.connect_to.is_some(),
+            EdgeDisplay { src_pos, dst_pos },
+            (),
+        )
+    }
+}
+
+fn get_terminal_position(cx: &Cx, terminal_id: Entity) -> IVec2 {
+    let rect = get_relative_rect(cx, terminal_id, 4);
+    rect.map_or(IVec2::default(), |f| f.center().as_ivec2())
+}
+
+fn get_target_position(cx: &Cx, target: Option<ConnectionTarget>) -> IVec2 {
+    match target {
+        Some(ConnectionTarget::InputTerminal(term)) => get_terminal_position(cx, term),
+        Some(ConnectionTarget::OutputTerminal(term)) => get_terminal_position(cx, term),
+        Some(ConnectionTarget::Position(pos)) => pos.as_ivec2(),
+        None => IVec2::default(),
+    }
+}
+
+fn get_relative_rect(cx: &Cx, id: Entity, levels: usize) -> Option<Rect> {
+    cx.world().get_entity(id)?;
+    let node = cx.use_component::<Node>(id)?;
+    let transform = cx.use_component::<GlobalTransform>(id)?;
+    let mut rect = node.logical_rect(transform);
+    let mut current = id;
+    for _ in 0..levels {
+        if let Some(parent) = cx.use_component::<Parent>(current) {
+            current = parent.get();
+        } else {
+            return None;
+        }
+    }
+    let node = cx.use_component::<Node>(current)?;
+    let transform = cx.use_component::<GlobalTransform>(current)?;
+    let ancestor_rect = node.logical_rect(transform);
+    rect.min -= ancestor_rect.min;
+    rect.max -= ancestor_rect.min;
+    Some(rect)
 }

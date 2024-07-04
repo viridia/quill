@@ -1,10 +1,10 @@
-use bevy::{prelude::*, ui};
+use bevy::{ecs::system::SystemParam, prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, ViewChild};
 use quill_obsidian::{colors, hooks::UseIsHover};
 
-use crate::{DropLocation, Gesture, GestureAction, GestureState, GraphEvent};
+use crate::{ConnectionTarget, DragMode, Gesture, GestureState, GraphEvent};
 
 fn style_node_graph_terminal_outline(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
@@ -60,6 +60,7 @@ impl ViewTemplate for InputTerminalDisplay {
                     .style((style_input_terminal, move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
                     }))
+                    .insert_dyn(terminal_event_handlers, id)
                     .children(Cond::new(
                         is_hover,
                         Element::<NodeBundle>::new().style(style_node_graph_terminal_outline),
@@ -115,92 +116,7 @@ impl ViewTemplate for OutputTerminalDisplay {
                     .style((style_output_terminal, move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
                     }))
-                    .insert_dyn(
-                        move |_| {
-                            (
-                                On::<Pointer<DragStart>>::run(
-                                    move |
-                                    event: Listener<Pointer<DragStart>>,
-                                    mut gesture_state: ResMut<GestureState>,
-                                    mut writer: EventWriter<GraphEvent>| {
-                                        let gesture = Gesture::ConnectInput {
-                                            terminal: id, to: DropLocation::Position(event.pointer_location.position) };
-                                        gesture_state.gesture = Some(gesture.clone());
-                                        writer.send(GraphEvent {
-                                            target: id,
-                                            gesture,
-                                            action: GestureAction::Start
-                                        });
-                                    },
-                                ),
-                                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                                    println!("Drag end");
-                                    // drag_state.set(
-                                    //     world,
-                                    //     DragState {
-                                    //         dragging: false,
-                                    //         offset: position_capture.get(world),
-                                    //     },
-                                    // );
-                                }),
-                                On::<Pointer<Drag>>::run({
-                                    move |world: &mut World| {
-                                        // println!("Drag");
-                                        //     let event = world
-                                        //         .get_resource::<ListenerInput<Pointer<Drag>>>()
-                                        //         .unwrap();
-                                        //     let ev = event.distance;
-                                        //     let ds = drag_state.get(world);
-                                        //     if let Some(on_drag) = on_drag {
-                                        //         if ds.dragging {
-                                        //             world.run_callback(
-                                        //                 on_drag,
-                                        //                 Vec2::new(ev.x, ev.y) + ds.offset,
-                                        //             );
-                                        //         }
-                                        //     }
-                                    }
-                                }),
-                                On::<Pointer<DragEnter>>::run({
-                                    move |world: &mut World| {
-                                        println!("Drag Enter");
-                                        //     let event = world
-                                        //         .get_resource::<ListenerInput<Pointer<Drag>>>()
-                                        //         .unwrap();
-                                        //     let ev = event.distance;
-                                        //     let ds = drag_state.get(world);
-                                        //     if let Some(on_drag) = on_drag {
-                                        //         if ds.dragging {
-                                        //             world.run_callback(
-                                        //                 on_drag,
-                                        //                 Vec2::new(ev.x, ev.y) + ds.offset,
-                                        //             );
-                                        //         }
-                                        //     }
-                                    }
-                                }),
-                                On::<Pointer<DragLeave>>::run({
-                                    move |world: &mut World| {
-                                        println!("Drag Leave");
-                                        //     let event = world
-                                        //         .get_resource::<ListenerInput<Pointer<Drag>>>()
-                                        //         .unwrap();
-                                        //     let ev = event.distance;
-                                        //     let ds = drag_state.get(world);
-                                        //     if let Some(on_drag) = on_drag {
-                                        //         if ds.dragging {
-                                        //             world.run_callback(
-                                        //                 on_drag,
-                                        //                 Vec2::new(ev.x, ev.y) + ds.offset,
-                                        //             );
-                                        //         }
-                                        //     }
-                                    }
-                                }),
-                            )
-                        },
-                        (),
-                    )
+                    .insert_dyn(terminal_event_handlers, id)
                     .children(Cond::new(
                         is_hover,
                         Element::<NodeBundle>::new().style(style_node_graph_terminal_outline),
@@ -208,5 +124,126 @@ impl ViewTemplate for OutputTerminalDisplay {
                     )),
                 self.label.clone(),
             ))
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn terminal_event_handlers(
+    id: Entity,
+) -> (
+    On<Pointer<DragStart>>,
+    On<Pointer<Drag>>,
+    On<Pointer<DragEnd>>,
+    On<Pointer<DragEnter>>,
+    On<Pointer<DragLeave>>,
+) {
+    (
+        On::<Pointer<DragStart>>::run(
+            move |mut event: ListenerMut<Pointer<DragStart>>,
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
+                event.stop_propagation();
+                gesture_state.mode = DragMode::Connect;
+                writer.send(GraphEvent {
+                    target: id,
+                    gesture: Gesture::Connect(crate::ConnectionAnchor::OutputTerminal(id)),
+                });
+            },
+        ),
+        On::<Pointer<Drag>>::run(
+            move |mut event: ListenerMut<Pointer<Drag>>,
+                  gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>,
+                  rel: RelativeWorldPositions| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Connect {
+                    // println!("position: {}", event.pointer_location.position);
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::ConnectMove(ConnectionTarget::Position(
+                            rel.transform_relative(id, event.pointer_location.position, 4),
+                        )),
+                    });
+                }
+            },
+        ),
+        On::<Pointer<DragEnd>>::run(
+            move |mut event: ListenerMut<Pointer<DragEnd>>,
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>,
+                  rel: RelativeWorldPositions| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Connect {
+                    gesture_state.mode = DragMode::None;
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::ConnectFinish(ConnectionTarget::Position(
+                            rel.transform_relative(id, event.pointer_location.position, 4),
+                        )),
+                    });
+                }
+            },
+        ),
+        On::<Pointer<DragEnter>>::run({
+            move |world: &mut World| {
+                println!("Drag Enter");
+                //     let event = world
+                //         .get_resource::<ListenerInput<Pointer<Drag>>>()
+                //         .unwrap();
+                //     let ev = event.distance;
+                //     let ds = drag_state.get(world);
+                //     if let Some(on_drag) = on_drag {
+                //         if ds.dragging {
+                //             world.run_callback(
+                //                 on_drag,
+                //                 Vec2::new(ev.x, ev.y) + ds.offset,
+                //             );
+                //         }
+                //     }
+            }
+        }),
+        On::<Pointer<DragLeave>>::run({
+            move |world: &mut World| {
+                println!("Drag Leave");
+                //     let event = world
+                //         .get_resource::<ListenerInput<Pointer<Drag>>>()
+                //         .unwrap();
+                //     let ev = event.distance;
+                //     let ds = drag_state.get(world);
+                //     if let Some(on_drag) = on_drag {
+                //         if ds.dragging {
+                //             world.run_callback(
+                //                 on_drag,
+                //                 Vec2::new(ev.x, ev.y) + ds.offset,
+                //             );
+                //         }
+                //     }
+            }
+        }),
+    )
+}
+
+#[derive(SystemParam)]
+struct RelativeWorldPositions<'w, 's> {
+    query: Query<'w, 's, (&'static Node, &'static GlobalTransform, &'static Parent)>,
+}
+
+impl<'w, 's> RelativeWorldPositions<'w, 's> {
+    pub fn transform_relative(&self, id: Entity, pos: Vec2, levels: usize) -> Vec2 {
+        let mut current = id;
+        for _ in 0..levels {
+            if let Ok((_, _, parent)) = self.query.get(current) {
+                current = parent.get();
+            } else {
+                return pos;
+            }
+        }
+
+        let Ok((node, transform, _)) = self.query.get(current) else {
+            return pos;
+        };
+
+        let rect = node.logical_rect(transform);
+        pos - rect.min
     }
 }

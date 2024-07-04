@@ -9,7 +9,7 @@ use quill_obsidian::{controls::Button, scrolling::ScrollArea};
 
 use crate::{
     catalog::SelectedCatalogEntry,
-    graph::{GraphNode, GraphResource, Selected, UndoAction},
+    graph::{GraphResource, UndoAction},
     graph_view::GraphViewId,
     operator::ReflectOperator,
 };

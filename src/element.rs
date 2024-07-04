@@ -252,6 +252,8 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
             // Only despawn the display entity if we created it. If we got it from the outside,
             // then it's the responsibility of the caller to clean it up.
             world.entity_mut(state.0).despawn();
+        } else {
+            world.entity_mut(state.0).remove::<B>();
         }
         self.children.raze(world, &mut state.1);
     }

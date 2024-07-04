@@ -16,7 +16,7 @@ use bevy_mod_picking::{
     DefaultPickingPlugins,
 };
 use bevy_mod_stylebuilder::*;
-use bevy_quill_obsidian_graph::{Gesture, GestureAction, GraphEvent, ObsidianGraphPlugin};
+use bevy_quill_obsidian_graph::{Gesture, GraphEvent, ObsidianGraphPlugin};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use graph::{GraphNode, GraphResource, Selected};
 use graph_view::{DragState, GraphView, GraphViewId};
@@ -214,38 +214,41 @@ impl ViewTemplate for CenterPanel {
                             &mut GraphNode,
                             &mut Selected,
                         )>| {
+                            let mut drag_state = query_drag_state.single_mut();
                             match event.gesture {
                                 // Move nodes by dragging.
-                                Gesture::Move(position) => {
+                                Gesture::Move(position, is_final) => {
                                     let offset = position.as_ivec2();
-                                    match event.action {
-                                        GestureAction::Start | GestureAction::Move => {
-                                            query_drag_state.single_mut().offset = offset;
-                                        }
-                                        GestureAction::End => {
-                                            for (_, mut node, selected) in
-                                                query_graph_nodes.iter_mut()
-                                            {
-                                                if selected.0 {
-                                                    node.position += offset;
-                                                }
+                                    if is_final {
+                                        for (_, mut node, selected) in
+                                        query_graph_nodes.iter_mut()
+                                        {
+                                            if selected.0 {
+                                                node.position += offset;
                                             }
-                                            query_drag_state.single_mut().offset = IVec2::default();
                                         }
-                                        GestureAction::Cancel => {
-                                            query_drag_state.single_mut().offset = IVec2::default();
-                                        }
+                                        drag_state.offset = IVec2::default();
+                                    } else {
+                                        drag_state.offset = offset;
                                     }
                                 }
 
-                                // bevy_quill_obsidian_graph::Gesture::Create(_) => todo!(),
-                                // bevy_quill_obsidian_graph::Gesture::ReconnectStart { edge, to } => todo!(),
-                                // bevy_quill_obsidian_graph::Gesture::ReconnectEnd { edge, to } => todo!(),
-                                // bevy_quill_obsidian_graph::Gesture::ConnectInput { terminal, to } => todo!(),
-                                // bevy_quill_obsidian_graph::Gesture::ConnectEnd { terminal, to } => todo!(),
-                                // bevy_quill_obsidian_graph::Gesture::ConnectCancel => todo!(),
+                                Gesture::Connect(anchor) => {
+                                    drag_state.connect_from = Some(anchor);
+                                }
+
+                                Gesture::ConnectMove(target) => {
+                                    drag_state.connect_to = Some(target);
+                                }
+
+                                Gesture::ConnectFinish(_target) => {
+                                    drag_state.connect_from = None;
+                                    drag_state.connect_to = None;
+                                }
+
                                 // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
                                 // bevy_quill_obsidian_graph::Gesture::SelectRect(_) => todo!(),
+
                                 Gesture::SelectAdd(node) => {
                                     catalog_selection.0 = None;
                                     if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
@@ -270,6 +273,13 @@ impl ViewTemplate for CenterPanel {
                                         }
                                     }
                                 }
+
+                                Gesture::Cancel => {
+                                    drag_state.offset = IVec2::default();
+                                    drag_state.connect_from = None;
+                                    drag_state.connect_to = None;
+                                }
+
                                 _ => {
                                     println!("Graph event received: {:?}", event.gesture)
                                 }
