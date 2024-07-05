@@ -194,6 +194,10 @@ impl Clone for GraphNode {
     }
 }
 
+/// Component used to store the position of a node while dragging.
+#[derive(Component)]
+pub struct NodeBasePosition(pub IVec2);
+
 #[derive(Clone)]
 pub struct InputTerminal {
     /// Name of this field

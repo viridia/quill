@@ -46,7 +46,11 @@ pub enum Gesture {
     /// Select a rectangular region
     SelectRect(Rect),
 
-    /// Add a node to the selection.
+    /// Select the given node. If the node is already selected, does nothing. If the node is
+    /// not selected, clears the selection and selects only the given node.
+    Select(Entity),
+
+    /// Add a node to the selection, don't affect other nodes.
     SelectAdd(Entity),
 
     /// Remove a node from the selection.

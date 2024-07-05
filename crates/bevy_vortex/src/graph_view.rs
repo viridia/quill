@@ -26,7 +26,7 @@ pub struct GraphViewId(pub(crate) Entity);
 #[derive(Component, Default)]
 pub struct DragState {
     /// Offset while dragging nodes
-    pub(crate) offset: IVec2,
+    // pub(crate) offset: IVec2,
     pub(crate) connect_from: Option<ConnectionAnchor>,
     pub(crate) connect_to: Option<ConnectionTarget>,
 }
@@ -86,7 +86,6 @@ impl ViewTemplate for GraphNodeView {
         let TypeInfo::Struct(st_info) = info else {
             panic!("Expected StructInfo");
         };
-        let drag_state = cx.use_inherited_component::<DragState>().unwrap();
 
         let field_names = {
             let num_fields = st_info.field_len();
@@ -98,15 +97,8 @@ impl ViewTemplate for GraphNodeView {
             names
         };
 
-        // Offset position while dragging.
-        let position = if is_selected {
-            node.position + drag_state.offset
-        } else {
-            node.position
-        };
-
         NodeDisplay::new(entity)
-            .position(position)
+            .position(node.position)
             .title(node.title())
             .selected(is_selected)
             // .on_drag(

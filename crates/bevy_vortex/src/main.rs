@@ -24,7 +24,7 @@ use bevy_quill_obsidian::{
 };
 use bevy_quill_obsidian_graph::{Gesture, GraphEvent, ObsidianGraphPlugin};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
-use graph::{GraphNode, GraphResource, Selected};
+use graph::{GraphNode, GraphResource, NodeBasePosition, Selected};
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
 use preview::{
@@ -207,29 +207,37 @@ impl ViewTemplate for CenterPanel {
                 |_| {
                     On::<GraphEvent>::run(
                         |event: Listener<GraphEvent>,
+                         mut commands: Commands,
                          mut catalog_selection: ResMut<SelectedCatalogEntry>,
                          mut query_drag_state: Query<&mut DragState>,
                          mut query_graph_nodes: Query<(
                             Entity,
                             &mut GraphNode,
                             &mut Selected,
+                            Option<&NodeBasePosition>,
                         )>| {
                             let mut drag_state = query_drag_state.single_mut();
                             match event.gesture {
                                 // Move nodes by dragging.
                                 Gesture::Move(position, is_final) => {
                                     let offset = position.as_ivec2();
-                                    if is_final {
-                                        for (_, mut node, selected) in
+                                    for (ent, mut node, selected, base) in
                                         query_graph_nodes.iter_mut()
-                                        {
-                                            if selected.0 {
-                                                node.position += offset;
+                                    {
+                                        if selected.0 {
+                                            if let Some(base) = base {
+                                                node.position = base.0 + offset;
+                                                if is_final {
+                                                    commands
+                                                        .entity(ent)
+                                                        .remove::<NodeBasePosition>();
+                                                }
+                                            } else {
+                                                commands
+                                                    .entity(ent)
+                                                    .insert(NodeBasePosition(node.position));
                                             }
                                         }
-                                        drag_state.offset = IVec2::default();
-                                    } else {
-                                        drag_state.offset = offset;
                                     }
                                 }
 
@@ -248,26 +256,48 @@ impl ViewTemplate for CenterPanel {
 
                                 // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
                                 // bevy_quill_obsidian_graph::Gesture::SelectRect(_) => todo!(),
+                                Gesture::Select(node) => {
+                                    catalog_selection.0 = None;
+                                    let is_selected = query_graph_nodes
+                                        .get_mut(node)
+                                        .map_or(false, |(_, _, selected, _)| selected.0);
+                                    if !is_selected {
+                                        for (ent, _, mut selected, _) in
+                                            query_graph_nodes.iter_mut()
+                                        {
+                                            let select = ent == node;
+                                            if selected.0 != select {
+                                                selected.0 = select;
+                                            }
+                                        }
+                                    }
+                                }
 
                                 Gesture::SelectAdd(node) => {
                                     catalog_selection.0 = None;
-                                    if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
+                                    if let Ok((_, _, mut selected, _)) =
+                                        query_graph_nodes.get_mut(node)
+                                    {
                                         selected.0 = true;
                                     }
                                 }
                                 Gesture::SelectRemove(node) => {
-                                    if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
+                                    if let Ok((_, _, mut selected, _)) =
+                                        query_graph_nodes.get_mut(node)
+                                    {
                                         selected.0 = false;
                                     }
                                 }
                                 Gesture::SelectToggle(node) => {
                                     catalog_selection.0 = None;
-                                    if let Ok((_, _, mut selected)) = query_graph_nodes.get_mut(node) {
+                                    if let Ok((_, _, mut selected, _)) =
+                                        query_graph_nodes.get_mut(node)
+                                    {
                                         selected.0 = !selected.0;
                                     }
                                 }
                                 Gesture::SelectClear => {
-                                    for (_, _, mut selected) in query_graph_nodes.iter_mut() {
+                                    for (_, _, mut selected, _) in query_graph_nodes.iter_mut() {
                                         if selected.0 {
                                             selected.0 = false;
                                         }
@@ -275,7 +305,7 @@ impl ViewTemplate for CenterPanel {
                                 }
 
                                 Gesture::Cancel => {
-                                    drag_state.offset = IVec2::default();
+                                    // drag_state.offset = IVec2::default();
                                     drag_state.connect_from = None;
                                     drag_state.connect_to = None;
                                 }

@@ -225,16 +225,15 @@ fn node_event_handlers(id: Entity, node_id: Entity) -> (On<Pointer<Down>>, On<Po
                         target: id,
                         gesture: Gesture::SelectToggle(node_id),
                     });
-                } else {
-                    if !is_shift {
-                        writer.send(GraphEvent {
-                            target: id,
-                            gesture: Gesture::SelectClear,
-                        });
-                    }
+                } else if is_shift {
                     writer.send(GraphEvent {
                         target: id,
                         gesture: Gesture::SelectAdd(node_id),
+                    });
+                } else {
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::Select(node_id),
                     });
                 }
             },
