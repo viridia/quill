@@ -60,7 +60,7 @@ impl ViewTemplate for InputTerminalDisplay {
                     .style((style_input_terminal, move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
                     }))
-                    .insert_dyn(terminal_event_handlers, id)
+                    .insert_dyn(terminal_event_handlers, (id, false))
                     .children(Cond::new(
                         is_hover,
                         Element::<NodeBundle>::new().style(style_node_graph_terminal_outline),
@@ -116,7 +116,7 @@ impl ViewTemplate for OutputTerminalDisplay {
                     .style((style_output_terminal, move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
                     }))
-                    .insert_dyn(terminal_event_handlers, id)
+                    .insert_dyn(terminal_event_handlers, (id, true))
                     .children(Cond::new(
                         is_hover,
                         Element::<NodeBundle>::new().style(style_node_graph_terminal_outline),
@@ -129,7 +129,7 @@ impl ViewTemplate for OutputTerminalDisplay {
 
 #[allow(clippy::type_complexity)]
 fn terminal_event_handlers(
-    id: Entity,
+    args: (Entity, bool),
 ) -> (
     On<Pointer<DragStart>>,
     On<Pointer<Drag>>,
@@ -137,6 +137,7 @@ fn terminal_event_handlers(
     On<Pointer<DragEnter>>,
     On<Pointer<DragLeave>>,
 ) {
+    let (id, is_output) = args;
     (
         On::<Pointer<DragStart>>::run(
             move |mut event: ListenerMut<Pointer<DragStart>>,
@@ -146,7 +147,11 @@ fn terminal_event_handlers(
                 gesture_state.mode = DragMode::Connect;
                 writer.send(GraphEvent {
                     target: id,
-                    gesture: Gesture::Connect(crate::ConnectionAnchor::OutputTerminal(id)),
+                    gesture: Gesture::Connect(if is_output {
+                        crate::ConnectionAnchor::OutputTerminal(id)
+                    } else {
+                        crate::ConnectionAnchor::InputTerminal(id)
+                    }),
                 });
             },
         ),
@@ -160,8 +165,10 @@ fn terminal_event_handlers(
                     // println!("position: {}", event.pointer_location.position);
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::ConnectMove(ConnectionTarget::Position(
-                            rel.transform_relative(id, event.pointer_location.position, 4),
+                        gesture: Gesture::ConnectDrag(rel.transform_relative(
+                            id,
+                            event.pointer_location.position,
+                            4,
                         )),
                     });
                 }
@@ -170,54 +177,45 @@ fn terminal_event_handlers(
         On::<Pointer<DragEnd>>::run(
             move |mut event: ListenerMut<Pointer<DragEnd>>,
                   mut gesture_state: ResMut<GestureState>,
-                  mut writer: EventWriter<GraphEvent>,
-                  rel: RelativeWorldPositions| {
+                  mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     gesture_state.mode = DragMode::None;
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::ConnectFinish(ConnectionTarget::Position(
-                            rel.transform_relative(id, event.pointer_location.position, 4),
-                        )),
+                        gesture: Gesture::ConnectFinish,
                     });
                 }
             },
         ),
         On::<Pointer<DragEnter>>::run({
-            move |world: &mut World| {
-                println!("Drag Enter");
-                //     let event = world
-                //         .get_resource::<ListenerInput<Pointer<Drag>>>()
-                //         .unwrap();
-                //     let ev = event.distance;
-                //     let ds = drag_state.get(world);
-                //     if let Some(on_drag) = on_drag {
-                //         if ds.dragging {
-                //             world.run_callback(
-                //                 on_drag,
-                //                 Vec2::new(ev.x, ev.y) + ds.offset,
-                //             );
-                //         }
-                //     }
+            move |mut event: ListenerMut<Pointer<DragEnter>>,
+                  gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Connect {
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::ConnectHover(if is_output {
+                            ConnectionTarget::OutputTerminal(id)
+                        } else {
+                            ConnectionTarget::InputTerminal(id)
+                        }),
+                    });
+                }
             }
         }),
         On::<Pointer<DragLeave>>::run({
-            move |world: &mut World| {
-                println!("Drag Leave");
-                //     let event = world
-                //         .get_resource::<ListenerInput<Pointer<Drag>>>()
-                //         .unwrap();
-                //     let ev = event.distance;
-                //     let ds = drag_state.get(world);
-                //     if let Some(on_drag) = on_drag {
-                //         if ds.dragging {
-                //             world.run_callback(
-                //                 on_drag,
-                //                 Vec2::new(ev.x, ev.y) + ds.offset,
-                //             );
-                //         }
-                //     }
+            move |mut event: ListenerMut<Pointer<DragLeave>>,
+                  gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Connect {
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::ConnectHover(ConnectionTarget::None),
+                    });
+                }
             }
         }),
     )

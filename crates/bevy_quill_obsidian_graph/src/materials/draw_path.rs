@@ -101,6 +101,7 @@ impl DrawPathMaterial {
         self.color = path.color.to_vec4();
         self.width = path.width;
         self.commands.clear();
+        // println!("Updating material: {}", path.commands.len());
         for segment in &path.commands {
             match segment {
                 DrawablePathSegment::Move(point) => {

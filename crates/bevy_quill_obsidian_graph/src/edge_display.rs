@@ -20,11 +20,15 @@ impl ViewTemplate for EdgeDisplay {
     type View = impl View;
 
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let mut ui_materials = cx
-            .world_mut()
-            .get_resource_mut::<Assets<DrawPathMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(DrawPathMaterial::default());
+        let material = cx.create_memo(
+            |world, _| {
+                let mut ui_materials = world
+                    .get_resource_mut::<Assets<DrawPathMaterial>>()
+                    .unwrap();
+                ui_materials.add(DrawPathMaterial::default())
+            },
+            (),
+        );
         let material_id = material.id();
         let src_pos = self.src_pos.as_vec2();
         let dst_pos = self.dst_pos.as_vec2();

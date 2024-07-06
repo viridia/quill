@@ -22,9 +22,14 @@ use bevy_quill_obsidian::{
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin,
 };
-use bevy_quill_obsidian_graph::{Gesture, GraphEvent, ObsidianGraphPlugin};
+use bevy_quill_obsidian_graph::{
+    ConnectionAnchor, ConnectionTarget, Gesture, GraphEvent, ObsidianGraphPlugin,
+};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
-use graph::{GraphNode, GraphResource, NodeBasePosition, Selected};
+use graph::{
+    AddConnectionCmd, GraphNode, GraphResource, InputTerminal, NodeBasePosition, Selected,
+    ValidateConnectionCmd,
+};
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
 use preview::{
@@ -243,13 +248,73 @@ impl ViewTemplate for CenterPanel {
 
                                 Gesture::Connect(anchor) => {
                                     drag_state.connect_from = Some(anchor);
+                                    drag_state.valid_connection = false;
                                 }
 
-                                Gesture::ConnectMove(target) => {
-                                    drag_state.connect_to = Some(target);
+                                Gesture::ConnectDrag(pos) => {
+                                    drag_state.connect_to_pos = pos;
                                 }
 
-                                Gesture::ConnectFinish(_target) => {
+                                Gesture::ConnectHover(target) => {
+                                    if matches!(target, ConnectionTarget::None) {
+                                        drag_state.connect_to = None;
+                                        drag_state.valid_connection = false;
+                                    } else {
+                                        drag_state.connect_to = Some(target);
+                                        let Some(from) = drag_state.connect_from else {
+                                            return;
+                                        };
+                                        match from {
+                                            ConnectionAnchor::OutputTerminal(from) => {
+                                                if let ConnectionTarget::InputTerminal(to) = target
+                                                {
+                                                    commands.add(ValidateConnectionCmd {
+                                                        output: from,
+                                                        input: to,
+                                                    });
+                                                }
+                                            }
+                                            ConnectionAnchor::InputTerminal(from) => {
+                                                if let ConnectionTarget::OutputTerminal(to) = target
+                                                {
+                                                    commands.add(ValidateConnectionCmd {
+                                                        output: to,
+                                                        input: from,
+                                                    });
+                                                }
+                                            }
+                                            ConnectionAnchor::EdgeSource(_) => todo!(),
+                                            ConnectionAnchor::EdgeSink(_) => todo!(),
+                                        }
+                                    }
+                                }
+
+                                Gesture::ConnectFinish => {
+                                    // TODO: Check for valid
+                                    if let (Some(from), Some(to)) =
+                                        (drag_state.connect_from, drag_state.connect_to)
+                                    {
+                                        match from {
+                                            ConnectionAnchor::OutputTerminal(from) => {
+                                                if let ConnectionTarget::InputTerminal(to) = to {
+                                                    commands.add(AddConnectionCmd {
+                                                        output: from,
+                                                        input: to,
+                                                    });
+                                                }
+                                            }
+                                            ConnectionAnchor::InputTerminal(from) => {
+                                                if let ConnectionTarget::OutputTerminal(to) = to {
+                                                    commands.add(AddConnectionCmd {
+                                                        output: to,
+                                                        input: from,
+                                                    });
+                                                }
+                                            }
+                                            ConnectionAnchor::EdgeSource(_) => todo!(),
+                                            ConnectionAnchor::EdgeSink(_) => todo!(),
+                                        }
+                                    }
                                     drag_state.connect_from = None;
                                     drag_state.connect_to = None;
                                 }

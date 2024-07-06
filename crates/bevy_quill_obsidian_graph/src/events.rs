@@ -19,7 +19,7 @@ pub enum ConnectionAnchor {
 pub enum ConnectionTarget {
     InputTerminal(Entity),
     OutputTerminal(Entity),
-    Position(Vec2),
+    None,
 }
 
 #[derive(Clone, Debug)]
@@ -34,11 +34,14 @@ pub enum Gesture {
     /// Start dragging a connection. The argument is the terminal.
     Connect(ConnectionAnchor),
 
-    /// Update the dragged connection. The argument is the terminal or coordinate of the endpoint.
-    ConnectMove(ConnectionTarget),
+    /// Drag the connection to a new location.
+    ConnectDrag(Vec2),
+
+    /// Called when the connection hovers over a target.
+    ConnectHover(ConnectionTarget),
 
     /// Finish dragging the connection.
-    ConnectFinish(ConnectionTarget),
+    ConnectFinish,
 
     /// Option-click to scroll the view.
     Scroll(Vec2),

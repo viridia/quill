@@ -12,6 +12,9 @@
 
 ## Vortex notes
 
+- Interior controls.
+- Double-click.
+- Rect select
 - Drag to connect
   - Start: create a proxy connection from a terminal to a point.
     - or from a point to a terminal
@@ -22,9 +25,6 @@
 - Drag to reconnect:
   - Start: hide the real connection and otherwise do the same thing.
   - End: remove the proxy connection and unhide the real one.
-- Rect select
-- Catalog view
-  - Double-click.
 - Operators
   - Buffered Nodes (for Blur)?
   - Uniform vs. Source?

@@ -1,5 +1,5 @@
 use crate::{
-    graph::{GraphNode, GraphResource, Selected},
+    graph::{Connection, GraphNode, GraphResource, Selected},
     operator::{DisplayName, OperatorInput, OperatorOutput},
 };
 use bevy::{color::Color, prelude::*, reflect::TypeInfo};
@@ -25,10 +25,14 @@ pub struct GraphViewId(pub(crate) Entity);
 /// Component which stores the current dragging state.
 #[derive(Component, Default)]
 pub struct DragState {
-    /// Offset while dragging nodes
-    // pub(crate) offset: IVec2,
+    /// The terminal we are dragging from
     pub(crate) connect_from: Option<ConnectionAnchor>,
+    /// The terminal we are dragging to.
     pub(crate) connect_to: Option<ConnectionTarget>,
+    /// The mouse position during dragging
+    pub(crate) connect_to_pos: Vec2,
+    /// Whether the dragged connection is valid.
+    pub(crate) valid_connection: bool,
 }
 
 /// View template for graph. Entity is the id for the graph view.
@@ -40,30 +44,24 @@ impl ViewTemplate for GraphView {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let graph = cx.use_resource::<GraphResource>();
         let node_ids: Vec<_> = graph.0.iter_nodes().map(|(_, v)| *v).collect();
+        let connection_ids: Vec<_> = graph.0.iter_connections().cloned().collect();
         let graph_view_id = cx.use_inherited_component::<GraphViewId>().unwrap().0;
 
         GraphDisplay::new()
             .entity(graph_view_id)
             .style(style_node_graph)
             .children((
-                For::each(node_ids, |node| GraphNodeView(*node)),
-                ConnectionProxyView,
                 EdgeDisplay {
                     src_pos: IVec2::new(50, 50),
                     dst_pos: IVec2::new(400, 50),
                 },
                 EdgeDisplay {
-                    src_pos: IVec2::new(50, 60),
-                    dst_pos: IVec2::new(400, 70),
-                },
-                EdgeDisplay {
-                    src_pos: IVec2::new(50, 70),
-                    dst_pos: IVec2::new(400, 170),
-                },
-                EdgeDisplay {
                     src_pos: IVec2::new(50, 170),
                     dst_pos: IVec2::new(400, 70),
                 },
+                For::each(connection_ids, |conn| ConnectionView(*conn)),
+                For::each(node_ids, |node| GraphNodeView(*node)),
+                ConnectionProxyView,
             ))
     }
 }
@@ -101,13 +99,6 @@ impl ViewTemplate for GraphNodeView {
             .position(node.position)
             .title(node.title())
             .selected(is_selected)
-            // .on_drag(
-            //     cx.create_callback(move |new_pos: In<Vec2>, world: &mut World| {
-            //         let mut entt = world.entity_mut(entity);
-            //         let mut pos = entt.get_mut::<GraphNode>().unwrap();
-            //         pos.position = new_pos.as_ivec2();
-            //     }),
-            // )
             .children(For::each(field_names, move |field| GraphNodePropertyView {
                 node: entity,
                 field,
@@ -141,12 +132,12 @@ impl ViewTemplate for GraphNodePropertyView {
             InputTerminalDisplay {
                 color: colors::RESOURCE,
                 control: display_name.to_owned().into_view_child(),
-                id: node.get_input_terminal(self.field).unwrap().id(),
+                id: node.get_input_terminal(self.field).unwrap(),
             }
             .into_view_child()
         } else if field_attrs.contains::<OperatorOutput>() {
             OutputTerminalDisplay {
-                id: node.get_output_terminal(self.field).unwrap().id(),
+                id: node.get_output_terminal(self.field).unwrap(),
                 label: display_name.to_string(),
                 color: colors::LIGHT,
             }
@@ -154,6 +145,21 @@ impl ViewTemplate for GraphNodePropertyView {
         } else {
             display_name.into_view_child()
         }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct ConnectionView(Entity);
+
+impl ViewTemplate for ConnectionView {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let connection = cx.use_component::<Connection>(self.0).unwrap();
+        let Connection(output, input) = connection;
+        let src_pos = get_terminal_position(cx, output.terminal_id);
+        let dst_pos = get_terminal_position(cx, input.terminal_id);
+
+        EdgeDisplay { src_pos, dst_pos }
     }
 }
 
@@ -167,19 +173,19 @@ impl ViewTemplate for ConnectionProxyView {
         let (src_pos, dst_pos) = match drag_state.connect_from {
             Some(ConnectionAnchor::OutputTerminal(term)) => (
                 get_terminal_position(cx, term),
-                get_target_position(cx, drag_state.connect_to),
+                get_target_position(cx, drag_state.connect_to, drag_state.connect_to_pos),
             ),
             Some(ConnectionAnchor::InputTerminal(term)) => (
-                get_target_position(cx, drag_state.connect_to),
+                get_target_position(cx, drag_state.connect_to, drag_state.connect_to_pos),
                 get_terminal_position(cx, term),
             ),
-            Some(ConnectionAnchor::EdgeSource(edge)) => todo!(),
-            Some(ConnectionAnchor::EdgeSink(edge)) => todo!(),
+            Some(ConnectionAnchor::EdgeSource(_edge)) => todo!(),
+            Some(ConnectionAnchor::EdgeSink(_edge)) => todo!(),
             None => (IVec2::default(), IVec2::default()),
         };
         // println!("src_pos: {src_pos}, dst_pos: {dst_pos}");
         Cond::new(
-            drag_state.connect_from.is_some() && drag_state.connect_to.is_some(),
+            drag_state.connect_from.is_some(),
             EdgeDisplay { src_pos, dst_pos },
             (),
         )
@@ -191,12 +197,12 @@ fn get_terminal_position(cx: &Cx, terminal_id: Entity) -> IVec2 {
     rect.map_or(IVec2::default(), |f| f.center().as_ivec2())
 }
 
-fn get_target_position(cx: &Cx, target: Option<ConnectionTarget>) -> IVec2 {
+fn get_target_position(cx: &Cx, target: Option<ConnectionTarget>, pos: Vec2) -> IVec2 {
     match target {
         Some(ConnectionTarget::InputTerminal(term)) => get_terminal_position(cx, term),
         Some(ConnectionTarget::OutputTerminal(term)) => get_terminal_position(cx, term),
-        Some(ConnectionTarget::Position(pos)) => pos.as_ivec2(),
-        None => IVec2::default(),
+        Some(ConnectionTarget::None) => pos.as_ivec2(),
+        None => pos.as_ivec2(),
     }
 }
 

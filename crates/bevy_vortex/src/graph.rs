@@ -1,7 +1,8 @@
 use bevy::{
+    ecs::{system::SystemState, world::Command},
     hierarchy::BuildChildren,
     math::IVec2,
-    prelude::{default, Commands, Component, Entity, Resource, World},
+    prelude::*,
     reflect::{Reflect, TypeInfo},
     utils::{HashMap, HashSet},
 };
@@ -20,7 +21,7 @@ pub struct GraphNodeId(usize);
 pub struct Graph {
     nodes: HashMap<GraphNodeId, Entity>,
     next_id: usize,
-    connections: HashSet<Connection>,
+    connections: HashSet<Entity>,
     undo_stack: Vec<UndoAction>,
     redo_stack: Vec<UndoAction>,
 }
@@ -32,7 +33,7 @@ impl Graph {
     }
 
     /// Return an iterator of the connections in the graph.
-    pub fn iter_connections(&self) -> bevy::utils::hashbrown::hash_set::Iter<Connection> {
+    pub fn iter_connections(&self) -> bevy::utils::hashbrown::hash_set::Iter<Entity> {
         self.connections.iter()
     }
 
@@ -69,16 +70,16 @@ impl Graph {
         node_id: GraphNodeId,
         action: &mut UndoAction,
     ) {
-        assert!(!self
-            .connections
-            .iter()
-            .any(|c| c.0.node == node_id || c.1.node == node_id));
+        // assert!(!self
+        //     .connections
+        //     .iter()
+        //     .any(|c| c.0.node == node_id || c.1.node == node_id));
         if let Some(entity) = self.nodes.remove(&node_id) {
             // Verify that there are no connections to this node.
             let mut node_entity = world.entity_mut(entity);
             // Remove the node from the world and put it on the undo stack.
             let node = node_entity.take::<GraphNode>().unwrap();
-            node_entity.despawn();
+            node_entity.despawn_recursive();
             action
                 .mutations
                 .push(UndoMutation::RemoveNode(node_id, node));
@@ -86,19 +87,34 @@ impl Graph {
     }
 
     /// Add a connection to the graph.
-    pub fn add_connection(&mut self, connection: Connection, action: &mut UndoAction) {
+    pub fn add_connection(
+        &mut self,
+        world: &mut World,
+        connection: Connection,
+        action: &mut UndoAction,
+    ) -> Entity {
         action
             .mutations
             .push(UndoMutation::AddConnection(connection));
-        self.connections.insert(connection);
+        let id = world.spawn(connection).id();
+        self.connections.insert(id);
+        id
     }
 
     /// Remove a connection from the graph.
-    pub fn remove_connection(&mut self, connection: Connection, action: &mut UndoAction) {
-        action
-            .mutations
-            .push(UndoMutation::RemoveConnection(connection));
-        self.connections.remove(&connection);
+    pub fn remove_connection(
+        &mut self,
+        world: &mut World,
+        connection: Entity,
+        action: &mut UndoAction,
+    ) {
+        if let Some(connection) = world.get_entity_mut(connection) {
+            self.connections.remove(&connection.id());
+            action.mutations.push(UndoMutation::RemoveConnection(
+                *connection.get::<Connection>().unwrap(),
+            ));
+            connection.despawn();
+        }
     }
 
     /// Add a new unfo action to the undo stack. Also clears the redo stack.
@@ -125,9 +141,9 @@ pub struct GraphNode {
     /// Operator for this node.
     operator: Box<dyn Operator>,
     /// List of input terminals, derived from operator, with computed positions.
-    inputs: SmallVec<[InputTerminal; 4]>,
+    inputs: SmallVec<[(&'static str, Entity); 4]>,
     /// List of output terminals, derived from operator, with computed positions.
-    outputs: SmallVec<[OutputTerminal; 1]>,
+    outputs: SmallVec<[(&'static str, Entity); 1]>,
 }
 
 impl GraphNode {
@@ -156,29 +172,37 @@ impl GraphNode {
             let attrs = field.custom_attributes();
             let name = field.name();
             if attrs.contains::<OperatorInput>() {
-                self.inputs.push(InputTerminal {
-                    name,
-                    id: commands.spawn_empty().set_parent(parent).id(),
-                    data_type: ConnectionDataType::Scalar,
-                })
+                let id = commands
+                    .spawn(InputTerminal {
+                        node_id: parent,
+                        name,
+                        data_type: ConnectionDataType::Scalar,
+                    })
+                    .set_parent(parent)
+                    .id();
+                self.inputs.push((name, id));
             } else if attrs.contains::<OperatorOutput>() {
-                self.outputs.push(OutputTerminal {
-                    name,
-                    id: commands.spawn_empty().set_parent(parent).id(),
-                    data_type: ConnectionDataType::Scalar,
-                })
+                let id = commands
+                    .spawn(OutputTerminal {
+                        node_id: parent,
+                        name,
+                        data_type: ConnectionDataType::Scalar,
+                    })
+                    .set_parent(parent)
+                    .id();
+                self.outputs.push((name, id));
             }
         }
     }
 
     /// Locate the input terminal with the specified name.
-    pub fn get_input_terminal(&self, name: &'static str) -> Option<&InputTerminal> {
-        self.inputs.iter().find(|t| t.name == name)
+    pub fn get_input_terminal(&self, name: &'static str) -> Option<Entity> {
+        self.inputs.iter().find(|t| t.0 == name).map(|t| t.1)
     }
 
     /// Locate the output terminal with the specified name.
-    pub fn get_output_terminal(&self, name: &'static str) -> Option<&OutputTerminal> {
-        self.outputs.iter().find(|t| t.name == name)
+    pub fn get_output_terminal(&self, name: &'static str) -> Option<Entity> {
+        self.outputs.iter().find(|t| t.0 == name).map(|t| t.1)
     }
 }
 
@@ -198,51 +222,45 @@ impl Clone for GraphNode {
 #[derive(Component)]
 pub struct NodeBasePosition(pub IVec2);
 
-#[derive(Clone)]
+#[derive(Component, Clone)]
 pub struct InputTerminal {
+    /// Entity id of the node that owns this terminal.
+    node_id: Entity,
+    /// Entity used to position the terminal.
+    // id: Entity,
     /// Name of this field
     name: &'static str,
-    /// Entity used to position the terminal.
-    id: Entity,
     /// Data type for this connection
     data_type: ConnectionDataType,
 }
 
-impl InputTerminal {
-    pub fn id(&self) -> Entity {
-        self.id
-    }
-}
-
-#[derive(Clone)]
+#[derive(Component, Clone)]
 pub struct OutputTerminal {
+    /// Entity id of the node that owns this terminal.
+    node_id: Entity,
     /// Name of this field
     name: &'static str,
     /// Entity used to position the terminal.
-    id: Entity,
+    // id: Entity,
     /// Data type for this connection
     data_type: ConnectionDataType,
-}
-
-impl OutputTerminal {
-    pub fn id(&self) -> Entity {
-        self.id
-    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InputTerminalId {
-    node: GraphNodeId,
-    terminal: usize,
+    node_index: usize,
+    terminal_name: &'static str,
+    pub(crate) terminal_id: Entity,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct OutputTerminalId {
-    node: GraphNodeId,
-    terminal: usize,
+    node_index: usize,
+    terminal_name: &'static str,
+    pub(crate) terminal_id: Entity,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Connection(pub OutputTerminalId, pub InputTerminalId);
 
 /// The type of an input or output terminal. If the data type does not match, then
@@ -278,4 +296,71 @@ pub enum UndoMutation {
     RemoveNode(GraphNodeId, GraphNode),
     AddConnection(Connection),
     RemoveConnection(Connection),
+}
+
+pub(crate) struct AddConnectionCmd {
+    pub(crate) input: Entity,
+    pub(crate) output: Entity,
+}
+
+impl Command for AddConnectionCmd {
+    fn apply(self, world: &mut World) {
+        let mut st: SystemState<(
+            ResMut<GraphResource>,
+            Query<&InputTerminal>,
+            Query<&OutputTerminal>,
+            Query<&GraphNode>,
+        )> = SystemState::new(world);
+        let (_, inputs, outputs, nodes) = st.get_mut(world);
+        let input_terminal = inputs.get(self.input).unwrap();
+        let output_terminal = outputs.get(self.output).unwrap();
+        let input_node = nodes.get(input_terminal.node_id).unwrap();
+        let output_node = nodes.get(output_terminal.node_id).unwrap();
+
+        let connection = Connection(
+            OutputTerminalId {
+                node_index: output_node.id.0,
+                terminal_name: output_terminal.name,
+                terminal_id: self.output,
+            },
+            InputTerminalId {
+                node_index: input_node.id.0,
+                terminal_name: input_terminal.name,
+                terminal_id: self.input,
+            },
+        );
+
+        let mut action = UndoAction::new("Add Connection");
+        action
+            .mutations
+            .push(UndoMutation::AddConnection(connection));
+        let id = world.spawn(connection).id();
+        let (mut graph, _, _, _) = st.get_mut(world);
+        graph.0.connections.insert(id);
+        graph.0.add_undo_action(action);
+    }
+}
+
+pub(crate) struct ValidateConnectionCmd {
+    pub(crate) input: Entity,
+    pub(crate) output: Entity,
+}
+
+impl Command for ValidateConnectionCmd {
+    fn apply(self, world: &mut World) {
+        let mut st: SystemState<(
+            ResMut<GraphResource>,
+            Query<&InputTerminal>,
+            Query<&OutputTerminal>,
+            Query<&GraphNode>,
+        )> = SystemState::new(world);
+        // TODO: Need to inject DragState here
+        let (_, inputs, outputs, nodes) = st.get_mut(world);
+        // TODO: Validate connection:
+        // - can't connect to self
+        // - can't connect outputs to outputs
+        // - can't connect intputs to inputs
+        // - can't connect if data is incompatible
+        // - can't create loops
+    }
 }
