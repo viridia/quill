@@ -7,23 +7,27 @@ use crate::operator::{
 
 #[derive(Debug, Reflect, Clone, Default)]
 #[reflect(Operator, Default, @OperatorClass(OperatorCategory::Filter), @OperatorDescription("
-Converts the input Linear RGBA color to grayscale.
+Interpolate between two colors by a mix factor.
 "))]
-pub struct Grayscale {
+pub struct Mix {
     /// Output color
     #[reflect(@OperatorOutput, @DisplayName("Out"))]
     pub output: LinearRgba,
 
-    /// Input color
+    /// Input color A
     #[reflect(@OperatorInput, @DisplayName("In"))]
-    pub input: LinearRgba,
+    pub input_a: LinearRgba,
 
-    /// Strength of the grayscale effect, from 0 to 1.
-    #[reflect(@ValueRange(0.0..1.0), @DisplayName("Strength"))]
-    pub strength: f32,
+    /// Input color B
+    #[reflect(@OperatorInput, @DisplayName("A"))]
+    pub input_b: LinearRgba,
+
+    /// Mix factor, from 0 to 1.
+    #[reflect(@OperatorInput, @DisplayName("Factor"), @ValueRange(0.0..1.0))]
+    pub factor: f32,
 }
 
-impl Operator for Grayscale {
+impl Operator for Mix {
     fn to_boxed_clone(&self) -> Box<dyn Operator> {
         Box::new(self.clone())
     }

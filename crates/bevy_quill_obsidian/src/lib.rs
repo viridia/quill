@@ -76,8 +76,10 @@ impl Plugin for ObsidianUiPlugin {
         embedded_asset!(app, "assets/icons/close.png");
         embedded_asset!(app, "assets/icons/disc.png");
         embedded_asset!(app, "assets/icons/gradient_thumb.png");
+        embedded_asset!(app, "assets/icons/redo.png");
         embedded_asset!(app, "assets/icons/remove.png");
         embedded_asset!(app, "assets/icons/tune.png");
+        embedded_asset!(app, "assets/icons/undo.png");
         embedded_asset!(app, "assets/shaders/gradient_rect.wgsl");
         embedded_asset!(app, "assets/shaders/swatch_rect.wgsl");
         embedded_asset!(app, "assets/shaders/slider_rect.wgsl");

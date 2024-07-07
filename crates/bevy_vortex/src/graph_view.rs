@@ -132,6 +132,9 @@ impl ViewTemplate for GraphNodePropertyView {
         } else {
             self.field
         };
+
+        // TODO: Need to detect if input is connected.
+
         if field_attrs.contains::<OperatorInput>() {
             let id = node.get_input_terminal(self.field).unwrap();
             InputTerminalDisplay {

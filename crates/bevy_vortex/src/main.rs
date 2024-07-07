@@ -25,7 +25,8 @@ use bevy_quill_obsidian::{
 use bevy_quill_obsidian_graph::{ConnectionAnchor, Gesture, GraphEvent, ObsidianGraphPlugin};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use graph::{
-    AddConnectionCmd, GraphNode, GraphResource, NodeBasePosition, Selected, ValidateConnectionCmd,
+    sync_connections, AddConnectionCmd, GraphNode, GraphResource, NodeBasePosition, Selected,
+    ValidateConnectionCmd,
 };
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
@@ -93,7 +94,7 @@ fn main() {
             VortexPlugin,
             OperatorsPlugin,
         ))
-        .add_systems(Startup, setup_ui.pipe(setup_view_root))
+        .add_systems(Startup, (setup_ui.pipe(setup_view_root), sync_connections))
         .add_systems(
             Update,
             (

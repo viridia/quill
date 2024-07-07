@@ -4,7 +4,7 @@ use bevy::{
     math::IVec2,
     prelude::*,
     reflect::{Reflect, TypeInfo},
-    utils::{HashMap, HashSet},
+    utils::{hashbrown::HashSet, HashMap},
 };
 use smallvec::SmallVec;
 
@@ -185,6 +185,7 @@ impl GraphNode {
                         node_id: parent,
                         name,
                         data_type,
+                        connections: HashSet::new(),
                     })
                     .set_parent(parent)
                     .id();
@@ -195,6 +196,7 @@ impl GraphNode {
                         node_id: parent,
                         name,
                         data_type,
+                        connections: HashSet::new(),
                     })
                     .set_parent(parent)
                     .id();
@@ -240,6 +242,9 @@ pub struct Terminal {
     name: &'static str,
     /// Data type for this connection
     pub(crate) data_type: ConnectionDataType,
+
+    /// List of connections to this terminal.
+    connections: HashSet<Entity>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -301,9 +306,13 @@ pub(crate) struct AddConnectionCmd {
 
 impl Command for AddConnectionCmd {
     fn apply(self, world: &mut World) {
-        let mut st: SystemState<(ResMut<GraphResource>, Query<&Terminal>, Query<&GraphNode>)> =
-            SystemState::new(world);
-        let (_, terminals, nodes) = st.get_mut(world);
+        let mut st: SystemState<(
+            ResMut<GraphResource>,
+            Query<&mut Terminal>,
+            Query<&Connection>,
+            Query<&GraphNode>,
+        )> = SystemState::new(world);
+        let (_, mut terminals, connections, nodes) = st.get_mut(world);
         let input_terminal = terminals.get(self.input).unwrap();
         let output_terminal = terminals.get(self.output).unwrap();
         let input_node = nodes.get(input_terminal.node_id).unwrap();
@@ -322,14 +331,36 @@ impl Command for AddConnectionCmd {
             },
         );
 
+        let mut input_terminal = terminals.get_mut(self.input).unwrap();
+        let mut connections_to_remove = std::mem::take(&mut input_terminal.connections);
+        // Remove any previous connections from input terminal. There can be only one.
+        for conn_id in connections_to_remove.iter() {
+            let conn = connections.get(*conn_id).unwrap();
+            let output_id = conn.0.terminal_id;
+            let mut output_terminal = terminals.get_mut(output_id).unwrap();
+            output_terminal.connections.remove(conn_id);
+        }
+
+        // Insert the new connection.
+        let mut input_terminal = terminals.get_mut(self.input).unwrap();
+        input_terminal.connections.insert(self.output);
+
+        let mut output_terminal = terminals.get_mut(self.output).unwrap();
+        output_terminal.connections.insert(self.output);
+
         let mut action = UndoAction::new("Add Connection");
         action
             .mutations
             .push(UndoMutation::AddConnection(connection));
         let id = world.spawn(connection).id();
-        let (mut graph, _, _) = st.get_mut(world);
+        let (mut graph, _, _, _) = st.get_mut(world);
         graph.0.connections.insert(id);
         graph.0.add_undo_action(action);
+
+        // Despawn old connections
+        for conn_id in connections_to_remove.drain() {
+            world.entity_mut(conn_id).despawn();
+        }
     }
 }
 
@@ -351,4 +382,23 @@ impl Command for ValidateConnectionCmd {
         // - can't connect if data is incompatible
         // - can't create loops
     }
+}
+
+pub(crate) fn sync_connections(world: &mut World) {
+    // Hook that watches for changes to connections and updates the back-references in the
+    // terminals.
+    world
+        .register_component_hooks::<Connection>()
+        .on_remove(|mut world, entity, _component| {
+            if let Some(conn) = world.entity(entity).get::<Connection>() {
+                let output_id = conn.0.terminal_id;
+                let input_id = conn.1.terminal_id;
+                if let Some(mut output_terminal) = world.get_mut::<Terminal>(output_id) {
+                    output_terminal.connections.remove(&entity);
+                }
+                if let Some(mut input_terminal) = world.get_mut::<Terminal>(input_id) {
+                    input_terminal.connections.remove(&entity);
+                }
+            }
+        });
 }
