@@ -11,3 +11,6 @@ bevy_quill = { path = "../.." }
 bevy_quill_obsidian = { workspace = true }
 bevy_quill_obsidian_graph = { workspace = true }
 smallvec = "1.13.2"
+
+[lints.clippy]
+type_complexity = "allow"

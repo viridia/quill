@@ -11,12 +11,24 @@ struct PathCommand {
 }
 
 @group(1) @binding(0)
-var<uniform> color: vec4<f32>;
+var<uniform> gradient_normal: vec2<f32>;
 
 @group(1) @binding(1)
-var<uniform> width: f32;
+var<uniform> from_color: vec4<f32>;
 
 @group(1) @binding(2)
+var<uniform> from_offset: f32;
+
+@group(1) @binding(3)
+var<uniform> to_color: vec4<f32>;
+
+@group(1) @binding(4)
+var<uniform> to_offset: f32;
+
+@group(1) @binding(5)
+var<uniform> width: f32;
+
+@group(1) @binding(6)
 var<storage> commands: array<PathCommand>;
 
 @fragment
@@ -24,7 +36,9 @@ fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
     let pt = vec2<f32>(in.size.x, in.size.y) * in.uv;
     let d = distance_to_path(pt);
     let a = 1.0 - smoothstep(width * 0.5 - 0.3, width * 0.5 + 0.3, d);
-    return vec4<f32>(color.rgb, color.a * a);
+    let t = (dot(gradient_normal, pt) - from_offset) / (to_offset - from_offset);
+    let color = mix(from_color, to_color, clamp(t, 0., 1.));
+    return vec4<f32>(srgb_to_linear(color.rgb), color.a * a);
 }
 
 fn distance_to_path(pt: vec2<f32>) -> f32 {
@@ -137,4 +151,21 @@ fn are_colinear(p1: vec2<f32>, p2: vec2<f32>, p3: vec2<f32>) -> bool {
     let epsilon: f32 = 1e-6;
     let area = abs((p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) / 2.0);
     return area < epsilon;
+}
+
+// Convert sRGBA to linear color space because we interpolate in sRGB space.
+// fn srgba_to_linear(srgb: vec4<f32>) -> vec4<f32> {
+//     let a = 0.055;
+//     let srgbLow = srgb / 12.92;
+//     let srgbHigh = pow((srgb.rgb + a) / (1.0 + a), vec3<f32>(2.4, 2.4, 2.4));
+//     let linear = mix(srgbLow, srgbHigh, step(vec3<f32>(0.04045, 0.04045, 0.04045), srgb.rgb));
+//     return vec4<f32>(linear, srgb.a);
+// }
+
+fn srgb_to_linear(srgb: vec3<f32>) -> vec3<f32> {
+    let a = 0.055;
+    let srgbLow = srgb / 12.92;
+    let srgbHigh = pow((srgb + a) / (1.0 + a), vec3<f32>(2.4, 2.4, 2.4));
+    let linear = mix(srgbLow, srgbHigh, step(vec3<f32>(0.04045, 0.04045, 0.04045), srgb));
+    return linear;
 }

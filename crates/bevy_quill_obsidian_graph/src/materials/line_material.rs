@@ -1,3 +1,4 @@
+// TODO: Currently unused. This was a different way to draw edges, which doesn't work in a UI context.
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
 use bevy::render::mesh::MeshVertexBufferLayoutRef;

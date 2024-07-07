@@ -6,7 +6,7 @@ use bevy_quill_obsidian::{colors, hooks::UseIsHover};
 
 use crate::{ConnectionTarget, DragMode, Gesture, GestureState, GraphEvent};
 
-fn style_node_graph_terminal_outline(ss: &mut StyleBuilder) {
+fn style_terminal_outline(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
         .left(-3)
         .top(-3)
@@ -16,6 +16,16 @@ fn style_node_graph_terminal_outline(ss: &mut StyleBuilder) {
         .border_color(colors::FOCUS)
         .border_radius(8)
         .pointer_events(false);
+}
+
+fn style_terminal_hitbox(ss: &mut StyleBuilder) {
+    ss.position(ui::PositionType::Absolute)
+        .left(-3)
+        .top(-3)
+        .right(-3)
+        .bottom(-3)
+        .border_radius(8)
+        .pointer_events(true);
 }
 
 fn style_input_connector(ss: &mut StyleBuilder) {
@@ -61,10 +71,13 @@ impl ViewTemplate for InputTerminalDisplay {
                         sb.background_color(color);
                     }))
                     .insert_dyn(terminal_event_handlers, (id, false))
-                    .children(Cond::new(
-                        is_hover,
-                        Element::<NodeBundle>::new().style(style_node_graph_terminal_outline),
-                        (),
+                    .children((
+                        Element::<NodeBundle>::new().style(style_terminal_hitbox),
+                        Cond::new(
+                            is_hover,
+                            Element::<NodeBundle>::new().style(style_terminal_outline),
+                            (),
+                        ),
                     )),
                 self.control.clone(),
             ))
@@ -117,10 +130,13 @@ impl ViewTemplate for OutputTerminalDisplay {
                         sb.background_color(color);
                     }))
                     .insert_dyn(terminal_event_handlers, (id, true))
-                    .children(Cond::new(
-                        is_hover,
-                        Element::<NodeBundle>::new().style(style_node_graph_terminal_outline),
-                        (),
+                    .children((
+                        Element::<NodeBundle>::new().style(style_terminal_hitbox),
+                        Cond::new(
+                            is_hover,
+                            Element::<NodeBundle>::new().style(style_terminal_outline),
+                            (),
+                        ),
                     )),
                 self.label.clone(),
             ))
@@ -136,6 +152,7 @@ fn terminal_event_handlers(
     On<Pointer<DragEnd>>,
     On<Pointer<DragEnter>>,
     On<Pointer<DragLeave>>,
+    On<Pointer<Drop>>,
 ) {
     let (id, is_output) = args;
     (
@@ -144,15 +161,17 @@ fn terminal_event_handlers(
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
-                gesture_state.mode = DragMode::Connect;
-                writer.send(GraphEvent {
-                    target: id,
-                    gesture: Gesture::Connect(if is_output {
-                        crate::ConnectionAnchor::OutputTerminal(id)
-                    } else {
-                        crate::ConnectionAnchor::InputTerminal(id)
-                    }),
-                });
+                if gesture_state.mode != DragMode::Connect {
+                    gesture_state.mode = DragMode::Connect;
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::Connect(if is_output {
+                            crate::ConnectionAnchor::OutputTerminal(id)
+                        } else {
+                            crate::ConnectionAnchor::InputTerminal(id)
+                        }),
+                    });
+                }
             },
         ),
         On::<Pointer<Drag>>::run(
@@ -218,6 +237,20 @@ fn terminal_event_handlers(
                 }
             }
         }),
+        On::<Pointer<Drop>>::run(
+            move |mut event: ListenerMut<Pointer<Drop>>,
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Connect {
+                    gesture_state.mode = DragMode::None;
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::ConnectFinish,
+                    });
+                }
+            },
+        ),
     )
 }
 

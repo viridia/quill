@@ -16,15 +16,13 @@ pub enum DrawablePathSegment {
 /// Defines a stroked path
 #[derive(Debug, Clone)]
 pub struct DrawablePath {
-    color: Srgba,
     width: f32,
     commands: Vec<DrawablePathSegment>,
 }
 
 impl DrawablePath {
-    pub fn new(color: Srgba, width: f32) -> Self {
+    pub fn new(width: f32) -> Self {
         Self {
-            color,
             width,
             commands: Vec::new(),
         }
@@ -82,23 +80,53 @@ pub struct PathCommand {
 
 #[derive(AsBindGroup, Asset, TypePath, Debug, Clone, Default)]
 pub struct DrawPathMaterial {
-    /// Stroke color
+    /// Direction of color gradient, normalized
     #[uniform(0)]
-    pub(crate) color: Vec4,
+    pub(crate) gradient_normal: Vec2,
+
+    /// Color at start of gradient
+    #[uniform(1)]
+    pub(crate) from_color: Vec4,
+
+    /// Offset of first color stop along gradient normal
+    #[uniform(2)]
+    pub(crate) from_offset: f32,
+
+    /// Color at end of gradient
+    #[uniform(3)]
+    pub(crate) to_color: Vec4,
+
+    /// Offset of second color stop along gradient normal
+    #[uniform(4)]
+    pub(crate) to_offset: f32,
 
     /// Stroke width
-    #[uniform(1)]
+    #[uniform(5)]
     pub(crate) width: f32,
 
     // #[uniform(2)]
-    #[storage(2, read_only)]
+    #[storage(6, read_only)]
     pub(crate) commands: Vec<PathCommand>,
 }
 
 impl DrawPathMaterial {
-    pub fn update(&mut self, path: &DrawablePath) {
+    pub fn update_color(
+        &mut self,
+        from_color: Srgba,
+        from_pos: Vec2,
+        to_color: Srgba,
+        to_pos: Vec2,
+    ) {
+        let norm = (to_pos - from_pos).normalize();
+        self.gradient_normal = norm;
+        self.from_color = from_color.to_vec4();
+        self.from_offset = from_pos.dot(norm);
+        self.to_color = to_color.to_vec4();
+        self.to_offset = to_pos.dot(norm);
+    }
+
+    pub fn update_path(&mut self, path: &DrawablePath) {
         let bounds = path.bounds();
-        self.color = path.color.to_vec4();
         self.width = path.width;
         self.commands.clear();
         // println!("Updating material: {}", path.commands.len());

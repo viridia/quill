@@ -42,3 +42,20 @@ impl<T: MyTrait + Reflect + Clone> FromType<T> for ReflectMyTrait {
   }
 }
 ```
+
+Color gradient interpolation
+
+let v = in - origin
+let d = dot(v, end - origin) / len(v) \* len(end - origin)
+let d = clamp(d, 0, 1)
+
+this.normal.dot( point ) + this.constant;
+
+setFromNormalAndCoplanarPoint( normal, point ) {
+
+    	this.normal.copy( normal );
+    	this.constant = - point.dot( this.normal );
+
+    	return this;
+
+    }

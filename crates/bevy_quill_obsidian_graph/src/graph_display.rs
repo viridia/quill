@@ -4,7 +4,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 use bevy_quill_obsidian::{colors, controls::ScrollView};
 
-use crate::{materials::DotGridMaterial, Gesture, GraphEvent};
+use crate::{materials::DotGridMaterial, DragMode, Gesture, GestureState, GraphEvent};
 
 fn style_node_graph(ss: &mut StyleBuilder) {
     ss.background_color(colors::U1);
@@ -83,7 +83,8 @@ impl ViewTemplate for GraphDisplay {
                     .insert_dyn(
                         move |_| {
                             (
-                                On::<Pointer<DragStart>>::run(move |mut event: ListenerMut<Pointer<DragStart>>,
+                                On::<Pointer<Down>>::run(
+                                    move |mut event: ListenerMut<Pointer<Down>>,
                                     mut writer: EventWriter<GraphEvent>| {
                                         event.stop_propagation();
                                         writer.send(GraphEvent {
@@ -91,28 +92,49 @@ impl ViewTemplate for GraphDisplay {
                                             gesture: Gesture::SelectClear,
                                         });
                                 }),
-                                On::<Pointer<DragEnd>>::run(move |mut event: ListenerMut<Pointer<DragEnd>>,
-                                    mut _writer: EventWriter<GraphEvent>| {
+                                On::<Pointer<DragStart>>::run(
+                                    move |mut event: ListenerMut<Pointer<DragStart>>,
+                                    mut gesture_state: ResMut<GestureState>,
+                                    mut writer: EventWriter<GraphEvent>| {
                                         event.stop_propagation();
-                                    // drag_state.set(
-                                    //     world,
-                                    //     DragState {
-                                    //         dragging: false,
-                                    //         offset: position_capture.get(world),
-                                    //     },
-                                    // );
+                                        let pos = event.pointer_location.position;
+                                        gesture_state.mode = DragMode::RectSelect(pos);
+                                        writer.send(GraphEvent {
+                                            target: event.target(),
+                                            gesture: Gesture::SelectRect(Rect::from_corners(
+                                                pos,
+                                                pos)),
+                                        });
+                                }),
+                                On::<Pointer<DragEnd>>::run(
+                                    move |mut event: ListenerMut<Pointer<DragEnd>>,
+                                    mut gesture_state: ResMut<GestureState>,
+                                    mut writer: EventWriter<GraphEvent>| {
+                                        event.stop_propagation();
+                                        if let DragMode::RectSelect(pos) = gesture_state.mode {
+                                            writer.send(GraphEvent {
+                                                target: event.target(),
+                                                gesture: Gesture::SelectRect(Rect::from_corners(
+                                                    event.pointer_location.position,
+                                                    pos)),
+                                            });
+                                            gesture_state.mode = DragMode::None;
+                                        }
                                 }),
                                 On::<Pointer<Drag>>::run({
                                     move |mut event: ListenerMut<Pointer<Drag>>,
+                                    gesture_state: ResMut<GestureState>,
                                     mut writer: EventWriter<GraphEvent>
                                     | {
-                                        // event.stop_propagation();
-                                        // let gesture = Gesture::Move(event.distance);
-                                        // writer.send(GraphEvent {
-                                        //     target: id,
-                                        //     gesture,
-                                        //     action: crate::GestureAction::Move,
-                                        // });
+                                        event.stop_propagation();
+                                        if let DragMode::RectSelect(pos) = gesture_state.mode {
+                                            writer.send(GraphEvent {
+                                            target: event.target(),
+                                            gesture: Gesture::SelectRect(Rect::from_corners(
+                                                event.pointer_location.position,
+                                                pos)),
+                                        });
+                                    }
                                     }
                                 }),
                             )

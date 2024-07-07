@@ -30,3 +30,6 @@ bevy_mod_picking = { workspace = true }
 bevy_quill_obsidian_inspect = { workspace = true }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
+
+[lints.clippy]
+type_complexity = "allow"

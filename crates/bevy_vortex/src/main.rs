@@ -27,8 +27,7 @@ use bevy_quill_obsidian_graph::{
 };
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use graph::{
-    AddConnectionCmd, GraphNode, GraphResource, InputTerminal, NodeBasePosition, Selected,
-    ValidateConnectionCmd,
+    AddConnectionCmd, GraphNode, GraphResource, NodeBasePosition, Selected, ValidateConnectionCmd,
 };
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
@@ -252,10 +251,12 @@ impl ViewTemplate for CenterPanel {
                                 }
 
                                 Gesture::ConnectDrag(pos) => {
+                                    // println!("ConnectDrag: {:?}", pos);
                                     drag_state.connect_to_pos = pos;
                                 }
 
                                 Gesture::ConnectHover(target) => {
+                                    println!("ConnectHover: {:?}", target);
                                     if matches!(target, ConnectionTarget::None) {
                                         drag_state.connect_to = None;
                                         drag_state.valid_connection = false;
@@ -290,6 +291,7 @@ impl ViewTemplate for CenterPanel {
                                 }
 
                                 Gesture::ConnectFinish => {
+                                    println!("ConnectFinish");
                                     // TODO: Check for valid
                                     if let (Some(from), Some(to)) =
                                         (drag_state.connect_from, drag_state.connect_to)

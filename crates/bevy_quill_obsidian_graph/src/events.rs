@@ -85,12 +85,12 @@ pub(crate) enum DragMode {
     #[default]
     None,
     Move,
-    RectSelect,
+    RectSelect(Vec2),
     Connect,
 }
 
 #[derive(Resource, Default)]
 pub(crate) struct GestureState {
-    /// The type of gesture.
+    /// The type of gesture currently in effect.
     pub(crate) mode: DragMode,
 }

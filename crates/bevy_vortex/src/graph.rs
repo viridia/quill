@@ -171,22 +171,30 @@ impl GraphNode {
             let field = st_info.field_at(findex).unwrap();
             let attrs = field.custom_attributes();
             let name = field.name();
+            let type_name = field.type_path();
+            let mut data_type = ConnectionDataType::Scalar;
+            if type_name.contains("color") {
+                data_type = ConnectionDataType::Color;
+            } else if type_name == "Vec2" || type_name == "Vec3" || type_name == "Vec4" {
+                data_type = ConnectionDataType::Vector;
+            }
+            println!("Field: {} ({})", name, type_name);
             if attrs.contains::<OperatorInput>() {
                 let id = commands
-                    .spawn(InputTerminal {
+                    .spawn(Terminal {
                         node_id: parent,
                         name,
-                        data_type: ConnectionDataType::Scalar,
+                        data_type,
                     })
                     .set_parent(parent)
                     .id();
                 self.inputs.push((name, id));
             } else if attrs.contains::<OperatorOutput>() {
                 let id = commands
-                    .spawn(OutputTerminal {
+                    .spawn(Terminal {
                         node_id: parent,
                         name,
-                        data_type: ConnectionDataType::Scalar,
+                        data_type,
                     })
                     .set_parent(parent)
                     .id();
@@ -223,7 +231,7 @@ impl Clone for GraphNode {
 pub struct NodeBasePosition(pub IVec2);
 
 #[derive(Component, Clone)]
-pub struct InputTerminal {
+pub struct Terminal {
     /// Entity id of the node that owns this terminal.
     node_id: Entity,
     /// Entity used to position the terminal.
@@ -231,19 +239,7 @@ pub struct InputTerminal {
     /// Name of this field
     name: &'static str,
     /// Data type for this connection
-    data_type: ConnectionDataType,
-}
-
-#[derive(Component, Clone)]
-pub struct OutputTerminal {
-    /// Entity id of the node that owns this terminal.
-    node_id: Entity,
-    /// Name of this field
-    name: &'static str,
-    /// Entity used to position the terminal.
-    // id: Entity,
-    /// Data type for this connection
-    data_type: ConnectionDataType,
+    pub(crate) data_type: ConnectionDataType,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -305,15 +301,11 @@ pub(crate) struct AddConnectionCmd {
 
 impl Command for AddConnectionCmd {
     fn apply(self, world: &mut World) {
-        let mut st: SystemState<(
-            ResMut<GraphResource>,
-            Query<&InputTerminal>,
-            Query<&OutputTerminal>,
-            Query<&GraphNode>,
-        )> = SystemState::new(world);
-        let (_, inputs, outputs, nodes) = st.get_mut(world);
-        let input_terminal = inputs.get(self.input).unwrap();
-        let output_terminal = outputs.get(self.output).unwrap();
+        let mut st: SystemState<(ResMut<GraphResource>, Query<&Terminal>, Query<&GraphNode>)> =
+            SystemState::new(world);
+        let (_, terminals, nodes) = st.get_mut(world);
+        let input_terminal = terminals.get(self.input).unwrap();
+        let output_terminal = terminals.get(self.output).unwrap();
         let input_node = nodes.get(input_terminal.node_id).unwrap();
         let output_node = nodes.get(output_terminal.node_id).unwrap();
 
@@ -335,7 +327,7 @@ impl Command for AddConnectionCmd {
             .mutations
             .push(UndoMutation::AddConnection(connection));
         let id = world.spawn(connection).id();
-        let (mut graph, _, _, _) = st.get_mut(world);
+        let (mut graph, _, _) = st.get_mut(world);
         graph.0.connections.insert(id);
         graph.0.add_undo_action(action);
     }
@@ -348,14 +340,10 @@ pub(crate) struct ValidateConnectionCmd {
 
 impl Command for ValidateConnectionCmd {
     fn apply(self, world: &mut World) {
-        let mut st: SystemState<(
-            ResMut<GraphResource>,
-            Query<&InputTerminal>,
-            Query<&OutputTerminal>,
-            Query<&GraphNode>,
-        )> = SystemState::new(world);
+        let mut st: SystemState<(ResMut<GraphResource>, Query<&Terminal>, Query<&GraphNode>)> =
+            SystemState::new(world);
         // TODO: Need to inject DragState here
-        let (_, inputs, outputs, nodes) = st.get_mut(world);
+        let (_, terminals, _nodes) = st.get_mut(world);
         // TODO: Validate connection:
         // - can't connect to self
         // - can't connect outputs to outputs
