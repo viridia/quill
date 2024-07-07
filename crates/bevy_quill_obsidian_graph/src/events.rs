@@ -14,14 +14,6 @@ pub enum ConnectionAnchor {
     EdgeSink(Entity),
 }
 
-/// For a connection drag, the current drop location.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ConnectionTarget {
-    InputTerminal(Entity),
-    OutputTerminal(Entity),
-    None,
-}
-
 #[derive(Clone, Debug)]
 pub enum Gesture {
     /// Drag one or more nodes (ones that are currently selected).
@@ -37,11 +29,11 @@ pub enum Gesture {
     /// Drag the connection to a new location.
     ConnectDrag(Vec2),
 
-    /// Called when the connection hovers over a target.
-    ConnectHover(ConnectionTarget),
+    /// Called when the connection hovers over a target, or stops hovering.
+    ConnectHover(Option<Entity>),
 
     /// Finish dragging the connection.
-    ConnectFinish,
+    ConnectFinish(Entity),
 
     /// Option-click to scroll the view.
     Scroll(Vec2),

@@ -84,14 +84,6 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
-        // match state {
-        //     Self::State::True(_) => {
-        //         println!("Razing Cond: True");
-        //     }
-        //     Self::State::False(_) => {
-        //         println!("Razing Cond: False");
-        //     }
-        // }
         match state {
             Self::State::True(ref mut true_state) => self.pos.raze(world, true_state),
             Self::State::False(ref mut false_state) => self.neg.raze(world, false_state),

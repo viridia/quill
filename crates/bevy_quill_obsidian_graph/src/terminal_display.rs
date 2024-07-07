@@ -1,10 +1,10 @@
-use bevy::{ecs::system::SystemParam, prelude::*, ui};
+use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, ViewChild};
-use bevy_quill_obsidian::{colors, hooks::UseIsHover};
+use bevy_quill_obsidian::{colors, cursor::StyleBuilderCursor, hooks::UseIsHover};
 
-use crate::{ConnectionTarget, DragMode, Gesture, GestureState, GraphEvent};
+use crate::{DragMode, Gesture, GestureState, GraphEvent};
 
 fn style_terminal_outline(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
@@ -25,7 +25,8 @@ fn style_terminal_hitbox(ss: &mut StyleBuilder) {
         .right(-3)
         .bottom(-3)
         .border_radius(8)
-        .pointer_events(true);
+        .pointer_events(true)
+        .cursor(CursorIcon::Copy);
 }
 
 fn style_input_connector(ss: &mut StyleBuilder) {
@@ -160,6 +161,7 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<DragStart>>,
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
+                // println!("Terminal::DragStart: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode != DragMode::Connect {
                     gesture_state.mode = DragMode::Connect;
@@ -178,7 +180,7 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<Drag>>,
                   gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>,
-                  rel: RelativeWorldPositions| {
+                  rel: crate::relative_pos::RelativeWorldPositions| {
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     // println!("position: {}", event.pointer_location.position);
@@ -197,12 +199,13 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<DragEnd>>,
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
+                // println!("Terminal::DragEnd: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     gesture_state.mode = DragMode::None;
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::ConnectFinish,
+                        gesture: Gesture::Cancel,
                     });
                 }
             },
@@ -211,15 +214,12 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<DragEnter>>,
                   gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
+                // println!("Terminal::DragEnter: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::ConnectHover(if is_output {
-                            ConnectionTarget::OutputTerminal(id)
-                        } else {
-                            ConnectionTarget::InputTerminal(id)
-                        }),
+                        gesture: Gesture::ConnectHover(Some(id)),
                     });
                 }
             }
@@ -228,11 +228,12 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<DragLeave>>,
                   gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
+                // println!("Terminal::DragLeave: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::ConnectHover(ConnectionTarget::None),
+                        gesture: Gesture::ConnectHover(Some(id)),
                     });
                 }
             }
@@ -241,40 +242,16 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<Drop>>,
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
+                // println!("Terminal::Drop: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     gesture_state.mode = DragMode::None;
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::ConnectFinish,
+                        gesture: Gesture::ConnectFinish(id),
                     });
                 }
             },
         ),
     )
-}
-
-#[derive(SystemParam)]
-struct RelativeWorldPositions<'w, 's> {
-    query: Query<'w, 's, (&'static Node, &'static GlobalTransform, &'static Parent)>,
-}
-
-impl<'w, 's> RelativeWorldPositions<'w, 's> {
-    pub fn transform_relative(&self, id: Entity, pos: Vec2, levels: usize) -> Vec2 {
-        let mut current = id;
-        for _ in 0..levels {
-            if let Ok((_, _, parent)) = self.query.get(current) {
-                current = parent.get();
-            } else {
-                return pos;
-            }
-        }
-
-        let Ok((node, transform, _)) = self.query.get(current) else {
-            return pos;
-        };
-
-        let rect = node.logical_rect(transform);
-        pos - rect.min
-    }
 }

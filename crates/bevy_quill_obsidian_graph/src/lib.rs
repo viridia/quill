@@ -6,6 +6,7 @@ mod events;
 mod graph_display;
 mod materials;
 mod node_display;
+mod relative_pos;
 mod terminal_display;
 
 use bevy::{

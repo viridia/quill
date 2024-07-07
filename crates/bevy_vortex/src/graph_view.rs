@@ -7,8 +7,8 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild};
 use bevy_quill_obsidian::colors;
 use bevy_quill_obsidian_graph::{
-    ConnectionAnchor, ConnectionTarget, EdgeDisplay, GraphDisplay, InputTerminalDisplay,
-    NodeDisplay, OutputTerminalDisplay,
+    ConnectionAnchor, EdgeDisplay, GraphDisplay, InputTerminalDisplay, NodeDisplay,
+    OutputTerminalDisplay,
 };
 
 fn style_node_graph(ss: &mut StyleBuilder) {
@@ -28,7 +28,7 @@ pub struct DragState {
     /// The terminal we are dragging from
     pub(crate) connect_from: Option<ConnectionAnchor>,
     /// The terminal we are dragging to.
-    pub(crate) connect_to: Option<ConnectionTarget>,
+    pub(crate) connect_to: Option<Entity>,
     /// The mouse position during dragging
     pub(crate) connect_to_pos: Vec2,
     /// Whether the dragged connection is valid.
@@ -168,6 +168,7 @@ impl ViewTemplate for ConnectionView {
         let dst_color = get_terminal_edge_color(cx, input.terminal_id);
 
         EdgeDisplay {
+            edge_id: Some(self.0),
             src_pos,
             dst_pos,
             src_color,
@@ -203,6 +204,7 @@ impl ViewTemplate for ConnectionProxyView {
         Cond::new(
             drag_state.connect_from.is_some(),
             EdgeDisplay {
+                edge_id: None,
                 src_pos,
                 dst_pos,
                 src_color,
@@ -234,20 +236,16 @@ fn get_terminal_edge_color(cx: &Cx, terminal_id: Entity) -> Srgba {
     get_terminal_color(cx, terminal_id).mix(&Srgba::BLACK, 0.3)
 }
 
-fn get_target_position(cx: &Cx, target: Option<ConnectionTarget>, pos: Vec2) -> IVec2 {
+fn get_target_position(cx: &Cx, target: Option<Entity>, pos: Vec2) -> IVec2 {
     match target {
-        Some(ConnectionTarget::InputTerminal(term)) => get_terminal_position(cx, term),
-        Some(ConnectionTarget::OutputTerminal(term)) => get_terminal_position(cx, term),
-        Some(ConnectionTarget::None) => pos.as_ivec2(),
+        Some(term) => get_terminal_position(cx, term),
         None => pos.as_ivec2(),
     }
 }
 
-fn get_target_color(cx: &Cx, target: Option<ConnectionTarget>) -> Srgba {
+fn get_target_color(cx: &Cx, target: Option<Entity>) -> Srgba {
     match target {
-        Some(ConnectionTarget::InputTerminal(term)) => get_terminal_edge_color(cx, term),
-        Some(ConnectionTarget::OutputTerminal(term)) => get_terminal_edge_color(cx, term),
-        Some(ConnectionTarget::None) => colors::U3,
+        Some(term) => get_terminal_edge_color(cx, term),
         None => colors::U3,
     }
 }

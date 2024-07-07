@@ -15,13 +15,6 @@
 - Interior controls.
 - Double-click.
 - Rect select
-- Drag to connect
-  - Start: create a proxy connection from a terminal to a point.
-    - or from a point to a terminal
-  - Move: update the proxy connection's endpoint, either a point or a terminal
-    - query if the terminal is acceptable
-  - End: remove the proxy connection and set a real one.
-  - Cancel: remove the proxy connection.
 - Drag to reconnect:
   - Start: hide the real connection and otherwise do the same thing.
   - End: remove the proxy connection and unhide the real one.
@@ -42,20 +35,3 @@ impl<T: MyTrait + Reflect + Clone> FromType<T> for ReflectMyTrait {
   }
 }
 ```
-
-Color gradient interpolation
-
-let v = in - origin
-let d = dot(v, end - origin) / len(v) \* len(end - origin)
-let d = clamp(d, 0, 1)
-
-this.normal.dot( point ) + this.constant;
-
-setFromNormalAndCoplanarPoint( normal, point ) {
-
-    	this.normal.copy( normal );
-    	this.constant = - point.dot( this.normal );
-
-    	return this;
-
-    }
