@@ -5,7 +5,6 @@ use crate::{
 };
 use bevy::{
     // core::{DebugName, Name},
-    core::Name,
     ecs::{system::SystemState, world::DeferredWorld},
     hierarchy::{Children, HierarchyQueryExt, Parent},
     log::warn,

@@ -237,7 +237,7 @@ impl Clone for GraphNode {
 #[derive(Component)]
 pub struct NodeBasePosition(pub IVec2);
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 pub struct Terminal {
     /// Entity id of the node that owns this terminal.
     pub(crate) node_id: Entity,
@@ -277,7 +277,7 @@ pub struct Connection {
 
 /// The type of an input or output terminal. If the data type does not match, then
 /// values will be coerced to the proper type.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum ConnectionDataType {
     /// A boolean value
     Scalar,

@@ -386,6 +386,7 @@ impl ViewTemplate for ConnectionView {
                 dst_pos: IVec2::default(),
                 src_color: colors::U3,
                 dst_color: colors::U3,
+                hidden: true,
             };
         };
         let Connection { output, input } = connection;
@@ -394,12 +395,21 @@ impl ViewTemplate for ConnectionView {
         let src_color = get_terminal_edge_color(cx, output.terminal_id);
         let dst_color = get_terminal_edge_color(cx, input.terminal_id);
 
+        let drag_state = cx.use_inherited_component::<DragState>().unwrap();
+        let hidden = match drag_state.connect_from {
+            Some(ConnectionAnchor::EdgeSink(edge)) | Some(ConnectionAnchor::EdgeSource(edge)) => {
+                edge == self.0
+            }
+            _ => false,
+        };
+
         EdgeDisplay {
             edge_id: Some(self.0),
             src_pos,
             dst_pos,
             src_color,
             dst_color,
+            hidden,
         }
     }
 }
@@ -424,8 +434,34 @@ impl ViewTemplate for ConnectionProxyView {
                 get_target_color(cx, drag_state.connect_to),
                 get_terminal_edge_color(cx, term),
             ),
-            Some(ConnectionAnchor::EdgeSource(_edge)) => todo!(),
-            Some(ConnectionAnchor::EdgeSink(_edge)) => todo!(),
+            Some(ConnectionAnchor::EdgeSink(edge)) => {
+                // If we're dragging the sink, then the source end (output terminal) is anchored.
+                let output = cx
+                    .use_component::<Connection>(edge)
+                    .unwrap()
+                    .output
+                    .terminal_id;
+                (
+                    get_terminal_position(cx, output),
+                    get_target_position(cx, drag_state.connect_to),
+                    get_terminal_edge_color(cx, output),
+                    get_target_color(cx, drag_state.connect_to),
+                )
+            }
+            Some(ConnectionAnchor::EdgeSource(edge)) => {
+                // If we're dragging the source, then the sink end (input terminal) is anchored.
+                let input = cx
+                    .use_component::<Connection>(edge)
+                    .unwrap()
+                    .input
+                    .terminal_id;
+                (
+                    get_target_position(cx, drag_state.connect_to),
+                    get_terminal_position(cx, input),
+                    get_target_color(cx, drag_state.connect_to),
+                    get_terminal_edge_color(cx, input),
+                )
+            }
             None => (IVec2::default(), IVec2::default(), colors::U3, colors::U3),
         };
         Cond::new(
@@ -436,6 +472,7 @@ impl ViewTemplate for ConnectionProxyView {
                 dst_pos,
                 src_color,
                 dst_color,
+                hidden: false,
             },
             (),
         )

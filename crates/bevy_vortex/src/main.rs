@@ -29,7 +29,8 @@ use bevy_quill_obsidian_graph::{
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use commands::{AddConnectionCmd, DeleteSelectedCmd};
 use graph::{
-    sync_connections, GraphNode, GraphResource, NodeBasePosition, Selected, ValidateConnectionCmd,
+    sync_connections, Connection, GraphNode, GraphResource, NodeBasePosition, Selected,
+    ValidateConnectionCmd,
 };
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
@@ -242,7 +243,8 @@ impl ViewTemplate for CenterPanel {
                             &mut GraphNode,
                             &mut Selected,
                             Option<&NodeBasePosition>,
-                        )>| {
+                        )>,
+                         mut query_connections: Query<&mut Connection>| {
                             let mut drag_state = query_drag_state.single_mut();
                             match event.gesture {
                                 // Move nodes by dragging.
@@ -283,10 +285,6 @@ impl ViewTemplate for CenterPanel {
                                     DragAction::Start | DragAction::Update => {
                                         drag_state.connect_from = Some(anchor);
                                         drag_state.connect_to = Some(target);
-                                        if action == DragAction::Start {
-                                            drag_state.valid_connection = false;
-                                        }
-
                                         match (anchor, target) {
                                             (
                                                 ConnectionAnchor::OutputTerminal(output),
@@ -295,6 +293,7 @@ impl ViewTemplate for CenterPanel {
                                                 commands
                                                     .add(ValidateConnectionCmd { output, input });
                                             }
+
                                             (
                                                 ConnectionAnchor::InputTerminal(output),
                                                 ConnectionTarget::OutputTerminal(input),
@@ -302,8 +301,27 @@ impl ViewTemplate for CenterPanel {
                                                 commands
                                                     .add(ValidateConnectionCmd { output, input });
                                             }
-                                            (ConnectionAnchor::EdgeSource(_), _) => todo!(),
-                                            (ConnectionAnchor::EdgeSink(_), _) => todo!(),
+
+                                            (
+                                                ConnectionAnchor::EdgeSink(edge),
+                                                ConnectionTarget::OutputTerminal(output),
+                                            ) => {
+                                                let conn = query_connections.get_mut(edge).unwrap();
+                                                let input = conn.input.terminal_id;
+                                                commands
+                                                    .add(ValidateConnectionCmd { output, input });
+                                            }
+
+                                            (
+                                                ConnectionAnchor::EdgeSource(edge),
+                                                ConnectionTarget::InputTerminal(input),
+                                            ) => {
+                                                let conn = query_connections.get_mut(edge).unwrap();
+                                                let output = conn.output.terminal_id;
+                                                commands
+                                                    .add(ValidateConnectionCmd { output, input });
+                                            }
+
                                             _ => {
                                                 drag_state.valid_connection = false;
                                             }
@@ -316,16 +334,50 @@ impl ViewTemplate for CenterPanel {
                                                 ConnectionAnchor::OutputTerminal(output),
                                                 ConnectionTarget::InputTerminal(input),
                                             ) => {
-                                                commands.add(AddConnectionCmd { output, input });
+                                                commands.add(AddConnectionCmd {
+                                                    output,
+                                                    input,
+                                                    replace: None,
+                                                });
                                             }
+
                                             (
                                                 ConnectionAnchor::InputTerminal(output),
                                                 ConnectionTarget::OutputTerminal(input),
                                             ) => {
-                                                commands.add(AddConnectionCmd { output, input });
+                                                commands.add(AddConnectionCmd {
+                                                    output,
+                                                    input,
+                                                    replace: None,
+                                                });
                                             }
-                                            (ConnectionAnchor::EdgeSource(_), _) => todo!(),
-                                            (ConnectionAnchor::EdgeSink(_), _) => todo!(),
+
+                                            (
+                                                ConnectionAnchor::EdgeSource(edge),
+                                                ConnectionTarget::OutputTerminal(output),
+                                            ) => {
+                                                let conn = query_connections.get_mut(edge).unwrap();
+                                                let input = conn.input.terminal_id;
+                                                commands.add(AddConnectionCmd {
+                                                    output,
+                                                    input,
+                                                    replace: Some(edge),
+                                                });
+                                            }
+
+                                            (
+                                                ConnectionAnchor::EdgeSink(edge),
+                                                ConnectionTarget::InputTerminal(input),
+                                            ) => {
+                                                let conn = query_connections.get_mut(edge).unwrap();
+                                                let output = conn.output.terminal_id;
+                                                commands.add(AddConnectionCmd {
+                                                    output,
+                                                    input,
+                                                    replace: Some(edge),
+                                                });
+                                            }
+
                                             _ => {}
                                         }
 
