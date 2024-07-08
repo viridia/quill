@@ -10,7 +10,7 @@ use bevy_quill_obsidian::{
     hooks::{UseElementRect, UseIsHover},
 };
 
-use crate::{DragMode, Gesture, GestureState, GraphEvent};
+use crate::{DragAction, DragMode, Gesture, GestureState, GraphEvent};
 
 fn style_node_graph_node(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
@@ -260,30 +260,51 @@ fn node_event_handlers(id: Entity, node_id: Entity) -> (On<Pointer<Down>>, On<Po
 }
 
 #[allow(clippy::type_complexity)]
-fn title_event_handlers(id: Entity) -> (On<Pointer<DragEnd>>, On<Pointer<Drag>>) {
+fn title_event_handlers(
+    id: Entity,
+) -> (
+    On<Pointer<DragStart>>,
+    On<Pointer<DragEnd>>,
+    On<Pointer<Drag>>,
+) {
     (
-        On::<Pointer<DragEnd>>::run(
-            move |mut event: ListenerMut<Pointer<DragEnd>>,
-                  mut gesture_state: ResMut<GestureState>,
-                  mut writer: EventWriter<GraphEvent>| {
-                event.stop_propagation();
-                gesture_state.mode = DragMode::None;
-                writer.send(GraphEvent {
-                    target: id,
-                    gesture: Gesture::Move(event.distance, true),
-                });
-            },
-        ),
-        On::<Pointer<Drag>>::run({
-            move |mut event: ListenerMut<Pointer<Drag>>,
+        On::<Pointer<DragStart>>::run(
+            move |mut event: ListenerMut<Pointer<DragStart>>,
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
                 gesture_state.mode = DragMode::Move;
                 writer.send(GraphEvent {
                     target: id,
-                    gesture: Gesture::Move(event.distance, false),
+                    gesture: Gesture::Move(Vec2::default(), DragAction::Start),
                 });
+            },
+        ),
+        On::<Pointer<DragEnd>>::run(
+            move |mut event: ListenerMut<Pointer<DragEnd>>,
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Move {
+                    gesture_state.mode = DragMode::None;
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::Move(event.distance, DragAction::Finish),
+                    });
+                }
+            },
+        ),
+        On::<Pointer<Drag>>::run({
+            move |mut event: ListenerMut<Pointer<Drag>>,
+                  gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>| {
+                event.stop_propagation();
+                if gesture_state.mode == DragMode::Move {
+                    writer.send(GraphEvent {
+                        target: id,
+                        gesture: Gesture::Move(event.distance, DragAction::Update),
+                    });
+                }
             }
         }),
     )

@@ -32,22 +32,13 @@ pub enum ConnectionTarget {
 pub enum Gesture {
     /// Drag one or more nodes (ones that are currently selected).
     /// The arguments are the drag vector, and whether this is the final drag value.
-    Move(Vec2, bool),
+    Move(Vec2, DragAction),
 
     /// Drag a node onto the graph to create it.
     Create(Vec2),
 
     /// Event sent when dragging a connection.
     Connect(ConnectionAnchor, ConnectionTarget, DragAction),
-
-    /// Drag the connection to a new location.
-    // ConnectDrag(Vec2),
-
-    /// Called when the connection hovers over a target, or stops hovering.
-    // ConnectHover(Option<Entity>),
-
-    /// Finish dragging the connection.
-    // ConnectFinish(ConnectionAnchor, Entity),
 
     /// Option-click to scroll the view.
     Scroll(Vec2),

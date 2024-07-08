@@ -59,18 +59,6 @@ impl ViewTemplate for GraphView {
             .entity(graph_view_id)
             .style(style_node_graph)
             .children((
-                // EdgeDisplay {
-                //     src_pos: IVec2::new(50, 50),
-                //     dst_pos: IVec2::new(400, 50),
-                //     src_color: colors::LIGHT,
-                //     dst_color: colors::RESOURCE,
-                // },
-                // EdgeDisplay {
-                //     src_pos: IVec2::new(50, 170),
-                //     dst_pos: IVec2::new(400, 70),
-                //     src_color: colors::X_RED,
-                //     dst_color: colors::Y_GREEN,
-                // },
                 For::each(connection_ids, |conn| ConnectionView(*conn)),
                 For::each(node_ids, |node| GraphNodeView(*node)),
                 ConnectionProxyView,
@@ -100,7 +88,6 @@ impl ViewTemplate for GraphNodeView {
             Some(dwidth) => ui::Val::Px(dwidth.0 as f32),
             None => ui::Val::Auto,
         };
-        // println!("Display Width: {:?}", display_width);
 
         let field_names = {
             let num_fields = st_info.field_len();
@@ -276,7 +263,6 @@ impl ViewTemplate for GraphNodePropertyEditF32 {
 
             slider.into_view_child()
         } else {
-            println!("No Range");
             // TODO: Need label
             let mut spinbox = SpinBox::new()
                 .value(*field_reflect.downcast_ref::<f32>().unwrap())
@@ -341,7 +327,7 @@ impl ViewTemplate for GraphNodePropertyEditLinearRgba {
                 MenuButton::new()
                     .minimal(true)
                     .no_caret(true)
-                    .size(Size::Xxs)
+                    .size(Size::Xxxs)
                     .style(|sb: &mut StyleBuilder| {
                         sb.padding(0).min_width(64);
                     })

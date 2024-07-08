@@ -227,23 +227,34 @@ impl ViewTemplate for CenterPanel {
                             let mut drag_state = query_drag_state.single_mut();
                             match event.gesture {
                                 // Move nodes by dragging.
-                                Gesture::Move(position, is_final) => {
+                                Gesture::Move(position, action) => {
                                     let offset = position.as_ivec2();
-                                    for (ent, mut node, selected, base) in
-                                        query_graph_nodes.iter_mut()
-                                    {
-                                        if selected.0 {
-                                            if let Some(base) = base {
-                                                node.position = base.0 + offset;
-                                                if is_final {
+                                    match action {
+                                        DragAction::Start => {
+                                            for (ent, node, selected, _base) in
+                                                query_graph_nodes.iter_mut()
+                                            {
+                                                if selected.0 {
                                                     commands
                                                         .entity(ent)
-                                                        .remove::<NodeBasePosition>();
+                                                        .insert(NodeBasePosition(node.position));
                                                 }
-                                            } else {
-                                                commands
-                                                    .entity(ent)
-                                                    .insert(NodeBasePosition(node.position));
+                                            }
+                                        }
+
+                                        DragAction::Update => {
+                                            for (_, mut node, _, base) in
+                                                query_graph_nodes.iter_mut()
+                                            {
+                                                if let Some(base) = base {
+                                                    node.position = base.0 + offset;
+                                                }
+                                            }
+                                        }
+
+                                        DragAction::Finish => {
+                                            for (ent, _, _, _) in query_graph_nodes.iter_mut() {
+                                                commands.entity(ent).remove::<NodeBasePosition>();
                                             }
                                         }
                                     }

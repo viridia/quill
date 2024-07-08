@@ -11,10 +11,12 @@
 
 ## Vortex nextish
 
-- Color popup doesn't change prop color.
+- Nodes shrink after connection
 - Delete selected nodes.
+- Dragging of edges.
 - Flesh out undo/redo
 - Serialization
+- Open/Save dialogs.
 
 ## Vortex notes
 
@@ -26,4 +28,4 @@
 - Operators
   - Buffered Nodes (for Blur)?
   - Uniform vs. Source?
-    - Uniform is a node type.
+    - Uniform is an input node type.
