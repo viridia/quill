@@ -22,7 +22,7 @@ pub use events::*;
 pub use graph_display::GraphDisplay;
 use materials::{DotGridMaterial, DrawPathMaterial, LineMaterial};
 pub use node_display::NodeDisplay;
-pub use terminal_display::{InputTerminalDisplay, OutputTerminalDisplay};
+pub use terminal_display::{InputTerminalDisplay, NoTerminalDisplay, OutputTerminalDisplay};
 
 /// Plugin for the Obsidian UI library.
 pub struct ObsidianGraphPlugin;

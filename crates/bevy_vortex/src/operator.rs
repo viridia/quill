@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::ops::RangeInclusive;
 
 use bevy::{
     reflect::{reflect_trait, Reflect},
@@ -49,6 +49,10 @@ pub trait Operator: Send + Sync + Reflect {
     fn gen(&self);
 }
 
+/// Width of the operator node, in pixels.
+#[derive(Debug, Clone, Reflect)]
+pub struct DisplayWidth(pub i32);
+
 /// Name of this operator or operator property.
 #[derive(Debug, Clone, Reflect)]
 pub struct DisplayName(pub &'static str);
@@ -75,7 +79,7 @@ pub struct OperatorOutput;
 /// This attribute can be applied to numeric fields. It can also be applied to aggregate types
 /// that have a numeric type parameter, such as an `Option<f32>` or `Vec<i8>`.
 #[derive(Debug, Clone, Reflect)]
-pub struct ValueRange<T>(pub Range<T>);
+pub struct OpValueRange<T>(pub RangeInclusive<T>);
 
 /// An attribute that specifies how many decimal digits of precision should be allowed.
 /// If the field is an integer, this will be ignored. If present, field values will be
@@ -84,7 +88,7 @@ pub struct ValueRange<T>(pub Range<T>);
 /// This attribute can be applied to numeric fields. It can also be applied to aggregate types
 /// that have a numeric type parameter, such as an `Option<f32>` or `Vec<i8>`.
 #[derive(Debug, Clone, Reflect)]
-pub struct Precision(pub usize);
+pub struct OpValuePrecision(pub usize);
 
 /// An attribute that specifies the increment and decrement step size for a numeric field.
 /// If not present, the step size will be determined from the precision. If the precision is
@@ -93,4 +97,4 @@ pub struct Precision(pub usize);
 /// This attribute can be applied to numeric fields. It can also be applied to aggregate types
 /// that have a numeric type parameter, such as an `Option<f32>` or `Vec<i8>`.
 #[derive(Debug, Clone, Reflect)]
-pub struct Step<T>(pub T);
+pub struct OpValueStep<T>(pub T);

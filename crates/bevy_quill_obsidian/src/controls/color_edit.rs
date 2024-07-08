@@ -7,10 +7,10 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
-use bevy_quill_obsidian::{
-    controls::{Button, ButtonVariant, ColorGradient, GradientSlider, Swatch, SwatchGrid},
-    RoundedCorners,
-};
+
+use crate::RoundedCorners;
+
+use super::{Button, ButtonVariant, ColorGradient, GradientSlider, Swatch, SwatchGrid};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ColorMode {

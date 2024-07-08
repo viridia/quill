@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::operator::{
-    DisplayName, Operator, OperatorCategory, OperatorClass, OperatorDescription, OperatorInput,
-    OperatorOutput, ReflectOperator, ValueRange,
+    DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
+    OperatorDescription, OperatorInput, OperatorOutput, ReflectOperator,
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
@@ -19,7 +19,7 @@ pub struct Grayscale {
     pub input: LinearRgba,
 
     /// Strength of the grayscale effect, from 0 to 1.
-    #[reflect(@ValueRange(0.0..1.0), @DisplayName("Strength"))]
+    #[reflect(@OpValueRange::<f32>(0.0..=1.0), @OpValuePrecision(3), @DisplayName("Strength"))]
     pub strength: f32,
 }
 

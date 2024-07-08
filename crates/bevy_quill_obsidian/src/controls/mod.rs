@@ -1,5 +1,6 @@
 mod button;
 mod checkbox;
+mod color_edit;
 mod dialog;
 mod disabled;
 mod disclosure_toggle;
@@ -19,6 +20,7 @@ mod tool_palette;
 
 pub use button::*;
 pub use checkbox::*;
+pub use color_edit::{ColorEdit, ColorEditState, ColorMode, RecentColors};
 pub use dialog::*;
 pub use disabled::*;
 pub use disclosure_toggle::*;

@@ -25,13 +25,8 @@ fn style_menu_icon(ss: &mut StyleBuilder) {
     ss.margin((2, 0));
 }
 
-use crate::{
-    templates::{
-        color_edit::{ColorEdit, ColorEditState, ColorMode, RecentColors},
-        field_label::FieldLabel,
-    },
-    Inspectable,
-};
+use crate::{templates::field_label::FieldLabel, Inspectable};
+use bevy_quill_obsidian::controls::{ColorEdit, ColorEditState, ColorMode, RecentColors};
 
 #[derive(Clone)]
 pub struct SrgbaInspector(pub(crate) Arc<Inspectable>);

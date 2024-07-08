@@ -144,6 +144,33 @@ impl ViewTemplate for OutputTerminalDisplay {
     }
 }
 
+fn style_no_connector(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .align_items(ui::AlignItems::Center)
+        .justify_content(ui::JustifyContent::Stretch)
+        .min_height(20)
+        .padding((8, 0));
+}
+
+/// Entry for a property that is neither an input or output terminal, but which can be edited.
+#[derive(Clone, PartialEq)]
+pub struct NoTerminalDisplay {
+    /// Control rendered when the input is not connected.
+    pub control: ViewChild,
+}
+
+impl ViewTemplate for NoTerminalDisplay {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut Cx) -> Self::View {
+        Element::<NodeBundle>::new()
+            .named("NoTerminal")
+            .style(style_no_connector)
+            .children(self.control.clone())
+    }
+}
+
 #[allow(clippy::type_complexity)]
 fn terminal_event_handlers(
     args: (Entity, bool),

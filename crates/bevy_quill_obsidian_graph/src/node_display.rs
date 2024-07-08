@@ -47,7 +47,7 @@ fn style_node_graph_node_content(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::Stretch)
-        .gap(2)
+        .gap(4)
         .border(1)
         .border_color(colors::U4)
         .border(ui::UiRect {
@@ -96,6 +96,8 @@ pub struct NodeDisplay {
     pub node_id: Entity,
     /// The coordinates of the node's upper-left corner.
     pub position: IVec2,
+    /// Display width of the node.
+    pub width: ui::Val,
     /// The title of the node.
     pub title: String,
     /// Whether the node is currently selected.
@@ -111,6 +113,7 @@ impl NodeDisplay {
             node_id: entity,
             position: default(),
             title: default(),
+            width: ui::Val::Auto,
             selected: false,
             children: default(),
         }
@@ -125,6 +128,12 @@ impl NodeDisplay {
     /// Set the position of the node.
     pub fn position(mut self, position: IVec2) -> Self {
         self.position = position;
+        self
+    }
+
+    /// Set the display width of the node.
+    pub fn width(mut self, width: ui::Val) -> Self {
+        self.width = width;
         self
     }
 
@@ -196,6 +205,12 @@ impl ViewTemplate for NodeDisplay {
                             });
                         },
                         self.selected,
+                    )
+                    .style_dyn(
+                        |width, sb| {
+                            sb.width(width);
+                        },
+                        self.width,
                     )
                     .children(self.children.clone()),
                 Cond::new(

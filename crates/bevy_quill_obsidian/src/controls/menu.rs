@@ -141,8 +141,8 @@ impl MenuButton {
     }
 
     /// Set the button style.
-    pub fn style(mut self, style: StyleHandle) -> Self {
-        self.style = style;
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = style.into_handle();
         self
     }
 
@@ -306,15 +306,17 @@ impl ViewTemplate for MenuButton {
                         focused,
                     ),
                 self.children.clone(),
-                Spacer,
                 Cond::new(
                     self.no_caret,
                     (),
-                    Icon::new("embedded://bevy_quill_obsidian/assets/icons/chevron_down.png")
-                        .color(Color::from(colors::DIM))
-                        .style(|ss: &mut StyleBuilder| {
-                            ss.margin_right(4);
-                        }),
+                    (
+                        Spacer,
+                        Icon::new("embedded://bevy_quill_obsidian/assets/icons/chevron_down.png")
+                            .color(Color::from(colors::DIM))
+                            .style(|ss: &mut StyleBuilder| {
+                                ss.margin_right(4);
+                            }),
+                    ),
                 ),
                 Cond::new(
                     state != BistableTransitionState::Exited,

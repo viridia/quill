@@ -47,7 +47,7 @@ pub mod prelude {
 }
 
 use bevy_mod_picking::prelude::EventListenerPlugin;
-use controls::MenuCloseEvent;
+use controls::{MenuCloseEvent, RecentColors};
 use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
 pub use rounded_corners::RoundedCorners;
 
@@ -107,6 +107,7 @@ impl Plugin for ObsidianUiPlugin {
                 cursor::update_cursor,
             ),
         )
+        .init_resource::<RecentColors>()
         .add_systems(PostUpdate, floating::position_floating);
     }
 }

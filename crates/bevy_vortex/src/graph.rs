@@ -155,6 +155,10 @@ impl GraphNode {
         self.operator.as_reflect()
     }
 
+    pub fn operator_reflect_mut(&mut self) -> &mut dyn Reflect {
+        self.operator.as_reflect_mut()
+    }
+
     /// For each node input or output, create an entry which holds the entity used to position
     /// that terminal on the graph view.
     fn create_terminals(&mut self, commands: &mut Commands, parent: Entity) {
@@ -178,7 +182,7 @@ impl GraphNode {
             } else if type_name == "Vec2" || type_name == "Vec3" || type_name == "Vec4" {
                 data_type = ConnectionDataType::Vector;
             }
-            println!("Field: {} ({})", name, type_name);
+            // println!("Field: {} ({})", name, type_name);
             if attrs.contains::<OperatorInput>() {
                 let id = commands
                     .spawn(Terminal {
@@ -245,6 +249,12 @@ pub struct Terminal {
 
     /// List of connections to this terminal.
     connections: HashSet<Entity>,
+}
+
+impl Terminal {
+    pub fn is_connected(&self) -> bool {
+        !self.connections.is_empty()
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

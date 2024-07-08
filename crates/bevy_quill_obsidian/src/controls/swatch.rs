@@ -12,6 +12,7 @@ fn style_swatch(ss: &mut StyleBuilder) {
         .min_height(8)
         .display(ui::Display::Flex)
         .color(colors::FOREGROUND)
+        .border_radius(3)
         .padding(2);
 }
 

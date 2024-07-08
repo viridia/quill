@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::operator::{
-    DisplayName, Operator, OperatorCategory, OperatorClass, OperatorDescription, OperatorInput,
-    OperatorOutput, ReflectOperator, ValueRange,
+    DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
+    OperatorDescription, OperatorInput, OperatorOutput, ReflectOperator,
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
@@ -23,7 +23,11 @@ pub struct Mix {
     pub input_b: LinearRgba,
 
     /// Mix factor, from 0 to 1.
-    #[reflect(@OperatorInput, @DisplayName("Factor"), @ValueRange(0.0..1.0))]
+    #[reflect(
+        @OperatorInput,
+        @DisplayName("Factor"),
+        @OpValueRange::<f32>(0.0..=1.0),
+        @OpValuePrecision(3))]
     pub factor: f32,
 }
 

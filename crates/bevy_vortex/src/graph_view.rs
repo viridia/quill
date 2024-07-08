@@ -1,14 +1,24 @@
 use crate::{
     graph::{Connection, GraphNode, GraphResource, Selected, Terminal},
-    operator::{DisplayName, OperatorInput, OperatorOutput},
+    operator::{
+        DisplayName, DisplayWidth, OpValuePrecision, OpValueRange, OpValueStep, OperatorInput,
+        OperatorOutput,
+    },
 };
-use bevy::{color::Color, prelude::*, reflect::TypeInfo};
+use bevy::{color::Color, prelude::*, reflect::TypeInfo, ui};
 use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, IntoViewChild};
-use bevy_quill_obsidian::colors;
+use bevy_quill_obsidian::{
+    colors,
+    controls::{
+        ColorEdit, ColorEditState, ColorMode, MenuButton, MenuPopup, Slider, SpinBox, Swatch,
+    },
+    floating::{FloatAlign, FloatSide},
+    size::Size,
+};
 use bevy_quill_obsidian_graph::{
-    ConnectionAnchor, EdgeDisplay, GraphDisplay, InputTerminalDisplay, NodeDisplay,
-    OutputTerminalDisplay,
+    ConnectionAnchor, EdgeDisplay, GraphDisplay, InputTerminalDisplay, NoTerminalDisplay,
+    NodeDisplay, OutputTerminalDisplay,
 };
 
 fn style_node_graph(ss: &mut StyleBuilder) {
@@ -88,6 +98,11 @@ impl ViewTemplate for GraphNodeView {
         let TypeInfo::Struct(st_info) = info else {
             panic!("Expected StructInfo");
         };
+        let display_width = match st_info.custom_attributes().get::<DisplayWidth>() {
+            Some(dwidth) => ui::Val::Px(dwidth.0 as f32),
+            None => ui::Val::Auto,
+        };
+        // println!("Display Width: {:?}", display_width);
 
         let field_names = {
             let num_fields = st_info.field_len();
@@ -101,6 +116,7 @@ impl ViewTemplate for GraphNodeView {
 
         NodeDisplay::new(entity)
             .position(node.position)
+            .width(display_width)
             .title(node.title())
             .selected(is_selected)
             .children(For::each(field_names, move |field| GraphNodePropertyView {
@@ -137,10 +153,20 @@ impl ViewTemplate for GraphNodePropertyView {
 
         if field_attrs.contains::<OperatorInput>() {
             let id = node.get_input_terminal(self.field).unwrap();
+            let terminal = cx.use_component::<Terminal>(id).unwrap();
             InputTerminalDisplay {
                 id,
                 color: get_terminal_color(cx, id),
-                control: display_name.to_owned().into_view_child(),
+                control: Cond::new(
+                    terminal.is_connected(),
+                    display_name.to_owned(),
+                    GraphNodePropertyEdit {
+                        node: self.node,
+                        display_name,
+                        field: self.field,
+                    },
+                )
+                .into_view_child(),
             }
             .into_view_child()
         } else if field_attrs.contains::<OperatorOutput>() {
@@ -152,8 +178,192 @@ impl ViewTemplate for GraphNodePropertyView {
             }
             .into_view_child()
         } else {
-            display_name.into_view_child()
+            NoTerminalDisplay {
+                control: GraphNodePropertyEdit {
+                    node: self.node,
+                    display_name,
+                    field: self.field,
+                }
+                .into_view_child(),
+            }
+            .into_view_child()
         }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct GraphNodePropertyEdit {
+    node: Entity,
+    display_name: &'static str,
+    field: &'static str,
+}
+
+impl ViewTemplate for GraphNodePropertyEdit {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let node = cx.use_component::<GraphNode>(self.node).unwrap();
+        let reflect = node.operator_reflect();
+        let Some(TypeInfo::Struct(st_info)) = reflect.get_represented_type_info() else {
+            panic!("Expected StructInfo");
+        };
+        let field = st_info.field(self.field).unwrap();
+
+        match field.type_path() {
+            "f32" => GraphNodePropertyEditF32 {
+                node: self.node,
+                display_name: self.display_name,
+                field: self.field,
+            }
+            .into_view_child(),
+            "bevy_color::linear_rgba::LinearRgba" => GraphNodePropertyEditLinearRgba {
+                node: self.node,
+                display_name: self.display_name,
+                field: self.field,
+            }
+            .into_view_child(),
+
+            _ => {
+                warn!("Unsupported type: {}", field.type_path());
+                self.display_name.into_view_child()
+            }
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct GraphNodePropertyEditF32 {
+    node: Entity,
+    display_name: &'static str,
+    field: &'static str,
+}
+
+impl ViewTemplate for GraphNodePropertyEditF32 {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let id = self.node;
+        let path = self.field;
+        let node = cx.use_component::<GraphNode>(self.node).unwrap();
+        let reflect = node.operator_reflect();
+        let Some(TypeInfo::Struct(st_info)) = reflect.get_represented_type_info() else {
+            panic!("Expected StructInfo");
+        };
+        let field = st_info.field(self.field).unwrap();
+        let field_attrs = field.custom_attributes();
+        let field_reflect = reflect.reflect_path(path).unwrap();
+
+        if let Some(range) = field_attrs.get::<OpValueRange<f32>>() {
+            let mut slider = Slider::new()
+                .range(range.0.clone())
+                .value(*field_reflect.downcast_ref::<f32>().unwrap())
+                .label(self.display_name)
+                .style(|sb: &mut StyleBuilder| {
+                    sb.flex_grow(1.).min_width(128);
+                })
+                .on_change(cx.create_callback(
+                    move |value: In<f32>, mut nodes: Query<&mut GraphNode>| {
+                        let mut node = nodes.get_mut(id).unwrap();
+                        let reflect = node.operator_reflect_mut();
+                        let field_reflect = reflect.reflect_path_mut(path).unwrap();
+                        field_reflect.apply((*value).as_reflect());
+                    },
+                ));
+
+            if let Some(precision) = field_attrs.get::<OpValuePrecision>() {
+                slider = slider.precision(precision.0);
+            }
+
+            if let Some(step) = field_attrs.get::<OpValueStep<f32>>() {
+                slider = slider.step(step.0);
+            }
+
+            slider.into_view_child()
+        } else {
+            println!("No Range");
+            // TODO: Need label
+            let mut spinbox = SpinBox::new()
+                .value(*field_reflect.downcast_ref::<f32>().unwrap())
+                .style(|sb: &mut StyleBuilder| {
+                    sb.flex_grow(1.);
+                })
+                .on_change(cx.create_callback(
+                    move |value: In<f32>, mut nodes: Query<&mut GraphNode>| {
+                        let mut node = nodes.get_mut(id).unwrap();
+                        let reflect = node.operator_reflect_mut();
+                        let field_reflect = reflect.reflect_path_mut(path).unwrap();
+                        field_reflect.apply((*value).as_reflect());
+                    },
+                ));
+
+            if let Some(precision) = field_attrs.get::<OpValuePrecision>() {
+                spinbox = spinbox.precision(precision.0);
+            }
+
+            if let Some(step) = field_attrs.get::<OpValueStep<f32>>() {
+                spinbox = spinbox.step(step.0);
+            }
+
+            spinbox.into_view_child()
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct GraphNodePropertyEditLinearRgba {
+    node: Entity,
+    display_name: &'static str,
+    field: &'static str,
+}
+
+impl ViewTemplate for GraphNodePropertyEditLinearRgba {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let node = cx.use_component::<GraphNode>(self.node).unwrap();
+        let reflect = node.operator_reflect();
+        let field_reflect = reflect.reflect_path(self.field).unwrap();
+        let color = *field_reflect.downcast_ref::<LinearRgba>().unwrap();
+
+        let state = cx.create_mutable(ColorEditState {
+            mode: ColorMode::Rgb,
+            rgb: Srgba::default(),
+            hsl: Hsla::default(),
+        });
+
+        Element::<NodeBundle>::new()
+            .style(|sb: &mut StyleBuilder| {
+                sb.gap(4).justify_items(ui::JustifyItems::End);
+            })
+            .children((
+                Element::<NodeBundle>::new()
+                    .style(|sb: &mut StyleBuilder| {
+                        sb.flex_grow(1.0).flex_basis(0);
+                    })
+                    .children(self.display_name),
+                MenuButton::new()
+                    .minimal(true)
+                    .no_caret(true)
+                    .size(Size::Xxs)
+                    .style(|sb: &mut StyleBuilder| {
+                        sb.padding(0).min_width(64);
+                    })
+                    .children(Swatch::new(color).style(|sb: &mut StyleBuilder| {
+                        sb.align_self(ui::AlignSelf::Stretch)
+                            .justify_self(ui::JustifySelf::Stretch)
+                            .flex_grow(1.0);
+                    }))
+                    .popup(
+                        MenuPopup::new()
+                            .side(FloatSide::Right)
+                            .align(FloatAlign::Start)
+                            .children(ColorEdit::new(
+                                state.get(cx),
+                                cx.create_callback(
+                                    move |st: In<ColorEditState>, world: &mut World| {
+                                        state.set(world, *st);
+                                    },
+                                ),
+                            )),
+                    ),
+            ))
     }
 }
 

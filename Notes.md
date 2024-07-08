@@ -1,7 +1,6 @@
 # Next
 
 - Use lifecycle hooks for view razing.
-- need preludes for bevy_quill, bevy_quill_obsidian
 - Test focus.
 - Think about separating styles from Quill.
   - Hard to do because text view uses the marker component.
@@ -10,9 +9,16 @@
   - Needs preferences API
 - Change window title.
 
+## Vortex nextish
+
+- Color popup menu not appearing.
+- Fix problems with drag state machine.
+- Test auto-deletion of connections.
+- Flesh out undo/redo
+- Serialization
+
 ## Vortex notes
 
-- Interior controls.
 - Double-click.
 - Rect select
 - Drag to reconnect:
@@ -22,16 +28,3 @@
   - Buffered Nodes (for Blur)?
   - Uniform vs. Source?
     - Uniform is a node type.
-
-```rust
-impl<T: MyTrait + Reflect + Clone> FromType<T> for ReflectMyTrait {
-  fn from_type() -> Self {
-    Self {
-      get_obj: |value: &dyn Reflect| {
-         let value = value.downcast_ref::<T>().unwrap();
-         Arc::new(RwLock::new(value.clone()))
-      }
-    }
-  }
-}
-```
