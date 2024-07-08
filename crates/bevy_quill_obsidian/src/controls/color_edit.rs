@@ -22,7 +22,7 @@ pub enum ColorMode {
 
 /// State for the color edit control. The state stores all color spaces simultaneously to avoid
 /// precision loss when converting between them.
-#[derive(Default, Clone, Copy, PartialEq)]
+#[derive(Default, Clone, Copy, PartialEq, Debug)]
 pub struct ColorEditState {
     pub mode: ColorMode,
     pub rgb: Srgba,

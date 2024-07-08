@@ -149,6 +149,9 @@ impl ViewTemplate for VortexUi {
         let panel_width = cx.use_resource::<PanelWidth>().0;
         let camera = self.0;
 
+        // Needed to ensure popup menus and dialogs render on the correct camera.
+        cx.insert(TargetCamera(camera));
+
         // Insert the view id as a context variable.
         cx.insert(GraphViewId(graph_view_id));
         cx.insert(DragState::default());

@@ -195,6 +195,9 @@ impl ViewTemplate for DemoUi {
         let panel_width = cx.use_resource::<PanelWidth>().0;
         let camera = self.0;
 
+        // Needed to ensure popup menus and dialogs render on the correct camera.
+        cx.insert(TargetCamera(camera));
+
         Element::<NodeBundle>::new()
             .named("Main")
             .style((typography::text_default, style_main))

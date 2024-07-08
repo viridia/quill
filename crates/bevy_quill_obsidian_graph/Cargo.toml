@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["verbose"]
-verbose = []          # Enable verbose logging
+# default = ["verbose"]
+verbose = [] # Enable verbose logging
 
 [dependencies]
 bevy = { workspace = true }
