@@ -14,6 +14,20 @@ pub enum ConnectionAnchor {
     EdgeSink(Entity),
 }
 
+/// For a connection drag, the current drag location.
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub enum ConnectionTarget {
+    /// Drag from an input terminal
+    InputTerminal(Entity),
+    /// Drag from an output terminal
+    OutputTerminal(Entity),
+    /// Dragging the source end (connected to an output) of an existing edge.
+    Location(Vec2),
+    /// Not dragging
+    #[default]
+    None,
+}
+
 #[derive(Clone, Debug)]
 pub enum Gesture {
     /// Drag one or more nodes (ones that are currently selected).
@@ -23,17 +37,17 @@ pub enum Gesture {
     /// Drag a node onto the graph to create it.
     Create(Vec2),
 
-    /// Start dragging a connection. The argument is the terminal.
-    Connect(ConnectionAnchor),
+    /// Event sent when dragging a connection.
+    Connect(ConnectionAnchor, ConnectionTarget, DragAction),
 
     /// Drag the connection to a new location.
-    ConnectDrag(Vec2),
+    // ConnectDrag(Vec2),
 
     /// Called when the connection hovers over a target, or stops hovering.
-    ConnectHover(Option<Entity>),
+    // ConnectHover(Option<Entity>),
 
     /// Finish dragging the connection.
-    ConnectFinish(Entity),
+    // ConnectFinish(ConnectionAnchor, Entity),
 
     /// Option-click to scroll the view.
     Scroll(Vec2),
@@ -81,8 +95,18 @@ pub(crate) enum DragMode {
     Connect,
 }
 
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub enum DragAction {
+    #[default]
+    Start,
+    Update,
+    Finish,
+}
+
 #[derive(Resource, Default)]
 pub(crate) struct GestureState {
     /// The type of gesture currently in effect.
     pub(crate) mode: DragMode,
+    pub(crate) anchor: Option<ConnectionAnchor>,
+    pub(crate) target: ConnectionTarget,
 }

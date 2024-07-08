@@ -3,6 +3,10 @@ name = "bevy_quill_obsidian_graph"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["verbose"]
+verbose = []          # Enable verbose logging
+
 [dependencies]
 bevy = { workspace = true }
 bevy_mod_picking = { workspace = true }

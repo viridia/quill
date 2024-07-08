@@ -22,7 +22,9 @@ use bevy_quill_obsidian::{
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin,
 };
-use bevy_quill_obsidian_graph::{ConnectionAnchor, Gesture, GraphEvent, ObsidianGraphPlugin};
+use bevy_quill_obsidian_graph::{
+    ConnectionAnchor, ConnectionTarget, DragAction, Gesture, GraphEvent, ObsidianGraphPlugin,
+};
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use graph::{
     sync_connections, AddConnectionCmd, GraphNode, GraphResource, NodeBasePosition, Selected,
@@ -94,7 +96,7 @@ fn main() {
             VortexPlugin,
             OperatorsPlugin,
         ))
-        .add_systems(Startup, (setup_ui.pipe(setup_view_root), sync_connections))
+        .add_systems(Startup, (sync_connections, setup_ui.pipe(setup_view_root)))
         .add_systems(
             Update,
             (
@@ -244,65 +246,61 @@ impl ViewTemplate for CenterPanel {
                                     }
                                 }
 
-                                Gesture::Connect(anchor) => {
-                                    drag_state.connect_from = Some(anchor);
-                                    drag_state.valid_connection = false;
-                                }
+                                Gesture::Connect(anchor, target, action) => match action {
+                                    DragAction::Start | DragAction::Update => {
+                                        drag_state.connect_from = Some(anchor);
+                                        drag_state.connect_to = Some(target);
+                                        if action == DragAction::Start {
+                                            drag_state.valid_connection = false;
+                                        }
 
-                                Gesture::ConnectDrag(pos) => {
-                                    drag_state.connect_to_pos = pos;
-                                }
+                                        match (anchor, target) {
+                                            (
+                                                ConnectionAnchor::OutputTerminal(output),
+                                                ConnectionTarget::InputTerminal(input),
+                                            ) => {
+                                                commands
+                                                    .add(ValidateConnectionCmd { output, input });
+                                            }
+                                            (
+                                                ConnectionAnchor::InputTerminal(output),
+                                                ConnectionTarget::OutputTerminal(input),
+                                            ) => {
+                                                commands
+                                                    .add(ValidateConnectionCmd { output, input });
+                                            }
+                                            (ConnectionAnchor::EdgeSource(_), _) => todo!(),
+                                            (ConnectionAnchor::EdgeSink(_), _) => todo!(),
+                                            _ => {
+                                                drag_state.valid_connection = false;
+                                            }
+                                        }
+                                    }
 
-                                Gesture::ConnectHover(target) => {
-                                    drag_state.connect_to = target;
-                                    if target.is_none() {
+                                    DragAction::Finish => {
+                                        match (anchor, target) {
+                                            (
+                                                ConnectionAnchor::OutputTerminal(output),
+                                                ConnectionTarget::InputTerminal(input),
+                                            ) => {
+                                                commands.add(AddConnectionCmd { output, input });
+                                            }
+                                            (
+                                                ConnectionAnchor::InputTerminal(output),
+                                                ConnectionTarget::OutputTerminal(input),
+                                            ) => {
+                                                commands.add(AddConnectionCmd { output, input });
+                                            }
+                                            (ConnectionAnchor::EdgeSource(_), _) => todo!(),
+                                            (ConnectionAnchor::EdgeSink(_), _) => todo!(),
+                                            _ => {}
+                                        }
+
+                                        drag_state.connect_from = None;
+                                        drag_state.connect_to = None;
                                         drag_state.valid_connection = false;
-                                    } else {
-                                        let Some(from) = drag_state.connect_from else {
-                                            return;
-                                        };
-                                        match from {
-                                            ConnectionAnchor::OutputTerminal(from) => {
-                                                commands.add(ValidateConnectionCmd {
-                                                    output: from,
-                                                    input: target.unwrap(),
-                                                });
-                                            }
-                                            ConnectionAnchor::InputTerminal(from) => {
-                                                commands.add(ValidateConnectionCmd {
-                                                    output: target.unwrap(),
-                                                    input: from,
-                                                });
-                                            }
-                                            ConnectionAnchor::EdgeSource(_) => todo!(),
-                                            ConnectionAnchor::EdgeSink(_) => todo!(),
-                                        }
                                     }
-                                }
-
-                                Gesture::ConnectFinish(target) => {
-                                    // TODO: Check for valid
-                                    if let Some(from) = drag_state.connect_from {
-                                        match from {
-                                            ConnectionAnchor::OutputTerminal(from) => {
-                                                commands.add(AddConnectionCmd {
-                                                    output: from,
-                                                    input: target,
-                                                });
-                                            }
-                                            ConnectionAnchor::InputTerminal(from) => {
-                                                commands.add(AddConnectionCmd {
-                                                    output: target,
-                                                    input: from,
-                                                });
-                                            }
-                                            ConnectionAnchor::EdgeSource(_) => todo!(),
-                                            ConnectionAnchor::EdgeSink(_) => todo!(),
-                                        }
-                                    }
-                                    drag_state.connect_from = None;
-                                    drag_state.connect_to = None;
-                                }
+                                },
 
                                 // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
                                 // bevy_quill_obsidian_graph::Gesture::SelectRect(_) => todo!(),

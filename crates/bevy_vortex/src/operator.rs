@@ -73,6 +73,11 @@ pub struct OperatorInput;
 #[derive(Debug, Clone, Reflect)]
 pub struct OperatorOutput;
 
+/// Indicates that an operator input terminal should not have an editable widget when not
+/// connected.
+#[derive(Debug, Clone, Reflect)]
+pub struct OperatorInputOnly;
+
 /// An attribute that specifies the minimum and maximum allowed values for a field.
 /// This range is inclusive.
 ///

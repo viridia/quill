@@ -12,6 +12,7 @@
 ## Vortex nextish
 
 - Color popup menu not appearing.
+- Delete selected nodes.
 - Fix problems with drag state machine.
 - Test auto-deletion of connections.
 - Flesh out undo/redo

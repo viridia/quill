@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::operator::{
     DisplayName, Operator, OperatorCategory, OperatorClass, OperatorDescription, OperatorInput,
-    ReflectOperator,
+    OperatorInputOnly, ReflectOperator,
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
@@ -10,7 +10,7 @@ use crate::operator::{
 Displays the output of the shader.
 "))]
 pub struct Output {
-    #[reflect(@OperatorInput, @DisplayName("Color"))]
+    #[reflect(@OperatorInput, @OperatorInputOnly, @DisplayName("Color"))]
     pub input: LinearRgba,
 }
 

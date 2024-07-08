@@ -9,7 +9,7 @@ use bevy_quill_obsidian::cursor::StyleBuilderCursor;
 use crate::{
     materials::{DrawPathMaterial, DrawablePath},
     relative_pos::RelativeWorldPositions,
-    DragMode, Gesture, GestureState, GraphEvent,
+    ConnectionAnchor, ConnectionTarget, DragAction, DragMode, Gesture, GestureState, GraphEvent,
 };
 
 fn style_edge(ss: &mut StyleBuilder) {
@@ -157,39 +157,57 @@ fn edge_event_handlers(
         On::<Pointer<DragStart>>::run(
             move |mut event: ListenerMut<Pointer<DragStart>>,
                   mut gesture_state: ResMut<GestureState>,
-                  mut writer: EventWriter<GraphEvent>| {
+                  mut writer: EventWriter<GraphEvent>,
+                  rel: RelativeWorldPositions| {
                 event.stop_propagation();
                 if gesture_state.mode != DragMode::Connect {
-                    gesture_state.mode = DragMode::Connect;
+                    #[cfg(feature = "verbose")]
+                    info!("Edge::DragStart: {}", event.target());
                     let id = id.unwrap();
+                    let anchor = if is_sink {
+                        ConnectionAnchor::EdgeSink(display_id)
+                    } else {
+                        ConnectionAnchor::EdgeSource(display_id)
+                    };
+                    gesture_state.target = ConnectionTarget::Location(rel.transform_relative(
+                        id,
+                        event.pointer_location.position,
+                        4,
+                    ));
+                    gesture_state.mode = DragMode::Connect;
+                    gesture_state.anchor = Some(anchor);
                     writer.send(GraphEvent {
                         target: display_id,
-                        gesture: Gesture::Connect(if is_sink {
-                            crate::ConnectionAnchor::EdgeSink(id)
-                        } else {
-                            crate::ConnectionAnchor::EdgeSource(id)
-                        }),
+                        gesture: Gesture::Connect(anchor, gesture_state.target, DragAction::Start),
                     });
                 }
             },
         ),
         On::<Pointer<Drag>>::run(
             move |mut event: ListenerMut<Pointer<Drag>>,
-                  gesture_state: ResMut<GestureState>,
+                  mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>,
                   rel: RelativeWorldPositions| {
                 event.stop_propagation();
+                let id = id.unwrap();
                 if gesture_state.mode == DragMode::Connect {
-                    // println!("position: {}", event.pointer_location.position);
-                    let id = id.unwrap();
-                    writer.send(GraphEvent {
-                        target: display_id,
-                        gesture: Gesture::ConnectDrag(rel.transform_relative(
+                    if let (Some(anchor), ConnectionTarget::Location(_)) =
+                        (gesture_state.anchor, gesture_state.target)
+                    {
+                        gesture_state.target = ConnectionTarget::Location(rel.transform_relative(
                             id,
                             event.pointer_location.position,
                             4,
-                        )),
-                    });
+                        ));
+                        writer.send(GraphEvent {
+                            target: id,
+                            gesture: Gesture::Connect(
+                                anchor,
+                                gesture_state.target,
+                                DragAction::Update,
+                            ),
+                        });
+                    }
                 }
             },
         ),
@@ -199,6 +217,8 @@ fn edge_event_handlers(
                   mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
+                    #[cfg(feature = "verbose")]
+                    info!("Edge::DragEnd: {}", event.target());
                     gesture_state.mode = DragMode::None;
                     writer.send(GraphEvent {
                         target: display_id,

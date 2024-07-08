@@ -2,7 +2,7 @@ use crate::{
     graph::{Connection, GraphNode, GraphResource, Selected, Terminal},
     operator::{
         DisplayName, DisplayWidth, OpValuePrecision, OpValueRange, OpValueStep, OperatorInput,
-        OperatorOutput,
+        OperatorInputOnly, OperatorOutput,
     },
 };
 use bevy::{color::Color, prelude::*, reflect::TypeInfo, ui};
@@ -17,8 +17,8 @@ use bevy_quill_obsidian::{
     size::Size,
 };
 use bevy_quill_obsidian_graph::{
-    ConnectionAnchor, EdgeDisplay, GraphDisplay, InputTerminalDisplay, NoTerminalDisplay,
-    NodeDisplay, OutputTerminalDisplay,
+    ConnectionAnchor, ConnectionTarget, EdgeDisplay, GraphDisplay, InputTerminalDisplay,
+    NoTerminalDisplay, NodeDisplay, OutputTerminalDisplay,
 };
 
 fn style_node_graph(ss: &mut StyleBuilder) {
@@ -38,9 +38,7 @@ pub struct DragState {
     /// The terminal we are dragging from
     pub(crate) connect_from: Option<ConnectionAnchor>,
     /// The terminal we are dragging to.
-    pub(crate) connect_to: Option<Entity>,
-    /// The mouse position during dragging
-    pub(crate) connect_to_pos: Vec2,
+    pub(crate) connect_to: Option<ConnectionTarget>,
     /// Whether the dragged connection is valid.
     pub(crate) valid_connection: bool,
 }
@@ -158,7 +156,7 @@ impl ViewTemplate for GraphNodePropertyView {
                 id,
                 color: get_terminal_color(cx, id),
                 control: Cond::new(
-                    terminal.is_connected(),
+                    terminal.is_connected() || field_attrs.contains::<OperatorInputOnly>(),
                     display_name.to_owned(),
                     GraphNodePropertyEdit {
                         node: self.node,
@@ -373,8 +371,16 @@ pub struct ConnectionView(Entity);
 impl ViewTemplate for ConnectionView {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let connection = cx.use_component::<Connection>(self.0).unwrap();
-        let Connection(output, input) = connection;
+        let Some(connection) = cx.use_component::<Connection>(self.0) else {
+            return EdgeDisplay {
+                edge_id: None,
+                src_pos: IVec2::default(),
+                dst_pos: IVec2::default(),
+                src_color: colors::U3,
+                dst_color: colors::U3,
+            };
+        };
+        let Connection { output, input } = connection;
         let src_pos = get_terminal_position(cx, output.terminal_id);
         let dst_pos = get_terminal_position(cx, input.terminal_id);
         let src_color = get_terminal_edge_color(cx, output.terminal_id);
@@ -400,12 +406,12 @@ impl ViewTemplate for ConnectionProxyView {
         let (src_pos, dst_pos, src_color, dst_color) = match drag_state.connect_from {
             Some(ConnectionAnchor::OutputTerminal(term)) => (
                 get_terminal_position(cx, term),
-                get_target_position(cx, drag_state.connect_to, drag_state.connect_to_pos),
+                get_target_position(cx, drag_state.connect_to),
                 get_terminal_edge_color(cx, term),
                 get_target_color(cx, drag_state.connect_to),
             ),
             Some(ConnectionAnchor::InputTerminal(term)) => (
-                get_target_position(cx, drag_state.connect_to, drag_state.connect_to_pos),
+                get_target_position(cx, drag_state.connect_to),
                 get_terminal_position(cx, term),
                 get_target_color(cx, drag_state.connect_to),
                 get_terminal_edge_color(cx, term),
@@ -449,17 +455,22 @@ fn get_terminal_edge_color(cx: &Cx, terminal_id: Entity) -> Srgba {
     get_terminal_color(cx, terminal_id).mix(&Srgba::BLACK, 0.3)
 }
 
-fn get_target_position(cx: &Cx, target: Option<Entity>, pos: Vec2) -> IVec2 {
+fn get_target_position(cx: &Cx, target: Option<ConnectionTarget>) -> IVec2 {
     match target {
-        Some(term) => get_terminal_position(cx, term),
-        None => pos.as_ivec2(),
+        Some(ConnectionTarget::InputTerminal(term) | ConnectionTarget::OutputTerminal(term)) => {
+            get_terminal_position(cx, term)
+        }
+        Some(ConnectionTarget::Location(loc)) => loc.as_ivec2(),
+        _ => IVec2::default(),
     }
 }
 
-fn get_target_color(cx: &Cx, target: Option<Entity>) -> Srgba {
+fn get_target_color(cx: &Cx, target: Option<ConnectionTarget>) -> Srgba {
     match target {
-        Some(term) => get_terminal_edge_color(cx, term),
-        None => colors::U3,
+        Some(ConnectionTarget::InputTerminal(term) | ConnectionTarget::OutputTerminal(term)) => {
+            get_terminal_edge_color(cx, term)
+        }
+        _ => colors::U3,
     }
 }
 

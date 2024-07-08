@@ -4,7 +4,9 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::{prelude::*, ViewChild};
 use bevy_quill_obsidian::{colors, cursor::StyleBuilderCursor, hooks::UseIsHover};
 
-use crate::{DragMode, Gesture, GestureState, GraphEvent};
+use crate::{
+    ConnectionAnchor, ConnectionTarget, DragAction, DragMode, Gesture, GestureState, GraphEvent,
+};
 
 fn style_terminal_outline(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
@@ -187,38 +189,58 @@ fn terminal_event_handlers(
         On::<Pointer<DragStart>>::run(
             move |mut event: ListenerMut<Pointer<DragStart>>,
                   mut gesture_state: ResMut<GestureState>,
-                  mut writer: EventWriter<GraphEvent>| {
-                // println!("Terminal::DragStart: {}", event.target());
+                  mut writer: EventWriter<GraphEvent>,
+                  rel: crate::relative_pos::RelativeWorldPositions| {
                 event.stop_propagation();
                 if gesture_state.mode != DragMode::Connect {
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragStart: {}", event.target());
+                    let anchor = if is_output {
+                        ConnectionAnchor::OutputTerminal(id)
+                    } else {
+                        ConnectionAnchor::InputTerminal(id)
+                    };
+                    gesture_state.target = ConnectionTarget::Location(rel.transform_relative(
+                        id,
+                        event.pointer_location.position,
+                        4,
+                    ));
                     gesture_state.mode = DragMode::Connect;
+                    gesture_state.anchor = Some(anchor);
                     writer.send(GraphEvent {
                         target: id,
-                        gesture: Gesture::Connect(if is_output {
-                            crate::ConnectionAnchor::OutputTerminal(id)
-                        } else {
-                            crate::ConnectionAnchor::InputTerminal(id)
-                        }),
+                        gesture: Gesture::Connect(anchor, gesture_state.target, DragAction::Start),
                     });
+                } else {
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragStart [IGNORED]: {}", event.target());
                 }
             },
         ),
         On::<Pointer<Drag>>::run(
             move |mut event: ListenerMut<Pointer<Drag>>,
-                  gesture_state: ResMut<GestureState>,
+                  mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>,
                   rel: crate::relative_pos::RelativeWorldPositions| {
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
-                    // println!("position: {}", event.pointer_location.position);
-                    writer.send(GraphEvent {
-                        target: id,
-                        gesture: Gesture::ConnectDrag(rel.transform_relative(
+                    if let (Some(anchor), ConnectionTarget::Location(_)) =
+                        (gesture_state.anchor, gesture_state.target)
+                    {
+                        gesture_state.target = ConnectionTarget::Location(rel.transform_relative(
                             id,
                             event.pointer_location.position,
                             4,
-                        )),
-                    });
+                        ));
+                        writer.send(GraphEvent {
+                            target: id,
+                            gesture: Gesture::Connect(
+                                anchor,
+                                gesture_state.target,
+                                DragAction::Update,
+                            ),
+                        });
+                    }
                 }
             },
         ),
@@ -226,42 +248,106 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<DragEnd>>,
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
-                // println!("Terminal::DragEnd: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
                     gesture_state.mode = DragMode::None;
-                    writer.send(GraphEvent {
-                        target: id,
-                        gesture: Gesture::Cancel,
-                    });
+                    match (gesture_state.anchor, gesture_state.target) {
+                        (Some(_), ConnectionTarget::Location(_)) => {
+                            #[cfg(feature = "verbose")]
+                            info!("Terminal::DragEnd [CANCEL]: {}", event.target());
+                            writer.send(GraphEvent {
+                                target: id,
+                                gesture: Gesture::Cancel,
+                            });
+                        }
+                        (Some(anchor), _) => {
+                            #[cfg(feature = "verbose")]
+                            info!("Terminal::DragEnd: {}", event.target());
+                            writer.send(GraphEvent {
+                                target: id,
+                                gesture: Gesture::Connect(
+                                    anchor,
+                                    gesture_state.target,
+                                    DragAction::Finish,
+                                ),
+                            });
+                        }
+                        _ => {}
+                    }
+                    gesture_state.anchor = None;
+                    gesture_state.target = ConnectionTarget::None;
+                    gesture_state.mode = DragMode::None;
+                } else {
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragEnd [IGNORED]: {}", event.target());
                 }
             },
         ),
         On::<Pointer<DragEnter>>::run({
             move |mut event: ListenerMut<Pointer<DragEnter>>,
-                  gesture_state: ResMut<GestureState>,
+                  mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
-                // println!("Terminal::DragEnter: {}", event.target());
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
-                    writer.send(GraphEvent {
-                        target: id,
-                        gesture: Gesture::ConnectHover(Some(id)),
-                    });
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragEnter: {}", event.target());
+                    if is_output {
+                        gesture_state.target = ConnectionTarget::OutputTerminal(id);
+                    } else {
+                        gesture_state.target = ConnectionTarget::InputTerminal(id);
+                    }
+                    if let Some(anchor) = gesture_state.anchor {
+                        writer.send(GraphEvent {
+                            target: id,
+                            gesture: Gesture::Connect(
+                                anchor,
+                                gesture_state.target,
+                                DragAction::Update,
+                            ),
+                        });
+                    }
+                } else {
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragEnter [IGNORED]: {}", event.target());
                 }
             }
         }),
         On::<Pointer<DragLeave>>::run({
             move |mut event: ListenerMut<Pointer<DragLeave>>,
-                  gesture_state: ResMut<GestureState>,
-                  mut writer: EventWriter<GraphEvent>| {
-                // println!("Terminal::DragLeave: {}", event.target());
+                  mut gesture_state: ResMut<GestureState>,
+                  mut writer: EventWriter<GraphEvent>,
+                  rel: crate::relative_pos::RelativeWorldPositions| {
                 event.stop_propagation();
                 if gesture_state.mode == DragMode::Connect {
-                    writer.send(GraphEvent {
-                        target: id,
-                        gesture: Gesture::ConnectHover(Some(id)),
-                    });
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragLeave: {}", event.target());
+                    gesture_state.target = match gesture_state.target {
+                        ConnectionTarget::OutputTerminal(target_id)
+                        | ConnectionTarget::InputTerminal(target_id)
+                            if id == target_id =>
+                        {
+                            ConnectionTarget::Location(rel.transform_relative(
+                                id,
+                                event.pointer_location.position,
+                                4,
+                            ))
+                        }
+                        _ if is_output => ConnectionTarget::OutputTerminal(id),
+                        _ => ConnectionTarget::InputTerminal(id),
+                    };
+                    if let Some(anchor) = gesture_state.anchor {
+                        writer.send(GraphEvent {
+                            target: id,
+                            gesture: Gesture::Connect(
+                                anchor,
+                                gesture_state.target,
+                                DragAction::Update,
+                            ),
+                        });
+                    }
+                } else {
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::DragLeave [IGNORED]: {}", event.target());
                 }
             }
         }),
@@ -269,14 +355,26 @@ fn terminal_event_handlers(
             move |mut event: ListenerMut<Pointer<Drop>>,
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
-                // println!("Terminal::Drop: {}", event.target());
                 event.stop_propagation();
+                #[cfg(feature = "verbose")]
                 if gesture_state.mode == DragMode::Connect {
+                    info!("Terminal::Drop: {}", event.target());
+                    if let Some(anchor) = gesture_state.anchor {
+                        writer.send(GraphEvent {
+                            target: id,
+                            gesture: Gesture::Connect(
+                                anchor,
+                                gesture_state.target,
+                                DragAction::Finish,
+                            ),
+                        });
+                    }
+                    gesture_state.anchor = None;
+                    gesture_state.target = ConnectionTarget::None;
                     gesture_state.mode = DragMode::None;
-                    writer.send(GraphEvent {
-                        target: id,
-                        gesture: Gesture::ConnectFinish(id),
-                    });
+                } else {
+                    #[cfg(feature = "verbose")]
+                    info!("Terminal::Drop [IGNORED]: {}", event.target());
                 }
             },
         ),
