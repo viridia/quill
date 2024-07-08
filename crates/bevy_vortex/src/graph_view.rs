@@ -7,7 +7,7 @@ use crate::{
 };
 use bevy::{color::Color, prelude::*, reflect::TypeInfo, ui};
 use bevy_mod_stylebuilder::*;
-use bevy_quill::{prelude::*, IntoViewChild};
+use bevy_quill::{prelude::*, Dynamic, IntoViewChild};
 use bevy_quill_obsidian::{
     colors,
     controls::{
@@ -27,6 +27,8 @@ fn style_node_graph(ss: &mut StyleBuilder) {
         .border_color(Color::BLACK)
         .min_width(100);
 }
+
+const NODE_PROP_HEIGHT: f32 = 20.;
 
 /// Component which stores the entity id of the graph view. Used for programmatic scrolling.
 #[derive(Component)]
@@ -142,15 +144,13 @@ impl ViewTemplate for GraphNodePropertyView {
             InputTerminalDisplay {
                 id,
                 color: get_terminal_color(cx, id),
-                control: Cond::new(
-                    terminal.is_connected() || field_attrs.contains::<OperatorInputOnly>(),
-                    display_name.to_owned(),
-                    GraphNodePropertyEdit {
-                        node: self.node,
-                        display_name,
-                        field: self.field,
-                    },
-                )
+                control: GraphNodePropertyEdit {
+                    node: self.node,
+                    display_name,
+                    field: self.field,
+                    editable: !(terminal.is_connected()
+                        || field_attrs.contains::<OperatorInputOnly>()),
+                }
                 .into_view_child(),
             }
             .into_view_child()
@@ -168,6 +168,7 @@ impl ViewTemplate for GraphNodePropertyView {
                     node: self.node,
                     display_name,
                     field: self.field,
+                    editable: true,
                 }
                 .into_view_child(),
             }
@@ -181,6 +182,7 @@ pub struct GraphNodePropertyEdit {
     node: Entity,
     display_name: &'static str,
     field: &'static str,
+    editable: bool,
 }
 
 impl ViewTemplate for GraphNodePropertyEdit {
@@ -193,7 +195,15 @@ impl ViewTemplate for GraphNodePropertyEdit {
         };
         let field = st_info.field(self.field).unwrap();
 
-        match field.type_path() {
+        Dynamic::new(match field.type_path() {
+            "f32" | "bevy_color::linear_rgba::LinearRgba" if !self.editable => {
+                Element::<NodeBundle>::new()
+                    .style(|sb: &mut StyleBuilder| {
+                        sb.min_width(128).height(NODE_PROP_HEIGHT);
+                    })
+                    .children(self.display_name)
+                    .into_view_child()
+            }
             "f32" => GraphNodePropertyEditF32 {
                 node: self.node,
                 display_name: self.display_name,
@@ -211,7 +221,7 @@ impl ViewTemplate for GraphNodePropertyEdit {
                 warn!("Unsupported type: {}", field.type_path());
                 self.display_name.into_view_child()
             }
-        }
+        })
     }
 }
 
@@ -327,9 +337,9 @@ impl ViewTemplate for GraphNodePropertyEditLinearRgba {
                 MenuButton::new()
                     .minimal(true)
                     .no_caret(true)
-                    .size(Size::Xxxs)
+                    .size(Size::Xxs)
                     .style(|sb: &mut StyleBuilder| {
-                        sb.padding(0).min_width(64);
+                        sb.padding(0).min_width(64).height(NODE_PROP_HEIGHT);
                     })
                     .children(Swatch::new(color).style(|sb: &mut StyleBuilder| {
                         sb.align_self(ui::AlignSelf::Stretch)

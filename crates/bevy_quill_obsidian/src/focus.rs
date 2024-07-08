@@ -133,14 +133,21 @@ impl TabNavigation<'_, '_> {
         // Start by identifying which tab group we are in. Mainly what we want to know is if
         // we're in a modal group.
         let mut tabgroup: Option<(Entity, &TabGroup)> = None;
-        let mut entity = focus;
-        while let Some(ent) = entity {
-            if let Ok((tg_entity, tg, _)) = self.tabgroup.get(ent) {
-                tabgroup = Some((tg_entity, tg));
-                break;
+        if focus.is_some() {
+            let mut entity = focus;
+            while let Some(ent) = entity {
+                if let Ok((tg_entity, tg, _)) = self.tabgroup.get(ent) {
+                    tabgroup = Some((tg_entity, tg));
+                    break;
+                }
+                // Search up
+                entity = self.parent.get(ent).ok().map(|parent| parent.get());
             }
-            // Search up
-            entity = self.parent.get(ent).ok().map(|parent| parent.get());
+        } else {
+            // If there's no focus entity, then pick a tabgroup arbitrarily.
+            if let Some((entity, tg, _)) = self.tabgroup.iter().next() {
+                tabgroup = Some((entity, tg));
+            }
         }
 
         if tabgroup.is_none() {

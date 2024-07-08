@@ -11,12 +11,11 @@
 
 ## Vortex nextish
 
-- Nodes shrink after connection
-- Delete selected nodes.
+- Delete selected nodes. We need keyboard, but global shortcuts...
 - Dragging of edges.
 - Flesh out undo/redo
 - Serialization
-- Open/Save dialogs.
+- Open/Save dialogs. (rfd)
 
 ## Vortex notes
 
