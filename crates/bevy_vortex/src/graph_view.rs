@@ -315,8 +315,10 @@ pub struct GraphNodePropertyEditLinearRgba {
 impl ViewTemplate for GraphNodePropertyEditLinearRgba {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let node = cx.use_component::<GraphNode>(self.node).unwrap();
+        let node_id = self.node;
+        let node = cx.use_component::<GraphNode>(node_id).unwrap();
         let reflect = node.operator_reflect();
+        let field_name = self.field;
         let field_reflect = reflect.reflect_path(self.field).unwrap();
         let color = *field_reflect.downcast_ref::<LinearRgba>().unwrap();
 
@@ -357,6 +359,13 @@ impl ViewTemplate for GraphNodePropertyEditLinearRgba {
                                 cx.create_callback(
                                     move |st: In<ColorEditState>, world: &mut World| {
                                         state.set(world, *st);
+
+                                        let mut node_entt = world.entity_mut(node_id);
+                                        let mut node = node_entt.get_mut::<GraphNode>().unwrap();
+                                        let reflect = node.operator_reflect_mut();
+                                        let field_reflect =
+                                            reflect.reflect_path_mut(field_name).unwrap();
+                                        field_reflect.apply(LinearRgba::from(st.rgb).as_reflect());
                                     },
                                 ),
                             )),

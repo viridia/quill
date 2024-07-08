@@ -50,7 +50,6 @@ impl<A: View> View for Portal<A> {
             for node in nodes.to_vec().iter() {
                 world.entity_mut(*node).insert(TargetCamera(camera));
             }
-            println!("Portal::attach_children: {:?}", nodes);
         }
         false
     }

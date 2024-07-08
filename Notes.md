@@ -11,7 +11,7 @@
 
 ## Vortex nextish
 
-- Color popup menu not appearing.
+- Color popup doesn't change prop color.
 - Delete selected nodes.
 - Flesh out undo/redo
 - Serialization
