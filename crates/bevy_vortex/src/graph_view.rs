@@ -61,6 +61,7 @@ impl ViewTemplate for GraphView {
             .entity(graph_view_id)
             .style(style_node_graph)
             .children((
+                // TODO: Selection rect.
                 For::each(connection_ids, |conn| ConnectionView(*conn)),
                 For::each(node_ids, |node| GraphNodeView(*node)),
                 ConnectionProxyView,
@@ -75,8 +76,6 @@ impl ViewTemplate for GraphNodeView {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
         let entity = self.0;
-        // TODO: Using selection this way means re-rendering every node every time the selection
-        // changes.
         let is_selected = cx
             .use_component::<Selected>(entity)
             .map_or_else(|| false, |s| s.0);
@@ -122,58 +121,62 @@ pub struct GraphNodePropertyView {
 impl ViewTemplate for GraphNodePropertyView {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let node = cx.use_component::<GraphNode>(self.node).unwrap();
-        let reflect = node.operator_reflect();
-        let info = reflect.get_represented_type_info().unwrap();
-        let TypeInfo::Struct(st_info) = info else {
-            panic!("Expected StructInfo");
-        };
-        let field = st_info.field(self.field).unwrap();
-        let field_attrs = field.custom_attributes();
-        let display_name = if let Some(dname) = field_attrs.get::<DisplayName>() {
-            dname.0
-        } else {
-            self.field
-        };
+        Dynamic::new({
+            if cx.world().get_entity(self.node).is_none() {
+                ().into_view_child()
+            } else {
+                let node = cx.use_component::<GraphNode>(self.node).unwrap();
+                let reflect = node.operator_reflect();
+                let info = reflect.get_represented_type_info().unwrap();
+                let TypeInfo::Struct(st_info) = info else {
+                    panic!("Expected StructInfo");
+                };
+                let field = st_info.field(self.field).unwrap();
+                let field_attrs = field.custom_attributes();
+                let display_name = if let Some(dname) = field_attrs.get::<DisplayName>() {
+                    dname.0
+                } else {
+                    self.field
+                };
 
-        // TODO: Need to detect if input is connected.
-
-        if field_attrs.contains::<OperatorInput>() {
-            let id = node.get_input_terminal(self.field).unwrap();
-            let terminal = cx.use_component::<Terminal>(id).unwrap();
-            InputTerminalDisplay {
-                id,
-                color: get_terminal_color(cx, id),
-                control: GraphNodePropertyEdit {
-                    node: self.node,
-                    display_name,
-                    field: self.field,
-                    editable: !(terminal.is_connected()
-                        || field_attrs.contains::<OperatorInputOnly>()),
+                if field_attrs.contains::<OperatorInput>() {
+                    let id = node.get_input_terminal(self.field).unwrap();
+                    let terminal = cx.use_component::<Terminal>(id).unwrap();
+                    InputTerminalDisplay {
+                        id,
+                        color: get_terminal_color(cx, id),
+                        control: GraphNodePropertyEdit {
+                            node: self.node,
+                            display_name,
+                            field: self.field,
+                            editable: !(terminal.is_connected()
+                                || field_attrs.contains::<OperatorInputOnly>()),
+                        }
+                        .into_view_child(),
+                    }
+                    .into_view_child()
+                } else if field_attrs.contains::<OperatorOutput>() {
+                    let id = node.get_output_terminal(self.field).unwrap();
+                    OutputTerminalDisplay {
+                        id,
+                        color: get_terminal_color(cx, id),
+                        label: display_name.to_string(),
+                    }
+                    .into_view_child()
+                } else {
+                    NoTerminalDisplay {
+                        control: GraphNodePropertyEdit {
+                            node: self.node,
+                            display_name,
+                            field: self.field,
+                            editable: true,
+                        }
+                        .into_view_child(),
+                    }
+                    .into_view_child()
                 }
-                .into_view_child(),
             }
-            .into_view_child()
-        } else if field_attrs.contains::<OperatorOutput>() {
-            let id = node.get_output_terminal(self.field).unwrap();
-            OutputTerminalDisplay {
-                id,
-                color: get_terminal_color(cx, id),
-                label: display_name.to_string(),
-            }
-            .into_view_child()
-        } else {
-            NoTerminalDisplay {
-                control: GraphNodePropertyEdit {
-                    node: self.node,
-                    display_name,
-                    field: self.field,
-                    editable: true,
-                }
-                .into_view_child(),
-            }
-            .into_view_child()
-        }
+        })
     }
 }
 

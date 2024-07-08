@@ -356,8 +356,8 @@ fn terminal_event_handlers(
                   mut gesture_state: ResMut<GestureState>,
                   mut writer: EventWriter<GraphEvent>| {
                 event.stop_propagation();
-                #[cfg(feature = "verbose")]
                 if gesture_state.mode == DragMode::Connect {
+                    #[cfg(feature = "verbose")]
                     info!("Terminal::Drop: {}", event.target());
                     if let Some(anchor) = gesture_state.anchor {
                         writer.send(GraphEvent {

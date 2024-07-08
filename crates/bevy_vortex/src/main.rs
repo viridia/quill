@@ -2,6 +2,7 @@
 
 mod add_node;
 mod catalog;
+mod commands;
 mod graph;
 mod graph_view;
 mod operator;
@@ -19,16 +20,16 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill_obsidian::{
     colors,
     controls::{Splitter, SplitterDirection},
-    focus::TabGroup,
+    focus::{DefaultKeyListener, KeyPressEvent, TabGroup},
     typography, viewport, ObsidianUiPlugin,
 };
 use bevy_quill_obsidian_graph::{
     ConnectionAnchor, ConnectionTarget, DragAction, Gesture, GraphEvent, ObsidianGraphPlugin,
 };
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
+use commands::{AddConnectionCmd, DeleteSelectedCmd};
 use graph::{
-    sync_connections, AddConnectionCmd, GraphNode, GraphResource, NodeBasePosition, Selected,
-    ValidateConnectionCmd,
+    sync_connections, GraphNode, GraphResource, NodeBasePosition, Selected, ValidateConnectionCmd,
 };
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
@@ -159,7 +160,25 @@ impl ViewTemplate for VortexUi {
         Element::<NodeBundle>::new()
             .named("Main")
             .style((typography::text_default, style_main))
-            .insert_dyn(move |_| (TabGroup::default(), TargetCamera(camera)), ())
+            .insert_dyn(
+                move |_| {
+                    (
+                        TabGroup::default(),
+                        TargetCamera(camera),
+                        DefaultKeyListener,
+                        On::<KeyPressEvent>::run(
+                            |event: Listener<KeyPressEvent>, mut commands: Commands| {
+                                if event.key_code == KeyCode::Delete
+                                    || event.key_code == KeyCode::Backspace
+                                {
+                                    commands.add(DeleteSelectedCmd);
+                                }
+                            },
+                        ),
+                    )
+                },
+                (),
+            )
             .children((
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
@@ -405,3 +424,5 @@ pub fn close_on_esc(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppE
         exit.send(AppExit::Success);
     }
 }
+
+pub fn handle_key_events() {}

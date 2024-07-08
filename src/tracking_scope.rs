@@ -180,30 +180,6 @@ impl TrackingScope {
     pub(crate) fn take_hooks(&mut self, other: &mut Self) {
         self.hook_states = std::mem::take(&mut other.hook_states)
     }
-
-    // / Raze the entities and components that were created during the reaction.
-    // pub(crate) fn cleanup(&mut self, mut deferred: DeferredWorld) {
-    //     let mut cleanups = std::mem::take(&mut self.cleanups);
-    //     for cleanup_fn in cleanups.drain(..) {
-    //         cleanup_fn(&mut deferred);
-    //     }
-    //     for hook in self.hook_states.drain(..).rev() {
-    //         match hook {
-    //             HookState::Entity(ent) => {
-    //                 deferred.commands().add(DespawnEntityCmd(ent));
-    //             }
-    //             HookState::Mutable(mutable_ent, _) => {
-    //                 deferred.commands().add(DespawnEntityCmd(mutable_ent));
-    //             }
-    //             HookState::Callback(callback) => {
-    //                 deferred.commands().add(UnregisterCallbackCmd(callback));
-    //             }
-    //             HookState::Effect(_) | HookState::Memo(_) => {
-    //                 // Nothing to do
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 struct DespawnEntityCmd(Entity);

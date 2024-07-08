@@ -11,7 +11,20 @@
 
 ## Vortex nextish
 
-- Delete selected nodes. We need keyboard, but global shortcuts...
+- Delete selected nodes.
+
+  - Crash when deleting. This happens (I think) because the view which displays the node
+    updates sooner than the view which iterates over the nodes; which means that the node view
+    is trying to display an entity that has been deleted.
+
+    When I delete a node, components get updated in this order:
+
+    - GraphNodeView
+    - GraphNodeView
+    - GraphView
+    - GraphNodePropertyView
+    - GraphNodePropertyView
+
 - Dragging of edges.
 - Flesh out undo/redo
 - Serialization

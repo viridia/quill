@@ -14,14 +14,14 @@ use crate::operator::{Operator, OperatorInput, OperatorOutput};
 pub struct GraphResource(pub(crate) Graph);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct GraphNodeId(usize);
+pub struct GraphNodeId(pub(crate) usize);
 
 /// A Vortex node graph.
 #[derive(Default)]
 pub struct Graph {
-    nodes: HashMap<GraphNodeId, Entity>,
+    pub(crate) nodes: HashMap<GraphNodeId, Entity>,
     next_id: usize,
-    connections: HashSet<Entity>,
+    pub(crate) connections: HashSet<Entity>,
     undo_stack: Vec<UndoAction>,
     redo_stack: Vec<UndoAction>,
 }
@@ -49,7 +49,7 @@ impl Graph {
         let id = GraphNodeId(self.next_id);
         let entity = commands.spawn_empty().id();
         let mut node = GraphNode {
-            id,
+            index: id,
             position,
             operator,
             inputs: default(),
@@ -79,6 +79,7 @@ impl Graph {
             let mut node_entity = world.entity_mut(entity);
             // Remove the node from the world and put it on the undo stack.
             let node = node_entity.take::<GraphNode>().unwrap();
+            // world.commands().entity(entity).despawn_recursive();
             node_entity.despawn_recursive();
             action
                 .mutations
@@ -135,15 +136,15 @@ pub struct Selected(pub bool);
 #[derive(Component)]
 pub struct GraphNode {
     /// Id of this node. This is used in serialization and undo/redo entries.
-    id: GraphNodeId,
+    pub(crate) index: GraphNodeId,
     /// Position of node relative to graph origin.
     pub(crate) position: IVec2,
     /// Operator for this node.
     operator: Box<dyn Operator>,
     /// List of input terminals, derived from operator, with computed positions.
-    inputs: SmallVec<[(&'static str, Entity); 4]>,
+    pub(crate) inputs: SmallVec<[(&'static str, Entity); 4]>,
     /// List of output terminals, derived from operator, with computed positions.
-    outputs: SmallVec<[(&'static str, Entity); 1]>,
+    pub(crate) outputs: SmallVec<[(&'static str, Entity); 1]>,
 }
 
 impl GraphNode {
@@ -223,7 +224,7 @@ impl GraphNode {
 impl Clone for GraphNode {
     fn clone(&self) -> Self {
         Self {
-            id: self.id,
+            index: self.index,
             position: self.position,
             operator: self.operator.to_boxed_clone(),
             inputs: self.inputs.clone(),
@@ -239,16 +240,13 @@ pub struct NodeBasePosition(pub IVec2);
 #[derive(Component, Clone)]
 pub struct Terminal {
     /// Entity id of the node that owns this terminal.
-    node_id: Entity,
-    /// Entity used to position the terminal.
-    // id: Entity,
+    pub(crate) node_id: Entity,
     /// Name of this field
-    name: &'static str,
+    pub(crate) name: &'static str,
     /// Data type for this connection
     pub(crate) data_type: ConnectionDataType,
-
     /// List of connections to this terminal.
-    connections: HashSet<Entity>,
+    pub(crate) connections: HashSet<Entity>,
 }
 
 impl Terminal {
@@ -259,15 +257,15 @@ impl Terminal {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InputTerminalId {
-    node_index: usize,
-    terminal_name: &'static str,
+    pub(crate) node_id: Entity,
+    pub(crate) terminal_name: &'static str,
     pub(crate) terminal_id: Entity,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct OutputTerminalId {
-    node_index: usize,
-    terminal_name: &'static str,
+    pub(crate) node_id: Entity,
+    pub(crate) terminal_name: &'static str,
     pub(crate) terminal_id: Entity,
 }
 
@@ -292,7 +290,7 @@ pub enum ConnectionDataType {
 /// Represents a user-level action which can be undone or redone.
 pub struct UndoAction {
     label: &'static str,
-    mutations: Vec<UndoMutation>,
+    pub(crate) mutations: Vec<UndoMutation>,
 }
 
 impl UndoAction {
@@ -310,71 +308,6 @@ pub enum UndoMutation {
     RemoveNode(GraphNodeId, GraphNode),
     AddConnection(Connection),
     RemoveConnection(Connection),
-}
-
-pub(crate) struct AddConnectionCmd {
-    pub(crate) input: Entity,
-    pub(crate) output: Entity,
-}
-
-impl Command for AddConnectionCmd {
-    fn apply(self, world: &mut World) {
-        let mut st: SystemState<(
-            ResMut<GraphResource>,
-            Query<&mut Terminal>,
-            Query<&GraphNode>,
-        )> = SystemState::new(world);
-        let (_, mut terminals, nodes) = st.get_mut(world);
-        let input_terminal = terminals.get(self.input).unwrap();
-        let output_terminal = terminals.get(self.output).unwrap();
-        let input_node = nodes.get(input_terminal.node_id).unwrap();
-        let output_node = nodes.get(output_terminal.node_id).unwrap();
-
-        let connection = Connection {
-            output: OutputTerminalId {
-                node_index: output_node.id.0,
-                terminal_name: output_terminal.name,
-                terminal_id: self.output,
-            },
-            input: InputTerminalId {
-                node_index: input_node.id.0,
-                terminal_name: input_terminal.name,
-                terminal_id: self.input,
-            },
-        };
-
-        let mut input_terminal = terminals.get_mut(self.input).unwrap();
-        let mut connections_to_remove = std::mem::take(&mut input_terminal.connections);
-        // Remove any previous connections from input terminal. There can be only one.
-        // for conn_id in connections_to_remove.iter() {
-        //     let conn = connections.get(*conn_id).unwrap();
-        //     let output_id = conn.0.terminal_id;
-        //     let mut output_terminal = terminals.get_mut(output_id).unwrap();
-        //     output_terminal.connections.remove(conn_id);
-        // }
-
-        let mut action = UndoAction::new("Add Connection");
-        action
-            .mutations
-            .push(UndoMutation::AddConnection(connection));
-        let id = world.spawn(connection).id();
-        let (mut graph, _, _) = st.get_mut(world);
-        graph.0.connections.insert(id);
-        graph.0.add_undo_action(action);
-
-        // Insert the new connection.
-        let (_, mut terminals, _) = st.get_mut(world);
-        let mut input_terminal = terminals.get_mut(self.input).unwrap();
-        input_terminal.connections.insert(id);
-
-        let mut output_terminal = terminals.get_mut(self.output).unwrap();
-        output_terminal.connections.insert(id);
-
-        // Despawn old connections
-        for conn_id in connections_to_remove.drain() {
-            world.entity_mut(conn_id).despawn();
-        }
-    }
 }
 
 pub(crate) struct ValidateConnectionCmd {

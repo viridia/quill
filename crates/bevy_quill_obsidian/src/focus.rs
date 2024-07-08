@@ -67,6 +67,10 @@ pub struct TabIndex(pub i32);
 #[derive(Debug, Default, Component, Copy, Clone)]
 pub struct AutoFocus;
 
+/// Indicates that this entity should receive keyboard events when there's no focus.
+#[derive(Debug, Default, Component, Copy, Clone)]
+pub struct DefaultKeyListener;
+
 /// Resource that controls whether the focus indicators are visible or not. Generally
 /// these are only visible after the Tab key has been pressed, and become hidden when
 /// the user interacts with the UI in with the pointing device.
@@ -287,6 +291,7 @@ fn handle_text_input(
     focus: ResMut<Focus>,
     mut press_writer: EventWriter<KeyPressEvent>,
     mut char_writer: EventWriter<KeyCharEvent>,
+    default_listener: Query<Entity, With<DefaultKeyListener>>,
 ) {
     if let Some(focus_elt) = focus.0 {
         for ev in key_events.read() {
@@ -305,6 +310,28 @@ fn handle_text_input(
                         key: ch.chars().next().unwrap(),
                     };
                     char_writer.send(ev);
+                }
+            }
+        }
+    } else {
+        for listener in default_listener.iter() {
+            for ev in key_events.read() {
+                if ev.state == ButtonState::Pressed {
+                    let press_event = KeyPressEvent {
+                        target: listener,
+                        key_code: ev.key_code,
+                        repeat: !key.just_pressed(ev.key_code),
+                        shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
+                    };
+                    press_writer.send(press_event);
+
+                    if let bevy::input::keyboard::Key::Character(ref ch) = ev.logical_key {
+                        let ev = KeyCharEvent {
+                            target: listener,
+                            key: ch.chars().next().unwrap(),
+                        };
+                        char_writer.send(ev);
+                    }
                 }
             }
         }

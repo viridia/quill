@@ -5,10 +5,11 @@ use crate::{
 };
 use bevy::{
     // core::{DebugName, Name},
-    ecs::world::DeferredWorld,
-    hierarchy::Parent,
+    core::Name,
+    ecs::{system::SystemState, world::DeferredWorld},
+    hierarchy::{Children, HierarchyQueryExt, Parent},
     log::warn,
-    prelude::{Added, Component, Entity, With, World},
+    prelude::{Added, Component, Entity, Query, With, World},
     utils::hashbrown::HashSet,
 };
 use impl_trait_for_tuples::*;
@@ -439,18 +440,25 @@ pub(crate) fn reaction_control_system(world: &mut World) {
             world.change_tick()
         };
 
-        // Scan changed resources
-        let mut scopes = world.query::<(Entity, &mut TrackingScope, &ViewThunk)>();
-        let changed = scopes
-            .iter(world)
-            .filter_map(|(e, scope, _)| {
-                if scope.dependencies_changed(world, this_run) {
-                    Some(e)
-                } else {
-                    None
+        // Scan changed resources. Need to do this in top-down order, so that parents update
+        // before children.
+        let mut st: SystemState<(
+            Query<Entity, With<ViewRoot>>,
+            Query<&Children>,
+            Query<(Entity, &TrackingScope)>,
+        )> = SystemState::new(world);
+        let (roots, children, scopes) = st.get(world);
+        let roots = roots.iter().collect::<Vec<_>>();
+        let mut changed: Vec<Entity> = Vec::with_capacity(64);
+        for root in roots {
+            children.iter_descendants(root).for_each(|child| {
+                if let Ok(scope) = scopes.get(child) {
+                    if scope.1.dependencies_changed(world, this_run) {
+                        changed.push(child);
+                    }
                 }
-            })
-            .collect::<Vec<_>>();
+            });
+        }
 
         // Quit if there are no changes.
         if changed.is_empty() {
@@ -467,13 +475,15 @@ pub(crate) fn reaction_control_system(world: &mut World) {
         run_cleanups(world, &changed);
 
         // Now rebuild all changed views and record depdendencies.
+        let mut scopes = world.query::<(Entity, &mut TrackingScope, &ViewThunk)>();
         for scope_entity in changed.iter() {
             // if let Some(name) = world.get::<Name>(*scope_entity) {
             //     println!("Updating {}", name);
             // } else {
             //     println!("Updating {}", *scope_entity);
             // }
-            // Run the reaction
+            // Run the reaction. Continue if this scope got deleted as a side effect of updating
+            // another scope.
             let Ok((_, mut scope, view_cell)) = scopes.get_mut(world, *scope_entity) else {
                 continue;
             };
