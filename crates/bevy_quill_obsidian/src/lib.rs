@@ -76,6 +76,7 @@ impl Plugin for ObsidianUiPlugin {
         embedded_asset!(app, "assets/icons/close.png");
         embedded_asset!(app, "assets/icons/disc.png");
         embedded_asset!(app, "assets/icons/gradient_thumb.png");
+        embedded_asset!(app, "assets/icons/lock.png");
         embedded_asset!(app, "assets/icons/redo.png");
         embedded_asset!(app, "assets/icons/remove.png");
         embedded_asset!(app, "assets/icons/tune.png");

@@ -2,7 +2,7 @@ use bevy::{color::palettes, prelude::*, ui};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
-    controls::{Button, ToolIconButton, ToolPalette},
+    controls::{Button, IconButton, ToolIconButton, ToolPalette},
     viewport, RoundedCorners,
 };
 
@@ -60,7 +60,7 @@ impl ViewTemplate for PreviewControls {
             .style(style_preview_controls)
             .children((
                 PreviewModeButtons,
-                Button::new().children("X"),
+                IconButton::new("embedded://bevy_quill_obsidian/assets/icons/lock.png"),
                 Button::new().children("Source..."),
                 Button::new().children("Export..."),
             ))
