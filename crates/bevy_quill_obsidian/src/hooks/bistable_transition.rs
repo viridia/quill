@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_quill::Cx;
+use bevy_quill_core::Cx;
 
 /// Plugin that runs the timers for bistable transitions.
 pub struct BistableTransitionPlugin;

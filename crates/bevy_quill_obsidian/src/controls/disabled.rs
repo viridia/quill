@@ -1,5 +1,5 @@
 use bevy::prelude::{Component, Entity, World};
-use bevy_quill::Cx;
+use bevy_quill_core::Cx;
 
 /// A marker component to indicate that a widget is disabled.
 #[derive(Component, Debug, Clone, Copy)]

@@ -7,7 +7,7 @@ use bevy::{
         attributes::CustomAttributes, DynamicEnum, DynamicVariant, ParsedPath, ReflectPathError,
     },
 };
-use bevy_quill::Cx;
+use bevy_quill_core::Cx;
 
 /// Trait that represents an item that can be inspected
 #[allow(unused_variables)]

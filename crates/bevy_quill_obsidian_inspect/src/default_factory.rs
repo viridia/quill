@@ -10,7 +10,7 @@ use crate::{
     Inspectable, InspectorFactory,
 };
 use bevy::reflect::ReflectRef;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 #[derive(Default)]
 pub struct DefaultInspectorFactory;

@@ -3,7 +3,7 @@ use crate::{colors, cursor::StyleBuilderCursor, hooks::UseElementRect, RoundedCo
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 use std::ops::RangeInclusive;
 
 #[derive(Clone, PartialEq, Default, Copy)]

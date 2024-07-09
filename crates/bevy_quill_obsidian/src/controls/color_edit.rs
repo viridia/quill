@@ -6,7 +6,7 @@ use bevy::{
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 use crate::RoundedCorners;
 

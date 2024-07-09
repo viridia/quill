@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bevy::prelude::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 use crate::Inspectable;
 

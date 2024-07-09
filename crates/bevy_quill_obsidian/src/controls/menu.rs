@@ -17,7 +17,7 @@ use bevy::{
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 use super::{
     button_bg_color, style_button, style_button_bg, ButtonVariant, Disabled, Icon, Spacer,

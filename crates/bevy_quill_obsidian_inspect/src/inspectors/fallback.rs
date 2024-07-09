@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 use crate::{
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},

@@ -4,7 +4,7 @@ use bevy::{
     prelude::{In, World},
     reflect::Reflect,
 };
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::controls::{Slider, SpinBox};
 
 use crate::{templates::field_label::FieldLabel, Inspectable, Precision, Step, ValueRange};

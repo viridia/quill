@@ -17,7 +17,7 @@ use bevy::{
 };
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 fn style_toggle(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)

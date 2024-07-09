@@ -11,7 +11,7 @@ use bevy::{
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::{
     colors,
     controls::{DisclosureToggle, Icon, MenuButton, MenuItem, MenuPopup},

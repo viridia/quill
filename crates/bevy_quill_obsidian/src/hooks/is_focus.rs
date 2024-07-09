@@ -3,7 +3,7 @@ use bevy::{
     ecs::{entity::Entity, world::World},
     hierarchy::Parent,
 };
-use bevy_quill::Cx;
+use bevy_quill_core::Cx;
 
 use crate::focus::FocusVisible;
 

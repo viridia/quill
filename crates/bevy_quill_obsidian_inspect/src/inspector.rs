@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bevy::reflect::{ParsedPath, ReflectKind};
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::controls::Spacer;
 
 use crate::{

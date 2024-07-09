@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_quill::Cx;
+use bevy_quill_core::Cx;
 
 /// Trait which adds `use_element_rect` to [`Cx`].
 pub trait UseElementRect {

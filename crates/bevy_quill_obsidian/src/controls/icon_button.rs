@@ -2,7 +2,7 @@ use super::{Button, Icon};
 use crate::{colors, size::Size, RoundedCorners};
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 /// A widget which displays a button containing an icon.
 #[derive(Default, Clone, PartialEq)]

@@ -3,7 +3,7 @@ use std::ops::Mul;
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_quill::{prelude::*, IntoViewChild, ViewChild};
+use bevy_quill_core::{prelude::*, IntoViewChild, ViewChild};
 use bevy_quill_obsidian::{
     colors,
     cursor::StyleBuilderCursor,

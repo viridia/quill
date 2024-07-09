@@ -8,7 +8,7 @@ use bevy::{
         OffsetAccess, ReflectRef, TypeInfo, TypeRegistry, VariantInfo, VariantType,
     },
 };
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::{
     controls::{MenuButton, MenuItem, MenuPopup},
     floating::{FloatAlign, FloatSide},

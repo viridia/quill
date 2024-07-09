@@ -5,7 +5,7 @@ use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::{
     StyleBuilder, StyleBuilderLayout, StyleBuilderPointerEvents, StyleBuilderVisibility,
 };
-use bevy_quill::prelude::*;
+use bevy_quill_core::prelude::*;
 use bevy_quill_obsidian::cursor::StyleBuilderCursor;
 
 use crate::{

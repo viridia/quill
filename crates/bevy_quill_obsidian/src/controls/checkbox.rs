@@ -9,7 +9,7 @@ use bevy::{
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 use crate::{
     colors,

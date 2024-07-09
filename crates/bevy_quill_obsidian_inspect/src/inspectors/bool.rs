@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::controls::Checkbox;
 
 use crate::{templates::field_label::FieldLabel, Inspectable};

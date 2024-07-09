@@ -6,7 +6,7 @@ use bevy::{
     ui,
 };
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::{
     colors,
     controls::{DisclosureToggle, IconButton},

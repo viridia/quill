@@ -1,6 +1,6 @@
 use bevy::{prelude::*, ui};
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 use bevy_quill_obsidian::{colors, typography};
 
 fn style_field_readonly_value(ss: &mut StyleBuilder) {

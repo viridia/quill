@@ -1,7 +1,7 @@
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_quill::{prelude::*, ViewChild};
+use bevy_quill_core::{prelude::*, ViewChild};
 use bevy_quill_obsidian::{colors, cursor::StyleBuilderCursor, hooks::UseIsHover};
 
 use crate::{

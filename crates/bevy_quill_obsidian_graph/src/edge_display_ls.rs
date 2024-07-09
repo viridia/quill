@@ -5,7 +5,7 @@ use bevy::{
     render::{mesh::PrimitiveTopology, render_asset::RenderAssetUsages},
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
-use bevy_quill::prelude::*;
+use bevy_quill_core::prelude::*;
 use bevy_quill_obsidian::colors;
 
 use crate::materials::LineMaterial;

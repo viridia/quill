@@ -8,7 +8,7 @@ use bevy_mod_picking::{
     prelude::{ListenerInput, On},
 };
 use bevy_mod_stylebuilder::*;
-use bevy_quill::*;
+use bevy_quill_core::*;
 
 use crate::{
     animation::{AnimatedBackgroundColor, AnimatedScale, AnimatedTransition},
