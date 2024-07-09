@@ -19,11 +19,11 @@ verbose = [] # Enable verbose logging
 
 [workspace.dependencies]
 bevy = "0.14.0"
-bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
+bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder", version = "0.1.1" }
 bevy_mod_picking = "0.20.1"
-bevy_quill_obsidian = { path = "crates/bevy_quill_obsidian" }
-bevy_quill_obsidian_inspect = { path = "crates/bevy_quill_obsidian_inspect" }
-bevy_quill_obsidian_graph = { path = "crates/bevy_quill_obsidian_graph" }
+bevy_quill_obsidian = { path = "crates/bevy_quill_obsidian", version = "0.1.0" }
+bevy_quill_obsidian_inspect = { path = "crates/bevy_quill_obsidian_inspect", version = "0.1.0" }
+bevy_quill_obsidian_graph = { path = "crates/bevy_quill_obsidian_graph", version = "0.1.0" }
 
 [dependencies]
 bevy = { workspace = true }

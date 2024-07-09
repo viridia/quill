@@ -4,7 +4,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_quill::*;
 use bevy_quill_obsidian::{colors, controls::ScrollView};
 
-use crate::{materials::DotGridMaterial, DragMode, Gesture, GestureState, GraphEvent};
+use crate::{materials::DotGridMaterial, DragAction, DragMode, Gesture, GestureState, GraphEvent};
 
 fn style_node_graph(ss: &mut StyleBuilder) {
     ss.background_color(colors::U1);
@@ -103,7 +103,7 @@ impl ViewTemplate for GraphDisplay {
                                             target: event.target(),
                                             gesture: Gesture::SelectRect(Rect::from_corners(
                                                 pos,
-                                                pos)),
+                                                pos), DragAction::Start),
                                         });
                                 }),
                                 On::<Pointer<DragEnd>>::run(
@@ -116,7 +116,7 @@ impl ViewTemplate for GraphDisplay {
                                                 target: event.target(),
                                                 gesture: Gesture::SelectRect(Rect::from_corners(
                                                     event.pointer_location.position,
-                                                    pos)),
+                                                    pos), DragAction::Finish),
                                             });
                                             gesture_state.mode = DragMode::None;
                                         }
@@ -132,7 +132,7 @@ impl ViewTemplate for GraphDisplay {
                                             target: event.target(),
                                             gesture: Gesture::SelectRect(Rect::from_corners(
                                                 event.pointer_location.position,
-                                                pos)),
+                                                pos), DragAction::Update),
                                         });
                                     }
                                     }

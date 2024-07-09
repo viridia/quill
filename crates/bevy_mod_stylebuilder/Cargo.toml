@@ -1,11 +1,15 @@
 [package]
 name = "bevy_mod_stylebuilder"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A set of fluent builder utilities for Bevy UI styles."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/viridia/quill"
 keywords = ["bevy", "ui", "reactive"]
+
+[features]
+default = ["mod_picking"]
+mod_picking = []          # Enable support for bevy_mod_picking
 
 [dependencies]
 bevy = { workspace = true }

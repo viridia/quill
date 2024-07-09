@@ -44,7 +44,7 @@ pub enum Gesture {
     Scroll(Vec2),
 
     /// Select a rectangular region
-    SelectRect(Rect),
+    SelectRect(Rect, DragAction),
 
     /// Select the given node. If the node is already selected, does nothing. If the node is
     /// not selected, clears the selection and selects only the given node.
