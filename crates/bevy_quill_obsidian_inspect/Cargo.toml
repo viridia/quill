@@ -2,6 +2,10 @@
 name = "bevy_quill_obsidian_inspect"
 version = "0.1.0"
 edition = "2021"
+description = "A reflective property inspector widget built on Bevy, Quill and Quill/Obsidian."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/viridia/quill"
+keywords = ["bevy", "ui", "reactive"]
 
 [dependencies]
 bevy = { workspace = true }

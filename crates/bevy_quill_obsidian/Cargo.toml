@@ -2,6 +2,10 @@
 name = "bevy_quill_obsidian"
 version = "0.1.0"
 edition = "2021"
+description = "An opinionated set of editor-focused widgets built on Bevy and Quill."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/viridia/quill"
+keywords = ["bevy", "ui", "reactive", "widgets"]
 
 [dependencies]
 bevy = { workspace = true }
