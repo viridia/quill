@@ -1029,7 +1029,6 @@ dependencies = [
  "bevy",
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
- "bevy_quill",
  "bevy_quill_core",
  "bevy_quill_obsidian",
 ]
@@ -1041,7 +1040,6 @@ dependencies = [
  "bevy",
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
- "bevy_quill",
  "bevy_quill_core",
  "bevy_quill_obsidian",
 ]

@@ -15,6 +15,5 @@ verbose = [] # Enable verbose logging
 bevy = { workspace = true }
 bevy_mod_picking = { workspace = true }
 bevy_mod_stylebuilder = { workspace = true }
-bevy_quill = { path = "../.." }
 bevy_quill_core = { workspace = true }
 bevy_quill_obsidian = { workspace = true }
