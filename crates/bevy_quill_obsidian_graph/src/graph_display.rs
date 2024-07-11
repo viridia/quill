@@ -95,9 +95,10 @@ impl ViewTemplate for GraphDisplay {
                                 On::<Pointer<DragStart>>::run(
                                     move |mut event: ListenerMut<Pointer<DragStart>>,
                                     mut gesture_state: ResMut<GestureState>,
-                                    mut writer: EventWriter<GraphEvent>| {
+                                    mut writer: EventWriter<GraphEvent>,
+                                    rel: crate::relative_pos::RelativeWorldPositions| {
                                         event.stop_propagation();
-                                        let pos = event.pointer_location.position;
+                                        let pos = rel.transform_relative(event.listener(), event.pointer_location.position, 1);
                                         gesture_state.mode = DragMode::RectSelect(pos);
                                         writer.send(GraphEvent {
                                             target: event.target(),
@@ -109,13 +110,14 @@ impl ViewTemplate for GraphDisplay {
                                 On::<Pointer<DragEnd>>::run(
                                     move |mut event: ListenerMut<Pointer<DragEnd>>,
                                     mut gesture_state: ResMut<GestureState>,
-                                    mut writer: EventWriter<GraphEvent>| {
+                                    mut writer: EventWriter<GraphEvent>,
+                                    rel: crate::relative_pos::RelativeWorldPositions| {
                                         event.stop_propagation();
                                         if let DragMode::RectSelect(pos) = gesture_state.mode {
                                             writer.send(GraphEvent {
                                                 target: event.target(),
                                                 gesture: Gesture::SelectRect(Rect::from_corners(
-                                                    event.pointer_location.position,
+                                                    rel.transform_relative(event.listener(), event.pointer_location.position, 1),
                                                     pos), DragAction::Finish),
                                             });
                                             gesture_state.mode = DragMode::None;
@@ -124,14 +126,15 @@ impl ViewTemplate for GraphDisplay {
                                 On::<Pointer<Drag>>::run({
                                     move |mut event: ListenerMut<Pointer<Drag>>,
                                     gesture_state: ResMut<GestureState>,
-                                    mut writer: EventWriter<GraphEvent>
+                                    mut writer: EventWriter<GraphEvent>,
+                                    rel: crate::relative_pos::RelativeWorldPositions
                                     | {
                                         event.stop_propagation();
                                         if let DragMode::RectSelect(pos) = gesture_state.mode {
                                             writer.send(GraphEvent {
                                             target: event.target(),
                                             gesture: Gesture::SelectRect(Rect::from_corners(
-                                                event.pointer_location.position,
+                                                rel.transform_relative(event.listener(), event.pointer_location.position, 1),
                                                 pos), DragAction::Update),
                                         });
                                     }

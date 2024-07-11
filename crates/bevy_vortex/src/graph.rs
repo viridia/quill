@@ -51,6 +51,7 @@ impl Graph {
         let mut node = GraphNode {
             index: id,
             position,
+            size: IVec2::ZERO,
             operator,
             inputs: default(),
             outputs: default(),
@@ -139,6 +140,8 @@ pub struct GraphNode {
     pub(crate) index: GraphNodeId,
     /// Position of node relative to graph origin.
     pub(crate) position: IVec2,
+    /// Size of the node, this is calculated by the display code.
+    pub(crate) size: IVec2,
     /// Operator for this node.
     operator: Box<dyn Operator>,
     /// List of input terminals, derived from operator, with computed positions.
@@ -226,6 +229,7 @@ impl Clone for GraphNode {
         Self {
             index: self.index,
             position: self.position,
+            size: IVec2::ZERO,
             operator: self.operator.to_boxed_clone(),
             inputs: self.inputs.clone(),
             outputs: self.outputs.clone(),

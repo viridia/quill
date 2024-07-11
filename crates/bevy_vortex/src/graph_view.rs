@@ -14,6 +14,7 @@ use bevy_quill_obsidian::{
         ColorEdit, ColorEditState, ColorMode, MenuButton, MenuPopup, Slider, SpinBox, Swatch,
     },
     floating::{FloatAlign, FloatSide},
+    hooks::UseElementRect,
     size::Size,
 };
 use bevy_quill_obsidian_graph::{
@@ -43,6 +44,8 @@ pub struct DragState {
     pub(crate) connect_to: Option<ConnectionTarget>,
     /// Whether the dragged connection is valid.
     pub(crate) valid_connection: bool,
+    /// The rectangle to display when selecting by dragging.
+    pub(crate) selection_rect: Option<Rect>,
 }
 
 /// View template for graph. Entity is the id for the graph view.
@@ -61,7 +64,7 @@ impl ViewTemplate for GraphView {
             .entity(graph_view_id)
             .style(style_node_graph)
             .children((
-                // TODO: Selection rect.
+                SelectionRectView,
                 For::each(connection_ids, |conn| ConnectionView(*conn)),
                 For::each(node_ids, |node| GraphNodeView(*node)),
                 ConnectionProxyView,
@@ -75,11 +78,27 @@ pub struct GraphNodeView(Entity);
 impl ViewTemplate for GraphNodeView {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let entity = self.0;
+        let display_id = cx.create_entity();
+        let node_id = self.0;
+        let size = cx.use_element_size(display_id);
+        let node = cx.use_component::<GraphNode>(node_id).unwrap();
+        if node.size != size.as_ivec2() {
+            // Save the node size
+            let mut entt = cx.world_mut().entity_mut(node_id);
+            let mut node = entt.get_mut::<GraphNode>().unwrap();
+            node.size = size.as_ivec2();
+        }
+        let node = cx.use_component::<GraphNode>(node_id).unwrap();
+
+        let relative_rect = Rect::from_center_size(node.position.as_vec2(), size);
+        let drag_state = cx.use_inherited_component::<DragState>().unwrap();
         let is_selected = cx
-            .use_component::<Selected>(entity)
-            .map_or_else(|| false, |s| s.0);
-        let node = cx.use_component::<GraphNode>(entity).unwrap();
+            .use_component::<Selected>(node_id)
+            .map_or_else(|| false, |s| s.0)
+            || drag_state.selection_rect.map_or_else(
+                || false,
+                |r| r.contains(relative_rect.min) && r.contains(relative_rect.max),
+            );
         let reflect = node.operator_reflect();
         let info = reflect.get_represented_type_info().unwrap();
         let TypeInfo::Struct(st_info) = info else {
@@ -100,13 +119,13 @@ impl ViewTemplate for GraphNodeView {
             names
         };
 
-        NodeDisplay::new(entity)
+        NodeDisplay::new(display_id, node_id)
             .position(node.position)
             .width(display_width)
             .title(node.title())
             .selected(is_selected)
             .children(For::each(field_names, move |field| GraphNodePropertyView {
-                node: entity,
+                node: node_id,
                 field,
             }))
     }
@@ -538,4 +557,39 @@ fn get_relative_rect(cx: &Cx, id: Entity, levels: usize) -> Option<Rect> {
     rect.min -= ancestor_rect.min;
     rect.max -= ancestor_rect.min;
     Some(rect)
+}
+
+fn style_selection_rect(ss: &mut StyleBuilder) {
+    ss.background_color(colors::TEXT_SELECT.with_alpha(0.02))
+        .border_color(colors::TEXT_SELECT.with_alpha(0.1))
+        .border(2);
+}
+
+#[derive(Clone, PartialEq)]
+struct SelectionRectView;
+
+impl ViewTemplate for SelectionRectView {
+    type View = impl View;
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let drag_state = cx.use_inherited_component::<DragState>().unwrap();
+
+        Dynamic::new(
+            drag_state
+                .selection_rect
+                .map(|rect| {
+                    Element::<NodeBundle>::new()
+                        .style(style_selection_rect)
+                        .style_dyn(
+                            |rect, sb| {
+                                sb.left(rect.min.x)
+                                    .top(rect.min.y)
+                                    .width(rect.width())
+                                    .height(rect.height());
+                            },
+                            rect,
+                        )
+                })
+                .into_view_child(),
+        )
+    }
 }

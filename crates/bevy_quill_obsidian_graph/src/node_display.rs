@@ -92,6 +92,8 @@ fn style_node_graph_node_outline(ss: &mut StyleBuilder) {
 /// A node within a node graph.
 #[derive(Clone, PartialEq)]
 pub struct NodeDisplay {
+    /// Entity id for the UI element to display.
+    pub display_id: Entity,
     /// Entity id of the node.
     pub node_id: Entity,
     /// The coordinates of the node's upper-left corner.
@@ -108,9 +110,10 @@ pub struct NodeDisplay {
 
 impl NodeDisplay {
     /// Create a new node display.
-    pub fn new(entity: Entity) -> Self {
+    pub fn new(display_id: Entity, node_id: Entity) -> Self {
         Self {
-            node_id: entity,
+            display_id,
+            node_id,
             position: default(),
             title: default(),
             width: ui::Val::Auto,
@@ -155,14 +158,14 @@ impl ViewTemplate for NodeDisplay {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let position = self.position;
         let node_id = self.node_id;
-        let id = cx.create_entity();
-        let hovering = cx.is_hovered(id);
-        let rect = cx.use_element_rect(id);
+        let display_id = self.display_id;
+        let hovering = cx.is_hovered(display_id);
+        let rect = cx.use_element_rect(display_id);
 
-        Element::<NodeBundle>::for_entity(id)
+        Element::<NodeBundle>::for_entity(display_id)
             .named("NodeGraph::Node")
             .style(style_node_graph_node)
-            .insert_dyn(move |_| node_event_handlers(id, node_id), ())
+            .insert_dyn(move |_| node_event_handlers(display_id, node_id), ())
             .effect(
                 move |cx, ent, (position, size)| {
                     if size.x > 0 && size.y > 0 {
@@ -192,7 +195,7 @@ impl ViewTemplate for NodeDisplay {
                         },
                         self.selected,
                     )
-                    .insert_dyn(move |_| title_event_handlers(id), ())
+                    .insert_dyn(move |_| title_event_handlers(display_id), ())
                     .children(self.title.clone()),
                 Element::<NodeBundle>::new()
                     .style(style_node_graph_node_content)

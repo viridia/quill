@@ -388,7 +388,27 @@ impl ViewTemplate for CenterPanel {
                                 },
 
                                 // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
-                                // bevy_quill_obsidian_graph::Gesture::SelectRect(_) => todo!(),
+                                Gesture::SelectRect(rect, action) => {
+                                    if action == DragAction::Finish {
+                                        for (_, node, mut selected, _) in
+                                            query_graph_nodes.iter_mut()
+                                        {
+                                            let node_rect = Rect::from_center_size(
+                                                node.position.as_vec2(),
+                                                node.size.as_vec2(),
+                                            );
+                                            if rect.contains(node_rect.min)
+                                                && rect.contains(node_rect.max)
+                                            {
+                                                selected.0 = true;
+                                            }
+                                        }
+                                        drag_state.selection_rect = None;
+                                    } else {
+                                        drag_state.selection_rect = Some(rect);
+                                    }
+                                }
+
                                 Gesture::Select(node) => {
                                     catalog_selection.0 = None;
                                     let is_selected = query_graph_nodes
@@ -414,6 +434,7 @@ impl ViewTemplate for CenterPanel {
                                         selected.0 = true;
                                     }
                                 }
+
                                 Gesture::SelectRemove(node) => {
                                     if let Ok((_, _, mut selected, _)) =
                                         query_graph_nodes.get_mut(node)
@@ -421,6 +442,7 @@ impl ViewTemplate for CenterPanel {
                                         selected.0 = false;
                                     }
                                 }
+
                                 Gesture::SelectToggle(node) => {
                                     catalog_selection.0 = None;
                                     if let Ok((_, _, mut selected, _)) =
@@ -429,6 +451,7 @@ impl ViewTemplate for CenterPanel {
                                         selected.0 = !selected.0;
                                     }
                                 }
+
                                 Gesture::SelectClear => {
                                     for (_, _, mut selected, _) in query_graph_nodes.iter_mut() {
                                         if selected.0 {
@@ -438,9 +461,9 @@ impl ViewTemplate for CenterPanel {
                                 }
 
                                 Gesture::Cancel => {
-                                    // drag_state.offset = IVec2::default();
                                     drag_state.connect_from = None;
                                     drag_state.connect_to = None;
+                                    drag_state.selection_rect = None;
                                 }
 
                                 _ => {
