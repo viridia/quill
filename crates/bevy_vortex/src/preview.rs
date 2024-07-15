@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{color::palettes, prelude::*, ui};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
 use bevy_quill::*;
@@ -6,10 +8,10 @@ use bevy_quill_obsidian::{
     viewport, RoundedCorners,
 };
 
-use std::f32::consts::PI;
+use crate::{gen::NodeOutput, graph::NodeSelected, pipeline::NodeShader3dHandle};
 
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub enum PreviewMode {
+enum PreviewMode {
     #[default]
     Square,
     Square2X2,
@@ -20,11 +22,10 @@ pub enum PreviewMode {
     Torus,
 }
 
-// While we can simply do `OnEnter(GameState::InGame{paused: true})`,
-// we need to be able to reason about "while we're in the game, paused or not".
-// To this end, we define the `InGame` computed state.
+// Computed state that says whether we are in 3D preview mode vs 2d. This sets up and tears
+// down the 3d scene.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct PreviewMode3d;
+struct PreviewMode3d;
 
 impl ComputedStates for PreviewMode3d {
     // Computed states can be calculated from one or many source states.
@@ -150,12 +151,15 @@ impl ViewTemplate for PreviewModeButtons {
 
 /// A marker component for our shapes
 #[derive(Component)]
-pub(crate) struct Shape;
+pub(crate) struct PreviewShape;
 
 #[derive(Component)]
 pub(crate) struct Preview3DEntity;
 
-pub fn enter_preview_3d(
+#[derive(Resource, Default)]
+pub struct PreviewShaderHandle(pub Handle<Shader>);
+
+fn enter_preview_3d(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -200,7 +204,7 @@ pub fn enter_preview_3d(
     ));
 }
 
-pub fn exit_preview_3d(mut commands: Commands, query: Query<Entity, With<Preview3DEntity>>) {
+fn exit_preview_3d(mut commands: Commands, query: Query<Entity, With<Preview3DEntity>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn()
     }
@@ -210,103 +214,196 @@ pub fn exit_preview_3d(mut commands: Commands, query: Query<Entity, With<Preview
 
 // pub fn exit_mode_square(mut commands: Commands) {}
 
-pub fn exit_mode_shape3d(mut commands: Commands, query: Query<Entity, With<Shape>>) {
+fn exit_mode_shape3d(mut commands: Commands, query: Query<Entity, With<PreviewShape>>) {
     for shape in query.iter() {
         commands.entity(shape).despawn()
     }
 }
 
-pub fn enter_mode_cuboid(
+fn enter_mode_cuboid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    shader: Res<PreviewShaderHandle>,
 ) {
-    let debug_material = materials.add(StandardMaterial {
-        // base_color_texture: Some(images.add(uv_debug_texture())),
-        ..default()
-    });
-
     let shape = meshes.add(Cuboid::new(1.4, 1.4, 1.4));
     commands.spawn((
-        PbrBundle {
-            mesh: shape,
-            material: debug_material.clone(),
+        shape,
+        NodeShader3dHandle(shader.0.clone()),
+        SpatialBundle {
             transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
-            ..default()
+            ..SpatialBundle::INHERITED_IDENTITY
         },
-        Shape,
+        PreviewShape,
     ));
 }
 
-pub fn enter_mode_sphere(
+fn enter_mode_sphere(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    shader: Res<PreviewShaderHandle>,
 ) {
-    let debug_material = materials.add(StandardMaterial {
-        // base_color_texture: Some(images.add(uv_debug_texture())),
-        ..default()
-    });
-
     let shape = meshes.add(Sphere::new(0.95).mesh().ico(5).unwrap());
     commands.spawn((
-        PbrBundle {
-            mesh: shape,
-            material: debug_material.clone(),
+        shape,
+        NodeShader3dHandle(shader.0.clone()),
+        SpatialBundle {
             transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
-            ..default()
+            ..SpatialBundle::INHERITED_IDENTITY
         },
-        Shape,
+        // MaterialMeshBundle::<PreviewMaterial> {
+        //     mesh: shape,
+        //     material: material.clone(),
+        //     transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
+        //     ..default()
+        // },
+        PreviewShape,
     ));
 }
 
-pub fn enter_mode_tetra(
+fn enter_mode_tetra(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    shader: Res<PreviewShaderHandle>,
 ) {
-    let debug_material = materials.add(StandardMaterial {
-        // base_color_texture: Some(images.add(uv_debug_texture())),
-        ..default()
-    });
-
     let shape = meshes.add(Tetrahedron::default());
     commands.spawn((
-        PbrBundle {
-            mesh: shape,
-            material: debug_material.clone(),
+        shape,
+        NodeShader3dHandle(shader.0.clone()),
+        SpatialBundle {
             transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.))
                 .with_scale(Vec3::splat(1.4)),
-            ..default()
+            ..SpatialBundle::INHERITED_IDENTITY
         },
-        Shape,
+        // MaterialMeshBundle::<PreviewMaterial> {
+        //     mesh: shape,
+        //     material: material.clone(),
+        //     transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.))
+        //         .with_scale(Vec3::splat(1.4)),
+        //     ..default()
+        // },
+        PreviewShape,
     ));
 }
 
-pub fn enter_mode_torus(
+fn enter_mode_torus(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    shader: Res<PreviewShaderHandle>,
 ) {
-    let debug_material = materials.add(StandardMaterial {
-        // base_color_texture: Some(images.add(uv_debug_texture())),
-        ..default()
-    });
-
     let shape = meshes.add(Torus::default());
     commands.spawn((
-        PbrBundle {
-            mesh: shape,
-            material: debug_material.clone(),
+        shape,
+        NodeShader3dHandle(shader.0.clone()),
+        SpatialBundle {
             transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
-            ..default()
+            ..SpatialBundle::INHERITED_IDENTITY
         },
-        Shape,
+        // MaterialMeshBundle::<PreviewMaterial> {
+        //     mesh: shape,
+        //     material: material.clone(),
+        //     transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
+        //     ..default()
+        // },
+        PreviewShape,
     ));
 }
 
-pub fn rotate_shapes(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
+fn rotate_preview_shapes(mut query: Query<&mut Transform, With<PreviewShape>>, time: Res<Time>) {
     for mut transform in &mut query {
         transform.rotate_y(time.delta_seconds() / 2.);
+    }
+}
+
+/// Update the preview shader handle based on the selected node.
+fn update_preview_shader(
+    q_selected: Query<(&NodeOutput, &NodeSelected)>,
+    mut resource: ResMut<PreviewShaderHandle>,
+    placeholder: Res<PlaceholderShaderHandle>,
+    // mut shaders: ResMut<Assets<Shader>>,
+    // mut materials: ResMut<Assets<PreviewMaterial>>,
+) {
+    let mut shader: Option<Handle<Shader>> = None;
+    for (output, selected) in q_selected.iter() {
+        if selected.0 {
+            if shader.is_none() {
+                shader = Some(output.shader.clone());
+            } else {
+                // Multiple selected, so we can't preview
+                return;
+            }
+        }
+    }
+
+    if let Some(handle) = shader {
+        if resource.0 != handle {
+            println!("Updating shader preview material to node output");
+            resource.0 = handle.clone();
+        }
+    } else if resource.0 != placeholder.0 {
+        println!("Updating shader preview material to placeholder");
+        resource.0 = placeholder.0.clone();
+    }
+}
+
+const PLACEHOLDER_SHADER_SRC: &str = "\
+#import bevy_pbr::{
+    mesh_functions,
+    view_transformations::position_world_to_clip
+}
+
+struct Vertex {
+    @builtin(instance_index) instance_index: u32,
+    @location(0) position: vec3<f32>,
+};
+struct VertexOutput {
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) world_position: vec4<f32>,
+};
+
+@vertex
+fn vertex(vertex: Vertex) -> VertexOutput {
+    var out: VertexOutput;
+    var world_from_local = mesh_functions::get_world_from_local(vertex.instance_index);
+    out.world_position = mesh_functions::mesh_position_local_to_world(world_from_local, vec4(vertex.position, 1.0));
+    out.clip_position = position_world_to_clip(out.world_position.xyz);
+    return out;
+}
+@fragment
+fn fragment(
+    @builtin(front_facing) is_front: bool,
+    mesh: VertexOutput,
+) -> @location(0) vec4<f32> {
+    return vec4<f32>(0.5, 0.0, 0.0, 1.0);
+}
+";
+
+#[derive(Resource, Default)]
+struct PlaceholderShaderHandle(pub Handle<Shader>);
+
+pub struct PreviewPlugin;
+
+impl Plugin for PreviewPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_state(PreviewMode::Cuboid)
+            .add_computed_state::<PreviewMode3d>()
+            .add_systems(Update, (update_preview_shader, rotate_preview_shapes))
+            .add_systems(OnEnter(PreviewMode3d), enter_preview_3d)
+            .add_systems(OnExit(PreviewMode3d), exit_preview_3d)
+            .add_systems(OnEnter(PreviewMode::Cuboid), enter_mode_cuboid)
+            .add_systems(OnEnter(PreviewMode::Sphere), enter_mode_sphere)
+            .add_systems(OnEnter(PreviewMode::Tetra), enter_mode_tetra)
+            .add_systems(OnEnter(PreviewMode::Torus), enter_mode_torus)
+            .add_systems(OnExit(PreviewMode::Sphere), exit_mode_shape3d)
+            .add_systems(OnExit(PreviewMode::Cuboid), exit_mode_shape3d)
+            .add_systems(OnExit(PreviewMode::Tetra), exit_mode_shape3d)
+            .add_systems(OnExit(PreviewMode::Torus), exit_mode_shape3d);
+    }
+
+    fn finish(&self, app: &mut App) {
+        let mut shader_assets = app.world_mut().resource_mut::<Assets<Shader>>();
+        let handle = shader_assets.add(Shader::from_wgsl(PLACEHOLDER_SHADER_SRC, "".to_string()));
+        app.insert_resource(PlaceholderShaderHandle(handle.clone()));
+        app.insert_resource(PreviewShaderHandle(handle));
+        println!("Preview plugin finished");
     }
 }

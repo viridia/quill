@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
-use crate::operator::{
-    DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
-    OperatorDescription, OperatorInput, OperatorOutput, ReflectOperator,
+use crate::{
+    gen::Expr,
+    operator::{
+        DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
+        OperatorDescription, OperatorInput, OperatorOutput, ReflectOperator,
+    },
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
@@ -28,7 +31,8 @@ impl Operator for Grayscale {
         Box::new(self.clone())
     }
 
-    fn gen(&self) {
+    fn gen(&self) -> Expr {
         // todo!()
+        Expr::ConstColor(LinearRgba::RED)
     }
 }

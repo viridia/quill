@@ -9,7 +9,7 @@ use bevy_quill::*;
 use bevy_quill_obsidian::{colors, controls::ListView, typography::text_strong};
 
 use crate::{
-    graph::{GraphNode, Selected},
+    graph::{GraphNode, NodeSelected},
     operator::{DisplayName, OperatorCategory, OperatorClass, ReflectOperator},
 };
 
@@ -109,7 +109,7 @@ impl ViewTemplate for CatalogRow {
                 move |_| {
                     On::<Pointer<Click>>::run(
                         move |mut selected: ResMut<SelectedCatalogEntry>,
-                        mut graph_nodes: Query<&mut Selected, With<GraphNode>>| {
+                        mut graph_nodes: Query<&mut NodeSelected, With<GraphNode>>| {
                         // Clear node selection
                         for mut selected in graph_nodes.iter_mut() {
                             selected.0 = false;

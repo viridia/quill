@@ -3,11 +3,14 @@
 mod add_node;
 mod catalog;
 mod commands;
+mod gen;
 mod graph;
 mod graph_view;
 mod operator;
 mod ops;
+mod pipeline;
 mod preview;
+mod propedit;
 
 use add_node::AddNodeButton;
 use bevy_mod_picking::{
@@ -28,16 +31,15 @@ use bevy_quill_obsidian_graph::{
 };
 use catalog::{build_operator_catalog, CatalogView, OperatorCatalog, SelectedCatalogEntry};
 use commands::{AddConnectionCmd, DeleteSelectedCmd};
+use gen::{begin_build_shaders, finish_build_shaders};
 use graph::{
-    sync_connections, Connection, GraphNode, GraphResource, NodeBasePosition, Selected,
+    sync_connection_refs, Connection, GraphNode, GraphResource, NodeBasePosition, NodeSelected,
     ValidateConnectionCmd,
 };
 use graph_view::{DragState, GraphView, GraphViewId};
 use ops::OperatorsPlugin;
-use preview::{
-    enter_mode_cuboid, enter_mode_sphere, enter_mode_tetra, enter_mode_torus, enter_preview_3d,
-    exit_mode_shape3d, exit_preview_3d, rotate_shapes, PreviewControls, PreviewMode, PreviewMode3d,
-};
+use pipeline::NodeShaderMeshPlugin;
+use preview::{PreviewControls, PreviewPlugin};
 
 use bevy::{asset::embedded_asset, prelude::*, ui};
 use bevy_quill::*;
@@ -87,38 +89,32 @@ fn main() {
         .insert_resource(PanelWidth(300.))
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins(DefaultPickingPlugins)
-        .insert_state(PreviewMode::Cuboid)
-        .add_computed_state::<PreviewMode3d>()
+        .add_plugins((DefaultPickingPlugins,))
         .insert_resource(DebugPickingMode::Disabled)
         .add_plugins((
+            PreviewPlugin,
             QuillPlugin,
             ObsidianUiPlugin,
             ObsidianGraphPlugin,
             VortexPlugin,
             OperatorsPlugin,
+            NodeShaderMeshPlugin,
         ))
-        .add_systems(Startup, (sync_connections, setup_ui.pipe(setup_view_root)))
+        .add_systems(
+            Startup,
+            (sync_connection_refs, setup_ui.pipe(setup_view_root)),
+        )
         .add_systems(
             Update,
             (
                 close_on_esc,
                 build_operator_catalog,
-                rotate_shapes,
                 viewport::update_viewport_inset,
                 viewport::update_camera_viewport,
+                begin_build_shaders,
+                finish_build_shaders,
             ),
         )
-        .add_systems(OnEnter(PreviewMode3d), enter_preview_3d)
-        .add_systems(OnExit(PreviewMode3d), exit_preview_3d)
-        .add_systems(OnEnter(PreviewMode::Cuboid), enter_mode_cuboid)
-        .add_systems(OnEnter(PreviewMode::Sphere), enter_mode_sphere)
-        .add_systems(OnEnter(PreviewMode::Tetra), enter_mode_tetra)
-        .add_systems(OnEnter(PreviewMode::Torus), enter_mode_torus)
-        .add_systems(OnExit(PreviewMode::Sphere), exit_mode_shape3d)
-        .add_systems(OnExit(PreviewMode::Cuboid), exit_mode_shape3d)
-        .add_systems(OnExit(PreviewMode::Tetra), exit_mode_shape3d)
-        .add_systems(OnExit(PreviewMode::Torus), exit_mode_shape3d)
         .run();
 }
 
@@ -241,7 +237,7 @@ impl ViewTemplate for CenterPanel {
                          mut query_graph_nodes: Query<(
                             Entity,
                             &mut GraphNode,
-                            &mut Selected,
+                            &mut NodeSelected,
                             Option<&NodeBasePosition>,
                         )>,
                          mut query_connections: Query<&mut Connection>| {

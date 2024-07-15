@@ -5,6 +5,8 @@ use bevy::{
     utils::hashbrown::HashSet,
 };
 
+use crate::gen::{Expr, ShaderAssembly};
+
 /// Groupings for operators
 #[derive(Debug, Clone, Reflect, PartialEq, Eq, PartialOrd, Ord)]
 pub enum OperatorCategory {
@@ -36,9 +38,7 @@ pub trait Operator: Send + Sync + Reflect {
     fn to_boxed_clone(&self) -> Box<dyn Operator>;
 
     /// Returns the names of all .wgsl imports needed for this operator to compile.
-    fn get_imports(&self) -> HashSet<String> {
-        HashSet::default()
-    }
+    fn get_deps(&self, assembly: &mut ShaderAssembly) {}
 
     //   /** Return the expression for this node. */
     //   public getCode(node: GraphNode, terminal: OutputTerminal, prologue: Expr[]): Expr {
@@ -46,7 +46,7 @@ pub trait Operator: Send + Sync + Reflect {
     //   }
 
     /// Generate code for this operator.
-    fn gen(&self);
+    fn gen(&self) -> Expr;
 }
 
 /// Width of the operator node, in pixels.

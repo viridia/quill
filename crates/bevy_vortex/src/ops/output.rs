@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
-use crate::operator::{
-    DisplayName, Operator, OperatorCategory, OperatorClass, OperatorDescription, OperatorInput,
-    OperatorInputOnly, ReflectOperator,
+use crate::{
+    gen::Expr,
+    operator::{
+        DisplayName, Operator, OperatorCategory, OperatorClass, OperatorDescription, OperatorInput,
+        OperatorInputOnly, ReflectOperator,
+    },
 };
 
 #[derive(Debug, Reflect, Clone, Default)]
@@ -19,7 +22,8 @@ impl Operator for Output {
         Box::new(self.clone())
     }
 
-    fn gen(&self) {
+    fn gen(&self) -> Expr {
         // todo!()
+        Expr::ConstColor(LinearRgba::WHITE)
     }
 }

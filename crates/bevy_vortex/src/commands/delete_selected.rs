@@ -12,7 +12,7 @@ impl Command for DeleteSelectedCmd {
     fn apply(self, world: &mut World) {
         let mut st: SystemState<(
             Query<(Entity, &mut Connection)>,
-            Query<(Entity, &GraphNode, &Selected)>,
+            Query<(Entity, &GraphNode, &NodeSelected)>,
         )> = SystemState::new(world);
         let (mut connections, nodes) = st.get_mut(world);
 

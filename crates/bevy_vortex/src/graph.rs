@@ -16,6 +16,25 @@ pub struct GraphResource(pub(crate) Graph);
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GraphNodeId(pub(crate) usize);
 
+/// A component that indicates that a particular view is displaying the output of a node,
+/// which means that it needs the material handle generated from the node.
+#[derive(Component, Default)]
+pub struct NodeObserver {
+    pub(crate) node: Option<Entity>,
+}
+
+/// Defines whether the material output of a node has changed, and whether it's being rebuilt.
+#[derive(PartialEq, Clone, Copy, Default)]
+pub enum NodeOutputState {
+    /// Material handle is up to date.
+    Ready,
+    /// Material has changed, but is not rebuilding.
+    #[default]
+    Modified,
+    /// Material is being rebuilt in an async task.
+    Building,
+}
+
 /// A Vortex node graph.
 #[derive(Default)]
 pub struct Graph {
@@ -57,7 +76,9 @@ impl Graph {
             outputs: default(),
         };
         node.create_terminals(commands, entity);
-        commands.entity(entity).insert((node, Selected(false)));
+        commands
+            .entity(entity)
+            .insert((node, NodeModified, NodeSelected(true)));
         action.mutations.push(UndoMutation::AddNode(id, entity));
         self.nodes.insert(id, entity);
         id
@@ -127,9 +148,10 @@ impl Graph {
 }
 
 /// Component indicating whether a graph node is selected.
-/// Note: this used to be a marker, but currently we don't support reactions on markers.
+/// Note: this used to be a marker component, but currently we don't support reactions on markers,
+/// because we can't react to removals or additions. Maybe once we start using observers...?
 #[derive(Component)]
-pub struct Selected(pub bool);
+pub struct NodeSelected(pub bool);
 
 /// A node within a node graph. The behavior and attributes of the node are determined by the
 /// operator.
@@ -237,6 +259,11 @@ impl Clone for GraphNode {
     }
 }
 
+/// Marker component that indicates that a graph node has been modified, and it's built shader is
+/// out of date.
+#[derive(Component)]
+pub struct NodeModified;
+
 /// Component used to store the position of a node while dragging.
 #[derive(Component)]
 pub struct NodeBasePosition(pub IVec2);
@@ -334,7 +361,7 @@ impl Command for ValidateConnectionCmd {
     }
 }
 
-pub(crate) fn sync_connections(world: &mut World) {
+pub(crate) fn sync_connection_refs(world: &mut World) {
     // Hook that watches for changes to connections and updates the back-references in the
     // terminals.
     world
