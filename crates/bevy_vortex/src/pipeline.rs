@@ -7,7 +7,7 @@ use bevy::{
     prelude::*,
     render::{
         extract_component::{ExtractComponent, ExtractComponentPlugin},
-        mesh::GpuMesh,
+        mesh::{GpuMesh, MeshVertexBufferLayoutRef},
         render_asset::RenderAssets,
         render_phase::{
             AddRenderCommand, BinnedRenderPhaseType, DrawFunctions, SetItemPipeline,
@@ -16,7 +16,8 @@ use bevy::{
         render_resource::{
             BlendState, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
             DepthStencilState, Face, FragmentState, FrontFace, MultisampleState, PipelineCache,
-            PolygonMode, PrimitiveState, RenderPipelineDescriptor, SpecializedRenderPipeline,
+            PolygonMode, PrimitiveState, RenderPipelineDescriptor, SpecializedMeshPipeline,
+            SpecializedMeshPipelineError, SpecializedMeshPipelines, SpecializedRenderPipeline,
             SpecializedRenderPipelines, StencilState, TextureFormat, VertexBufferLayout,
             VertexFormat, VertexState, VertexStepMode,
         },
@@ -58,30 +59,40 @@ impl FromWorld for NodeShaderMesh3dPipeline {
 }
 
 // We implement `SpecializedPipeline` to customize the default rendering from `MeshPipeline`
-impl SpecializedRenderPipeline for NodeShaderMesh3dPipeline {
+impl SpecializedMeshPipeline for NodeShaderMesh3dPipeline {
     type Key = NodeShaderMesh3dPipelineKey;
 
-    fn specialize(&self, key: Self::Key) -> RenderPipelineDescriptor {
+    fn specialize(
+        &self,
+        key: Self::Key,
+        layout: &MeshVertexBufferLayoutRef,
+    ) -> Result<RenderPipelineDescriptor, SpecializedMeshPipelineError> {
         // Customize how to store the meshes' vertex attributes in the vertex buffer
-        // Our meshes only have positions
-        let formats = vec![VertexFormat::Float32x3];
-
-        let vertex_layout =
-            VertexBufferLayout::from_vertex_formats(VertexStepMode::Vertex, formats);
+        // Our meshes only have positions and colors
+        let mut vertex_attributes = Vec::new();
+        if layout.0.contains(Mesh::ATTRIBUTE_POSITION) {
+            // Make sure this matches the shader location
+            vertex_attributes.push(Mesh::ATTRIBUTE_POSITION.at_shader_location(0));
+        }
+        if layout.0.contains(Mesh::ATTRIBUTE_COLOR) {
+            // Make sure this matches the shader location
+            vertex_attributes.push(Mesh::ATTRIBUTE_COLOR.at_shader_location(1));
+        }
+        let vertex_buffer_layout = layout.0.get_layout(&vertex_attributes)?;
 
         let format = match key.mesh_key.contains(MeshPipelineKey::HDR) {
             true => ViewTarget::TEXTURE_FORMAT_HDR,
             false => TextureFormat::bevy_default(),
         };
 
-        RenderPipelineDescriptor {
+        Ok(RenderPipelineDescriptor {
             vertex: VertexState {
                 // Use our custom shader
                 shader: key.shader.clone(),
                 entry_point: "vertex".into(),
                 shader_defs: vec![],
                 // Use our custom vertex buffer
-                buffers: vec![vertex_layout],
+                buffers: vec![vertex_buffer_layout],
             },
             fragment: Some(FragmentState {
                 // Use our custom shader
@@ -125,7 +136,7 @@ impl SpecializedRenderPipeline for NodeShaderMesh3dPipeline {
                 alpha_to_coverage_enabled: false,
             },
             label: Some("node_shader_mesh_pipeline".into()),
-        }
+        })
     }
 }
 
@@ -150,7 +161,7 @@ fn queue_node_shader_item(
     msaa: Res<Msaa>,
     mut opaque_render_phases: ResMut<ViewBinnedRenderPhases<Opaque3d>>,
     opaque_draw_functions: Res<DrawFunctions<Opaque3d>>,
-    mut specialized_render_pipelines: ResMut<SpecializedRenderPipelines<NodeShaderMesh3dPipeline>>,
+    mut specialized_mesh_pipelines: ResMut<SpecializedMeshPipelines<NodeShaderMesh3dPipeline>>,
     views: Query<(Entity, &VisibleEntities, &ExtractedView), With<ExtractedView>>,
     render_meshes: Res<RenderAssets<GpuMesh>>,
     render_mesh_instances: Res<RenderMeshInstances>,
@@ -180,19 +191,23 @@ fn queue_node_shader_item(
             };
 
             let mut mesh_key = mesh_key;
-            if let Some(mesh) = render_meshes.get(mesh_instance.mesh_asset_id) {
-                mesh_key |= MeshPipelineKey::from_primitive_topology(mesh.primitive_topology());
-            }
+            let Some(mesh) = render_meshes.get(mesh_instance.mesh_asset_id) else {
+                continue;
+            };
+            mesh_key |= MeshPipelineKey::from_primitive_topology(mesh.primitive_topology());
 
             let shader = shader_handle.get(visible_entity).unwrap();
-            let pipeline_id = specialized_render_pipelines.specialize(
-                &pipeline_cache,
-                &custom_phase_pipeline,
-                NodeShaderMesh3dPipelineKey {
-                    shader: shader.0.clone(),
-                    mesh_key,
-                },
-            );
+            let pipeline_id = specialized_mesh_pipelines
+                .specialize(
+                    &pipeline_cache,
+                    &custom_phase_pipeline,
+                    NodeShaderMesh3dPipelineKey {
+                        shader: shader.0.clone(),
+                        mesh_key,
+                    },
+                    &mesh.layout,
+                )
+                .expect("Failed to specialize mesh pipeline");
 
             // Add the custom render item. We use the
             // [`BinnedRenderPhaseType::NonMesh`] type to skip the special
@@ -236,7 +251,7 @@ impl Plugin for NodeShaderMeshPlugin {
             return;
         };
         render_app
-            .init_resource::<SpecializedRenderPipelines<NodeShaderMesh3dPipeline>>()
+            .init_resource::<SpecializedMeshPipelines<NodeShaderMesh3dPipeline>>()
             .add_render_command::<Opaque3d, DrawNodeShaderMeshCommands>()
             .add_systems(Render, queue_node_shader_item.in_set(RenderSet::Queue));
     }
