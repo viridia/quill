@@ -20,7 +20,7 @@ verbose = [] # Enable verbose logging
 [workspace.dependencies]
 bevy = "0.14.0"
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder", version = "0.1.1" }
-bevy_mod_picking = "0.20.1"
+bevy_mod_picking = { version = "0.20.1", default-features = false }
 bevy_quill_core = { path = "crates/bevy_quill_core", version = "0.1.0" }
 bevy_quill_obsidian = { path = "crates/bevy_quill_obsidian", version = "0.1.0" }
 bevy_quill_obsidian_inspect = { path = "crates/bevy_quill_obsidian_inspect", version = "0.1.0" }
@@ -35,7 +35,7 @@ smallvec = "1.13.2"
 
 [dev-dependencies]
 bevy_quill_obsidian = { path = "crates/bevy_quill_obsidian" }
-bevy_mod_picking = { workspace = true }
+bevy_mod_picking = { workspace = true, features = ["debug", "backend_raycast", "backend_bevy_ui"] }
 bevy_quill_obsidian_inspect = { workspace = true }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
