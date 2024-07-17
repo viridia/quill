@@ -14,7 +14,6 @@
 - Flesh out undo/redo
 - Serialization
 - Open/Save dialogs. (rfd)
-- Make nodes do stuff!
 - Commands to write:
   - validate_connection
   - propagate_changes / set modified state

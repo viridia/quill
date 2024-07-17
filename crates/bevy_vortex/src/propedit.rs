@@ -1,5 +1,6 @@
 use crate::{
-    graph::{GraphNode, NodeModified},
+    commands::MarkModifiedCmd,
+    graph::GraphNode,
     operator::{OpValuePrecision, OpValueRange, OpValueStep},
 };
 use bevy::{prelude::*, reflect::TypeInfo, ui};
@@ -108,7 +109,7 @@ impl ViewTemplate for GraphNodePropertyEditI32 {
                         let reflect = node.operator_reflect_mut();
                         let field_reflect = reflect.reflect_path_mut(path).unwrap();
                         field_reflect.apply((*value as i32).as_reflect());
-                        commands.entity(id).insert(NodeModified);
+                        commands.add(MarkModifiedCmd { start: id });
                     },
                 ));
 
@@ -136,7 +137,7 @@ impl ViewTemplate for GraphNodePropertyEditI32 {
                         let reflect = node.operator_reflect_mut();
                         let field_reflect = reflect.reflect_path_mut(path).unwrap();
                         field_reflect.apply((*value as i32).as_reflect());
-                        commands.entity(id).insert(NodeModified);
+                        commands.add(MarkModifiedCmd { start: id });
                     },
                 ));
 
@@ -190,7 +191,7 @@ impl ViewTemplate for GraphNodePropertyEditF32 {
                         let reflect = node.operator_reflect_mut();
                         let field_reflect = reflect.reflect_path_mut(path).unwrap();
                         field_reflect.apply((*value).as_reflect());
-                        commands.entity(id).insert(NodeModified);
+                        commands.add(MarkModifiedCmd { start: id });
                     },
                 ));
 
@@ -218,7 +219,7 @@ impl ViewTemplate for GraphNodePropertyEditF32 {
                         let reflect = node.operator_reflect_mut();
                         let field_reflect = reflect.reflect_path_mut(path).unwrap();
                         field_reflect.apply((*value).as_reflect());
-                        commands.entity(id).insert(NodeModified);
+                        commands.add(MarkModifiedCmd { start: id });
                     },
                 ));
 
@@ -296,7 +297,7 @@ impl ViewTemplate for GraphNodePropertyEditLinearRgba {
                                         let field_reflect =
                                             reflect.reflect_path_mut(field_name).unwrap();
                                         field_reflect.apply(LinearRgba::from(st.rgb).as_reflect());
-                                        world.entity_mut(node_id).insert(NodeModified);
+                                        world.commands().add(MarkModifiedCmd { start: node_id });
                                     },
                                 ),
                             )),

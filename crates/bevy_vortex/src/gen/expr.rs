@@ -54,7 +54,7 @@ pub enum Precedence {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     LiteralStr(String),
-    ConstI32(f32),
+    ConstI32(i32),
     ConstF32(f32),
     ConstVec2(Vec2),
     ConstVec3(Vec3),

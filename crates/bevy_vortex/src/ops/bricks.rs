@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
 use crate::{
-    gen::{Expr, ShaderAssembly, TerminalReader},
+    gen::{DataType, Expr, ShaderAssembly, TerminalReader},
     operator::{
         DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
         OperatorDescription, OperatorInput, OperatorInputOnly, OperatorOutput, ReflectOperator,
@@ -85,14 +87,37 @@ impl Operator for Bricks {
     fn gen(
         &self,
         assembly: &mut ShaderAssembly,
-        _reader: &TerminalReader,
-        _node_id: Entity,
+        reader: &TerminalReader,
+        node_id: Entity,
         _out_id: &str,
     ) -> Expr {
         assembly.add_include(BRICKS);
         assembly.add_include(SMOOTHERSTEP);
 
-        assembly.needs_uv = true;
+        let uv = match reader.read_input_terminal(assembly, node_id, "uv") {
+            Some(expr) => expr.cast(DataType::Vec2),
+            None => {
+                assembly.needs_uv = true;
+                Expr::RefLocal(DataType::Vec3, "mesh.uv".to_string())
+            }
+        };
+
+        Expr::FnCall(
+            DataType::F32,
+            "bricks".to_string(),
+            vec![
+                Arc::new(uv),
+                Arc::new(Expr::ConstI32(self.x_count)),
+                Arc::new(Expr::ConstI32(self.y_count)),
+                Arc::new(Expr::ConstF32(self.x_spacing)),
+                Arc::new(Expr::ConstF32(self.y_spacing)),
+                Arc::new(Expr::ConstF32(self.x_blur)),
+                Arc::new(Expr::ConstF32(self.y_blur)),
+                Arc::new(Expr::ConstF32(self.stagger)),
+                Arc::new(Expr::ConstI32(0)),
+            ],
+        )
+
         // assembly.add_import("embedded://bevy_vortex/ops/wgsl/smootherstep.wgsl".to_string());
         // assembly.add_import("embedded://bevy_vortex/ops/wgsl/bricks.wgsl".to_string());
         // let uv = node.read_input::<Vec2>("uv");
@@ -131,7 +156,7 @@ impl Operator for Bricks {
         // }
 
         // todo!()
-        Expr::ConstF32(self.x_spacing)
+        // Expr::ConstF32(self.x_spacing)
     }
 
     // fn get_deps(&self, assembly: &mut ShaderAssembly) {

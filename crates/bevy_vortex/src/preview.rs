@@ -317,7 +317,7 @@ fn update_preview_shader(
 
     if let Some(handle) = shader {
         if resource.0 != handle {
-            println!("Updating shader preview material to node output");
+            // println!("Updating shader preview material to node output");
             resource.0 = handle.clone();
             for shape_entity in q_preview_shapes.iter() {
                 commands
@@ -326,7 +326,7 @@ fn update_preview_shader(
             }
         }
     } else if resource.0 != placeholder.0 {
-        println!("Updating shader preview material to placeholder");
+        // println!("Updating shader preview material to placeholder");
         resource.0 = placeholder.0.clone();
         for shape_entity in q_preview_shapes.iter() {
             commands

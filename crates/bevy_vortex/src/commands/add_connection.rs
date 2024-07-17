@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::graph::*;
+use crate::{commands::mark_modified::MarkModifiedCmd, graph::*};
 
 pub(crate) struct AddConnectionCmd {
     /// Entity for the input terminal.
@@ -69,8 +69,7 @@ impl Command for AddConnectionCmd {
         output_terminal.connections.insert(id);
 
         // Mark input node as modified.
-        // TODO: Also mark all downstream nodes as modified.
-        world.entity_mut(input_node).insert(NodeModified);
+        world.commands().add(MarkModifiedCmd { start: input_node });
 
         // Despawn old connections
         for conn_id in connections_to_remove.drain() {

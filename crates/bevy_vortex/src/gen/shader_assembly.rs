@@ -162,7 +162,7 @@ impl ShaderAssembly {
             source.write_str(include)?;
         }
 
-        println!("Shader source:\n{}", source);
+        // println!("Shader source:\n{}", source);
         self.source = source;
         Ok(())
     }

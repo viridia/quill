@@ -3,7 +3,7 @@ use crate::gen::{output_chunk::OutputChunk, Expr};
 pub fn codegen(expr: &Expr) -> OutputChunk {
     match expr {
         Expr::LiteralStr(_) => todo!(),
-        Expr::ConstI32(_) => todo!(),
+        Expr::ConstI32(n) => OutputChunk::Literal(n.to_string()),
         Expr::ConstF32(f) => {
             let f = f.to_string();
             if f.contains('.') {
