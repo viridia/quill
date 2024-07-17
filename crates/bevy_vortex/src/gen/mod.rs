@@ -1,8 +1,13 @@
 mod expr;
 mod output_chunk;
+mod pass;
 mod shader_assembly;
+mod shader_imports;
+mod terminal_reader;
 
-use crate::graph::{GraphNode, NodeModified};
+use std::sync::Arc;
+
+use crate::graph::NodeModified;
 use bevy::render::extract_component::ExtractComponent;
 use bevy::tasks::futures_lite::future;
 use bevy::{
@@ -10,19 +15,19 @@ use bevy::{
     tasks::{block_on, AsyncComputeTaskPool, Task},
 };
 pub use expr::*;
-pub use output_chunk::*;
 pub use shader_assembly::ShaderAssembly;
+pub use terminal_reader::TerminalReader;
 
 /// Component used to indicate that a node is being observed. These nodes have higher priority
 /// when it comes to rebuilding shaders.
-#[derive(Component, Debug, Clone, Copy)]
-pub(crate) struct NodeObserved(Entity);
+// #[derive(Component, Debug, Clone, Copy)]
+// pub(crate) struct NodeObserved(Entity);
 
 /// Marker component that indicates that a graph node's shader is being rebuilt.
 #[derive(Component)]
 pub struct RebuildTask(Task<BuildShaderResult>);
 
-pub struct BuildShaderResult(ShaderAssembly);
+pub struct BuildShaderResult(String);
 
 #[derive(Component)]
 pub struct NodeOutput {
@@ -43,12 +48,10 @@ pub(crate) fn finish_build_shaders(
     for (node_id, mut rebuilding) in q_rebuilding.iter_mut() {
         let status = block_on(future::poll_once(&mut rebuilding.0));
         if let Some(result) = status {
-            // if let Ok((_node, mut output)) = q_nodes.get_mut(node_id) {
             let mut entt = commands.entity(node_id);
             entt.remove::<RebuildTask>();
-            let assembly = result.0;
-            let source = assembly.gen_source().unwrap();
-            // println!("Task complete:\n{}", assembly.gen_source().unwrap());
+            let source = result.0;
+            // println!("Shader built:\n{}", source);
             let shader = Shader::from_wgsl(source, "".to_string());
             if let Ok(output) = q_output.get(node_id) {
                 // Update shader asset in-place.
@@ -65,29 +68,35 @@ pub(crate) fn finish_build_shaders(
 
 pub(crate) fn begin_build_shaders(
     mut commands: Commands,
-    q_nodes: Query<&GraphNode>,
+    reader: TerminalReader,
     q_modified: Query<Entity, With<NodeModified>>,
 ) {
     // Spawn tasks for any nodes that are modified.
     // TODO: Limit
     let task_pool = AsyncComputeTaskPool::get();
     for modified in q_modified.iter() {
-        if let Ok(node) = q_nodes.get(modified) {
+        if let Ok(node) = reader.nodes.get(modified) {
             let mut entt = commands.entity(modified);
             entt.remove::<NodeModified>();
             // Need to walk the graph and build expression tree here.
             // Not sure that we need an async task since a lot of the effort is just querying
             // the graph, which is not accessible in a thread.
-            if let Some(output) = node.outputs.first() {
-                println!("Found first output: {:?}", output);
-            }
+            let Some(output) = node.outputs.first() else {
+                println!("Node has no outputs: {}", node.name());
+                continue;
+            };
+
+            // println!("Task spawned");
+            let mut assembly = ShaderAssembly::new(node.name().to_owned());
+            assembly.add_common_imports();
+            let expr = Arc::new(node.gen(&mut assembly, &reader, modified, output.0));
+            assembly.set_fragment_value(expr);
 
             let task = task_pool.spawn(async move {
                 // println!("Task spawned");
-                // TODO: do whatever you want here!
-                // generate_map_chunk(chunk_coord)
-                let assembly = ShaderAssembly::new(modified);
-                BuildShaderResult(assembly)
+                // let assembly = ShaderAssembly::new(modified);
+                assembly.run_passes().unwrap();
+                BuildShaderResult(assembly.source().to_owned())
             });
             entt.insert(RebuildTask(task));
         }

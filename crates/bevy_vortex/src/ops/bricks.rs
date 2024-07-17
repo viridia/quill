@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 
 use crate::{
-    gen::{Expr, ShaderAssembly},
+    gen::{Expr, ShaderAssembly, TerminalReader},
     operator::{
         DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
         OperatorDescription, OperatorInput, OperatorInputOnly, OperatorOutput, ReflectOperator,
     },
 };
+
+use super::wgsl::{BRICKS, SMOOTHERSTEP};
 
 #[derive(Debug, Reflect, Clone)]
 #[reflect(Operator, Default, @OperatorClass(OperatorCategory::Pattern), @OperatorDescription("
@@ -80,7 +82,19 @@ impl Operator for Bricks {
         Box::new(self.clone())
     }
 
-    fn gen(&self) -> Expr {
+    fn gen(
+        &self,
+        assembly: &mut ShaderAssembly,
+        _reader: &TerminalReader,
+        _node_id: Entity,
+        _out_id: &str,
+    ) -> Expr {
+        assembly.add_include(BRICKS);
+        assembly.add_include(SMOOTHERSTEP);
+
+        assembly.needs_uv = true;
+        // assembly.add_import("embedded://bevy_vortex/ops/wgsl/smootherstep.wgsl".to_string());
+        // assembly.add_import("embedded://bevy_vortex/ops/wgsl/bricks.wgsl".to_string());
         // let uv = node.read_input::<Vec2>("uv");
         // if uv.is_none() {
         //     uv = "in.uv";
@@ -117,13 +131,13 @@ impl Operator for Bricks {
         // }
 
         // todo!()
-        Expr::ConstF32(0.5)
+        Expr::ConstF32(self.x_spacing)
     }
 
-    fn get_deps(&self, assembly: &mut ShaderAssembly) {
-        assembly.add_import("embedded://bevy_vortex/ops/wgsl/smootherstep.wgsl".to_string());
-        assembly.add_import("embedded://bevy_vortex/ops/wgsl/bricks.wgsl".to_string());
-    }
+    // fn get_deps(&self, assembly: &mut ShaderAssembly) {
+    //     assembly.add_import("embedded://bevy_vortex/ops/wgsl/smootherstep.wgsl".to_string());
+    //     assembly.add_import("embedded://bevy_vortex/ops/wgsl/bricks.wgsl".to_string());
+    // }
 }
 
 impl Default for Bricks {

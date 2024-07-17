@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    gen::Expr,
+    gen::{Expr, ShaderAssembly, TerminalReader},
     operator::{
         DisplayName, Operator, OperatorCategory, OperatorClass, OperatorDescription, OperatorInput,
         OperatorInputOnly, ReflectOperator,
@@ -22,7 +22,13 @@ impl Operator for Output {
         Box::new(self.clone())
     }
 
-    fn gen(&self) -> Expr {
+    fn gen(
+        &self,
+        _assembly: &mut ShaderAssembly,
+        _reader: &TerminalReader,
+        _node_id: Entity,
+        _out_id: &str,
+    ) -> Expr {
         // todo!()
         Expr::ConstColor(LinearRgba::WHITE)
     }

@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
 use crate::{
-    gen::Expr,
+    gen::{DataType, Expr, ShaderAssembly, TerminalReader},
     operator::{
         DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
         OperatorDescription, OperatorInput, OperatorOutput, ReflectOperator,
@@ -39,8 +41,32 @@ impl Operator for Mix {
         Box::new(self.clone())
     }
 
-    fn gen(&self) -> Expr {
-        // todo!()
-        Expr::ConstColor(LinearRgba::WHITE)
+    fn gen(
+        &self,
+        assembly: &mut ShaderAssembly,
+        reader: &TerminalReader,
+        node_id: Entity,
+        _out_id: &str,
+    ) -> Expr {
+        let src_a = match reader.read_input_terminal(assembly, node_id, "input_a") {
+            Some(expr) => expr.cast(DataType::LinearRgba),
+            None => Expr::ConstColor(self.input_a),
+        };
+        let src_b = match reader.read_input_terminal(assembly, node_id, "input_b") {
+            Some(expr) => expr.cast(DataType::LinearRgba),
+            None => Expr::ConstColor(self.input_b),
+        };
+        let factor = match reader.read_input_terminal(assembly, node_id, "factor") {
+            Some(expr) => expr.cast(DataType::F32),
+            None => Expr::ConstF32(self.factor),
+        };
+        // TODO: Constant folding. Maybe this should be done as a post-process? We'll need
+        // to make a 'mix' object that can evaluate it's arguments.
+
+        Expr::FnCall(
+            DataType::LinearRgba,
+            "mix".to_string(),
+            vec![Arc::new(src_a), Arc::new(src_b), Arc::new(factor)],
+        )
     }
 }

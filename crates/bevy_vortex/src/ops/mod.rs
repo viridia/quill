@@ -1,13 +1,19 @@
 use bevy::{app::Plugin, asset::embedded_asset};
-use bricks::Bricks;
-use grayscale::Grayscale;
-use mix::Mix;
-use output::Output;
 
 mod bricks;
+mod color;
+mod geometry;
 mod grayscale;
 mod mix;
 mod output;
+mod wgsl;
+
+use bricks::Bricks;
+use color::ConstColor;
+use geometry::Geometry;
+use grayscale::Grayscale;
+use mix::Mix;
+use output::Output;
 
 pub struct OperatorsPlugin;
 
@@ -16,6 +22,8 @@ impl Plugin for OperatorsPlugin {
         embedded_asset!(app, "wgsl/bricks.wgsl");
         embedded_asset!(app, "wgsl/smootherstep.wgsl");
         app.register_type::<Bricks>()
+            .register_type::<ConstColor>()
+            .register_type::<Geometry>()
             .register_type::<Grayscale>()
             .register_type::<Mix>()
             .register_type::<Output>();

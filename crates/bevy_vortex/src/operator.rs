@@ -1,11 +1,11 @@
 use std::ops::RangeInclusive;
 
 use bevy::{
+    prelude::Entity,
     reflect::{reflect_trait, Reflect},
-    utils::hashbrown::HashSet,
 };
 
-use crate::gen::{Expr, ShaderAssembly};
+use crate::gen::{Expr, ShaderAssembly, TerminalReader};
 
 /// Groupings for operators
 #[derive(Debug, Clone, Reflect, PartialEq, Eq, PartialOrd, Ord)]
@@ -34,11 +34,15 @@ impl OperatorCategory {
 /// Defines an operational component in a node graph.
 #[reflect_trait]
 pub trait Operator: Send + Sync + Reflect {
+    fn name(&self) -> &'static str {
+        std::any::type_name::<Self>()
+    }
+
     /// Clone the implementation of this operator and return it as a boxed trait object.
     fn to_boxed_clone(&self) -> Box<dyn Operator>;
 
     /// Returns the names of all .wgsl imports needed for this operator to compile.
-    fn get_deps(&self, assembly: &mut ShaderAssembly) {}
+    // fn get_deps(&self, assembly: &mut ShaderAssembly) {}
 
     //   /** Return the expression for this node. */
     //   public getCode(node: GraphNode, terminal: OutputTerminal, prologue: Expr[]): Expr {
@@ -46,7 +50,13 @@ pub trait Operator: Send + Sync + Reflect {
     //   }
 
     /// Generate code for this operator.
-    fn gen(&self) -> Expr;
+    fn gen(
+        &self,
+        assembly: &mut ShaderAssembly,
+        reader: &TerminalReader,
+        node_id: Entity,
+        out_id: &str,
+    ) -> Expr;
 }
 
 /// Width of the operator node, in pixels.
@@ -103,3 +113,7 @@ pub struct OpValuePrecision(pub usize);
 /// that have a numeric type parameter, such as an `Option<f32>` or `Vec<i8>`.
 #[derive(Debug, Clone, Reflect)]
 pub struct OpValueStep<T>(pub T);
+
+// / For attributes that represent an enum value, the list of names for each value.
+// #[derive(Debug, Clone, Reflect)]
+// pub struct OpEnumLabels(pub &'static [&'static str]);

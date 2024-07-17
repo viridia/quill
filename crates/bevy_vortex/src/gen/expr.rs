@@ -2,18 +2,22 @@
 // import { GraphNode } from '../graph';
 // import { FunctionDefn, OverloadDefn } from '../operators/FunctionDefn';
 
+use std::sync::Arc;
+
 use bevy::{
     color::LinearRgba,
-    math::{Vec2, Vec3},
+    math::{Vec2, Vec3, Vec4},
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DataType {
+    Void,
     I32,
     F32,
     Vec2,
     Vec3,
     Vec4,
+    LinearRgba,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,15 +58,54 @@ pub enum Expr {
     ConstF32(f32),
     ConstVec2(Vec2),
     ConstVec3(Vec3),
+    ConstVec4(Vec4),
     ConstColor(LinearRgba),
-    LocalDefn(DataType, String, Option<Box<Expr>>),
-    Assign(DataType, String, Box<Expr>),
+    LocalDefn(DataType, String, Option<Arc<Expr>>),
+    Assign(DataType, String, Arc<Expr>),
     RefLocal(DataType, String),
     RefInput(DataType, String),
-    RefUnform(DataType, String),
-    TypeCast(DataType, Box<Expr>),
-    GetAttr(DataType, Box<Expr>, String),
-    BinOp(DataType, Box<Expr>, BinOp),
+    RefUniform(DataType, String),
+    TypeCast(DataType, Arc<Expr>),
+    GetAttr(DataType, Arc<Expr>, String),
+    BinOp(DataType, BinOp, Arc<Expr>, Arc<Expr>),
+
+    // Function call
+    FnCall(DataType, String, Vec<Arc<Expr>>),
+
+    // Overloaded call, meaning we don't know which overload to use yet.
+    OvCall(DataType, String, Vec<Arc<Expr>>),
+}
+
+impl Expr {
+    pub fn typ(&self) -> DataType {
+        match self {
+            Expr::LiteralStr(_) => todo!(),
+            Expr::ConstI32(_) => DataType::I32,
+            Expr::ConstF32(_) => DataType::F32,
+            Expr::ConstVec2(_) => DataType::Vec2,
+            Expr::ConstVec3(_) => DataType::Vec3,
+            Expr::ConstVec4(_) => DataType::Vec4,
+            Expr::ConstColor(_) => DataType::Vec4,
+            Expr::LocalDefn(dt, _, _) => *dt,
+            Expr::Assign(_, _, _) => DataType::Void,
+            Expr::RefLocal(dt, _) => *dt,
+            Expr::RefInput(dt, _) => *dt,
+            Expr::RefUniform(dt, _) => *dt,
+            Expr::TypeCast(dt, _) => *dt,
+            Expr::GetAttr(dt, _, _) => *dt,
+            Expr::BinOp(dt, _, _, _) => *dt,
+            Expr::FnCall(dt, _, _) => *dt,
+            Expr::OvCall(dt, _, _) => *dt,
+        }
+    }
+
+    pub fn cast(&self, dt: DataType) -> Expr {
+        if self.typ() == dt {
+            self.clone()
+        } else {
+            Expr::TypeCast(dt, Arc::new(self.clone()))
+        }
+    }
 }
 
 // export type ExprKind =

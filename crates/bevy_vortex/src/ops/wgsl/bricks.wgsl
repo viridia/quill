@@ -1,4 +1,4 @@
-f32 bricks(
+fn bricks(
     uv: vec2<f32>,
     x_count: i32,
     y_count: i32,
@@ -7,12 +7,12 @@ f32 bricks(
     x_blur: f32,
     y_blur: f32,
     stagger: f32,
-    corner: i32) {
-  let y = uv.y * float(y_count);
+    corner: i32) -> f32 {
+  let y = uv.y * f32(y_count);
   let yr = floor(y);
   let yi = floor(y + 0.5);
   let yf = smootherstep(y_spacing, y_spacing + y_blur, abs(y - yi));
-  let x = uv.x * float(x_count) + (floor(yr * 0.5) * 2.0 == yr ? stagger : 0.0);
+  let x = uv.x * f32(x_count) + select(0.0, stagger, floor(yr * 0.5) * 2.0 == yr);
   let xi = floor(x + 0.5);
   let xf = smootherstep(x_spacing, x_spacing + x_blur, abs(x - xi));
   var value: f32;

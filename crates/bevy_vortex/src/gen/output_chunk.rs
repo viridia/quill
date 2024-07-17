@@ -31,12 +31,17 @@ impl LineWrapping {
         }
     }
 
-    pub fn break_line<W: Write>(&mut self, out: &mut W) -> Result<(), Error> {
-        out.write_char('\n')?;
-        self.current_line_indent = self.next_line_indent;
+    pub fn write_indent<W: Write>(&mut self, out: &mut W) -> Result<(), Error> {
         for _ in 0..(self.current_line_indent * INDENT_SIZE) {
             out.write_char(' ')?;
         }
+        Ok(())
+    }
+
+    pub fn break_line<W: Write>(&mut self, out: &mut W) -> Result<(), Error> {
+        out.write_char('\n')?;
+        self.current_line_indent = self.next_line_indent;
+        self.write_indent(out)?;
         self.line_length = self.current_line_indent * INDENT_SIZE;
         Ok(())
     }
@@ -61,7 +66,7 @@ pub enum OutputChunk {
     /// A statement block.
     Stmt(Vec<OutputChunk>),
     /// A return statement.
-    Ret(Vec<OutputChunk>),
+    Ret(Box<OutputChunk>),
     /// An infix operator.
     Infix {
         oper: String,
@@ -108,15 +113,15 @@ impl OutputChunk {
                     1 + (chunks.len() - 1) + chunks.iter().map(|c| c.length()).sum::<usize>()
                 }
             }
-            OutputChunk::Ret(chunks) => {
-                "return ".len() + chunks.iter().map(|c| c.length()).sum::<usize>() + 1
-            }
+            OutputChunk::Ret(chunk) => "return ".len() + chunk.length() + 1,
             OutputChunk::Infix {
                 oper,
                 args,
                 precedence: _,
             } => {
-                args.iter().map(|c| c.length()).sum::<usize>() + (args.len() - 1) * (oper.len() + 2)
+                let padding = if oper == "." { 0 } else { 1 };
+                args.iter().map(|c| c.length()).sum::<usize>()
+                    + (args.len() - 1) * (oper.len() + padding * 2)
             }
             OutputChunk::FCall { func, args } => {
                 func.len() + args.iter().map(|c| c.length()).sum::<usize>() + 2 * args.len()
@@ -148,11 +153,13 @@ impl OutputChunk {
         match self {
             OutputChunk::Literal(s) => out.write_str(s)?,
             OutputChunk::Str(s) => out.write_str(s)?,
+
             OutputChunk::Concat(chunks) => {
                 for chunk in chunks {
                     chunk.flatten(out)?;
                 }
             }
+
             OutputChunk::Parens(chunks) => {
                 out.write_char('(')?;
                 for (i, chunk) in chunks.iter().enumerate() {
@@ -163,6 +170,7 @@ impl OutputChunk {
                 }
                 out.write_char(')')?;
             }
+
             OutputChunk::Brackets(chunks) => {
                 out.write_char('[')?;
                 for (i, chunk) in chunks.iter().enumerate() {
@@ -173,6 +181,7 @@ impl OutputChunk {
                 }
                 out.write_char(']')?;
             }
+
             OutputChunk::Stmt(chunks) => {
                 for (i, chunk) in chunks.iter().enumerate() {
                     if i > 0 {
@@ -182,27 +191,33 @@ impl OutputChunk {
                 }
                 out.write_char(';')?;
             }
-            OutputChunk::Ret(chunks) => {
+
+            OutputChunk::Ret(chunk) => {
                 out.write_str("return ")?;
-                for chunk in chunks {
-                    chunk.flatten(out)?;
-                }
+                chunk.flatten(out)?;
                 out.write_char(';')?;
             }
+
             OutputChunk::Infix {
                 oper,
                 args,
                 precedence: _,
             } => {
+                let padding = if oper == "." { 0 } else { 1 };
                 for (i, chunk) in args.iter().enumerate() {
                     if i > 0 {
-                        out.write_char(' ')?;
+                        if padding > 0 {
+                            out.write_char(' ')?;
+                        }
                         out.write_str(oper)?;
-                        out.write_char(' ')?;
+                        if padding > 0 {
+                            out.write_char(' ')?;
+                        }
                     }
                     chunk.flatten(out)?;
                 }
             }
+
             OutputChunk::FCall { func, args } => {
                 out.write_str(func)?;
                 out.write_char('(')?;
@@ -225,10 +240,12 @@ impl OutputChunk {
                 wrap.line_length += str.len();
                 self.flatten(out)
             }
+
             OutputChunk::Str(str) => {
                 wrap.line_length += str.len();
                 self.flatten(out)
             }
+
             OutputChunk::Concat(chunks) => {
                 // Break line before each chunk that is not the first chunk.
                 for (i, chunk) in chunks.iter().enumerate() {
@@ -244,6 +261,7 @@ impl OutputChunk {
                 wrap.current_line_indent = saved_indent;
                 Ok(())
             }
+
             OutputChunk::Parens(chunks) => {
                 wrap.line_length += 1;
                 out.write_char('(')?;
@@ -268,6 +286,7 @@ impl OutputChunk {
                 wrap.current_line_indent = saved_indent;
                 out.write_char(')')
             }
+
             OutputChunk::Brackets(chunks) => {
                 wrap.line_length += 1;
                 out.write_char('[')?;
@@ -292,6 +311,7 @@ impl OutputChunk {
                 wrap.current_line_indent = saved_indent;
                 out.write_char(']')
             }
+
             OutputChunk::Stmt(chunks) => {
                 // Break line before separators.
                 for (i, chunk) in chunks.iter().enumerate() {
@@ -310,13 +330,64 @@ impl OutputChunk {
                 wrap.current_line_indent = saved_indent;
                 Ok(())
             }
-            OutputChunk::Ret(chunks) => todo!(),
+
+            OutputChunk::Ret(chunk) => {
+                out.write_str("return ")?;
+                wrap.line_length += "return ".len();
+                chunk.format(out, wrap)?;
+                out.write_char(';')
+            }
+
             OutputChunk::Infix {
                 oper,
                 precedence,
                 args,
-            } => todo!(),
-            OutputChunk::FCall { func, args } => todo!(),
+            } => {
+                // TODO: Precedence
+                let padding = if oper == "." { 0 } else { 1 };
+                for (i, chunk) in args.iter().enumerate() {
+                    if i > 0 {
+                        if !wrap.can_fit(chunk.length() + padding * 2) {
+                            wrap.next_line_indent = saved_indent + 1;
+                            wrap.break_line(out)?;
+                        } else if padding > 0 {
+                            out.write_char(' ')?;
+                            wrap.line_length += 1;
+                        }
+                        out.write_str(oper)?;
+                        wrap.line_length += oper.len();
+                        if padding > 0 {
+                            out.write_char(' ')?;
+                            wrap.line_length += 1;
+                        }
+                    }
+                    chunk.format(out, wrap)?;
+                }
+                Ok(())
+            }
+
+            OutputChunk::FCall { func, args } => {
+                out.write_str(func)?;
+                out.write_char('(')?;
+                wrap.line_length += func.len() + 1;
+                for (i, chunk) in args.iter().enumerate() {
+                    if wrap.can_fit(chunk.head_length() + 1) {
+                        if i > 0 {
+                            wrap.line_length += 2;
+                            out.write_str(", ")?;
+                        }
+                    } else {
+                        if i > 0 {
+                            wrap.line_length += 1;
+                            out.write_char(',')?;
+                        }
+                        wrap.next_line_indent = saved_indent + 1;
+                        wrap.break_line(out)?;
+                    }
+                    chunk.format(out, wrap)?;
+                }
+                out.write_char(')')
+            }
         }
     }
 }
@@ -380,10 +451,7 @@ mod tests {
 
     #[test]
     fn test_head_length_ret() {
-        let chunk = OutputChunk::Ret(vec![
-            OutputChunk::Literal(String::from("Hello")),
-            OutputChunk::Literal(String::from("world!")),
-        ]);
+        let chunk = OutputChunk::Ret(Box::new(OutputChunk::Literal(String::from("Hello"))));
         assert_eq!(chunk.head_length(), "return".len());
     }
 
@@ -483,13 +551,10 @@ mod tests {
 
     #[test]
     fn test_flatten_ret() {
-        let chunk = OutputChunk::Ret(vec![
-            OutputChunk::Literal(String::from("Hello")),
-            OutputChunk::Literal(String::from("world!")),
-        ]);
+        let chunk = OutputChunk::Ret(Box::new(OutputChunk::Literal(String::from("Hello"))));
         let mut output = String::new();
         chunk.flatten(&mut output).unwrap();
-        assert_eq!(output, "return Helloworld!;");
+        assert_eq!(output, "return Hello;");
         assert_eq!(output.len(), chunk.length());
     }
 

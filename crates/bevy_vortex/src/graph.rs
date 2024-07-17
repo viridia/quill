@@ -8,7 +8,10 @@ use bevy::{
 };
 use smallvec::SmallVec;
 
-use crate::operator::{Operator, OperatorInput, OperatorOutput};
+use crate::{
+    gen::{Expr, ShaderAssembly, TerminalReader},
+    operator::{Operator, OperatorInput, OperatorOutput},
+};
 
 #[derive(Resource, Default)]
 pub struct GraphResource(pub(crate) Graph);
@@ -243,6 +246,20 @@ impl GraphNode {
     /// Locate the output terminal with the specified name.
     pub fn get_output_terminal(&self, name: &'static str) -> Option<Entity> {
         self.outputs.iter().find(|t| t.0 == name).map(|t| t.1)
+    }
+
+    pub fn name(&self) -> &'static str {
+        self.operator.name()
+    }
+
+    pub fn gen(
+        &self,
+        assembly: &mut ShaderAssembly,
+        reader: &TerminalReader,
+        node_id: Entity,
+        out_id: &str,
+    ) -> Expr {
+        self.operator.gen(assembly, reader, node_id, out_id)
     }
 }
 

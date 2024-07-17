@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    gen::Expr,
+    gen::{Expr, ShaderAssembly, TerminalReader},
     operator::{
         DisplayName, OpValuePrecision, OpValueRange, Operator, OperatorCategory, OperatorClass,
         OperatorDescription, OperatorInput, OperatorOutput, ReflectOperator,
@@ -31,7 +31,13 @@ impl Operator for Grayscale {
         Box::new(self.clone())
     }
 
-    fn gen(&self) -> Expr {
+    fn gen(
+        &self,
+        _assembly: &mut ShaderAssembly,
+        _reader: &TerminalReader,
+        _node_id: Entity,
+        _out_id: &str,
+    ) -> Expr {
         // todo!()
         Expr::ConstColor(LinearRgba::RED)
     }

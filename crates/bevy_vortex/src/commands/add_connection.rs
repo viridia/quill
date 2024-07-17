@@ -6,8 +6,11 @@ use bevy::{
 use crate::graph::*;
 
 pub(crate) struct AddConnectionCmd {
+    /// Entity for the input terminal.
     pub(crate) input: Entity,
+    /// Entity for the output terminal.
     pub(crate) output: Entity,
+    // If set, the entity of the connection to replace.
     pub(crate) replace: Option<Entity>,
 }
 
@@ -60,9 +63,14 @@ impl Command for AddConnectionCmd {
         let (_, mut terminals) = st.get_mut(world);
         let mut input_terminal = terminals.get_mut(self.input).unwrap();
         input_terminal.connections.insert(id);
+        let input_node = input_terminal.node_id;
 
         let mut output_terminal = terminals.get_mut(self.output).unwrap();
         output_terminal.connections.insert(id);
+
+        // Mark input node as modified.
+        // TODO: Also mark all downstream nodes as modified.
+        world.entity_mut(input_node).insert(NodeModified);
 
         // Despawn old connections
         for conn_id in connections_to_remove.drain() {

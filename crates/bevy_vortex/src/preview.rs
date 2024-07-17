@@ -250,12 +250,6 @@ fn enter_mode_sphere(
             transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
             ..SpatialBundle::INHERITED_IDENTITY
         },
-        // MaterialMeshBundle::<PreviewMaterial> {
-        //     mesh: shape,
-        //     material: material.clone(),
-        //     transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
-        //     ..default()
-        // },
         PreviewShape,
     ));
 }
@@ -274,13 +268,6 @@ fn enter_mode_tetra(
                 .with_scale(Vec3::splat(1.4)),
             ..SpatialBundle::INHERITED_IDENTITY
         },
-        // MaterialMeshBundle::<PreviewMaterial> {
-        //     mesh: shape,
-        //     material: material.clone(),
-        //     transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.))
-        //         .with_scale(Vec3::splat(1.4)),
-        //     ..default()
-        // },
         PreviewShape,
     ));
 }
@@ -298,12 +285,6 @@ fn enter_mode_torus(
             transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
             ..SpatialBundle::INHERITED_IDENTITY
         },
-        // MaterialMeshBundle::<PreviewMaterial> {
-        //     mesh: shape,
-        //     material: material.clone(),
-        //     transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 4.)),
-        //     ..default()
-        // },
         PreviewShape,
     ));
 }
@@ -316,11 +297,11 @@ fn rotate_preview_shapes(mut query: Query<&mut Transform, With<PreviewShape>>, t
 
 /// Update the preview shader handle based on the selected node.
 fn update_preview_shader(
+    mut commands: Commands,
     q_selected: Query<(&NodeOutput, &NodeSelected)>,
+    q_preview_shapes: Query<Entity, With<PreviewShape>>,
     mut resource: ResMut<PreviewShaderHandle>,
     placeholder: Res<PlaceholderShaderHandle>,
-    // mut shaders: ResMut<Assets<Shader>>,
-    // mut materials: ResMut<Assets<PreviewMaterial>>,
 ) {
     let mut shader: Option<Handle<Shader>> = None;
     for (output, selected) in q_selected.iter() {
@@ -338,44 +319,22 @@ fn update_preview_shader(
         if resource.0 != handle {
             println!("Updating shader preview material to node output");
             resource.0 = handle.clone();
+            for shape_entity in q_preview_shapes.iter() {
+                commands
+                    .entity(shape_entity)
+                    .insert(NodeShader3dHandle(handle.clone()));
+            }
         }
     } else if resource.0 != placeholder.0 {
         println!("Updating shader preview material to placeholder");
         resource.0 = placeholder.0.clone();
+        for shape_entity in q_preview_shapes.iter() {
+            commands
+                .entity(shape_entity)
+                .insert(NodeShader3dHandle(placeholder.0.clone()));
+        }
     }
 }
-
-const PLACEHOLDER_SHADER_SRC: &str = "\
-#import bevy_pbr::{
-    mesh_functions,
-    view_transformations::position_world_to_clip
-}
-
-struct Vertex {
-    @builtin(instance_index) instance_index: u32,
-    @location(0) position: vec3<f32>,
-};
-struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) world_position: vec4<f32>,
-};
-
-@vertex
-fn vertex(vertex: Vertex) -> VertexOutput {
-    var out: VertexOutput;
-    var world_from_local = mesh_functions::get_world_from_local(vertex.instance_index);
-    out.world_position = mesh_functions::mesh_position_local_to_world(world_from_local, vec4(vertex.position, 1.0));
-    out.clip_position = position_world_to_clip(out.world_position.xyz);
-    return out;
-}
-@fragment
-fn fragment(
-    @builtin(front_facing) is_front: bool,
-    mesh: VertexOutput,
-) -> @location(0) vec4<f32> {
-    return vec4<f32>(0.5, 0.0, 0.0, 1.0);
-}
-";
 
 #[derive(Resource, Default)]
 struct PlaceholderShaderHandle(pub Handle<Shader>);
@@ -401,9 +360,11 @@ impl Plugin for PreviewPlugin {
 
     fn finish(&self, app: &mut App) {
         let mut shader_assets = app.world_mut().resource_mut::<Assets<Shader>>();
-        let handle = shader_assets.add(Shader::from_wgsl(PLACEHOLDER_SHADER_SRC, "".to_string()));
+        let handle = shader_assets.add(Shader::from_wgsl(
+            include_str!("placeholder_shader.wgsl"),
+            "".to_string(),
+        ));
         app.insert_resource(PlaceholderShaderHandle(handle.clone()));
         app.insert_resource(PreviewShaderHandle(handle));
-        println!("Preview plugin finished");
     }
 }

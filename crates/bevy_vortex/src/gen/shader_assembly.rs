@@ -1,82 +1,173 @@
-use std::fmt::{Error, Write};
+use std::{
+    fmt::{Error, Write},
+    sync::Arc,
+};
 
-use bevy::{prelude::*, utils::HashSet};
+use bevy::prelude::*;
+
+use super::{
+    output_chunk::{LineWrapping, OutputChunk},
+    pass::{codegen, lower_typecasts},
+    shader_imports::ShaderImports,
+    Expr,
+};
 
 /// Structure which contains all of the parts of a shader source.
 pub struct ShaderAssembly {
-    /// Entity for the graph node that defines this shader.
-    node: Entity,
+    /// Name of this shader.
+    name: String,
+
+    /// The expression that represents the return value of the fragment shader
+    fragment_value: Arc<Expr>,
+
+    /// Generated code for fragment shader.
+    source: String,
 
     /// Set of imports for the shader.
-    imports: HashSet<String>,
+    imports: ShaderImports,
+
+    /// Code snippets that are included in the shader module.
+    includes: Vec<&'static str>,
+
+    /// Whether the fragment shader needs position information.
+    pub(crate) needs_position: bool,
+
+    /// Whether the fragment shader needs normal information.
+    pub(crate) needs_normal: bool,
+
+    /// Whether the fragment shader needs texture coordinates.
+    pub(crate) needs_uv: bool,
 }
 
 impl ShaderAssembly {
     /// Create a new shader assembly.
-    pub fn new(node: Entity) -> Self {
+    pub fn new(name: String) -> Self {
         Self {
-            node,
-            imports: HashSet::default(),
+            name,
+            fragment_value: Arc::new(Expr::ConstColor(LinearRgba::WHITE)),
+            source: String::new(),
+            imports: ShaderImports::default(),
+            includes: Vec::new(),
+            needs_position: false,
+            needs_normal: false,
+            needs_uv: false,
         }
+    }
+
+    /// Include a utility function in the shader.
+    pub fn add_include(&mut self, include: &'static str) {
+        if !self.includes.contains(&include) {
+            self.includes.push(include);
+        }
+    }
+
+    pub fn add_common_imports(&mut self) {
+        self.add_import("bevy_pbr::mesh_functions");
+        self.add_import("bevy_pbr::view_transformations::position_world_to_clip");
     }
 
     /// Add an import depdenency to the shader.
-    pub fn add_import(&mut self, name: String) {
-        self.imports.insert(name);
+    pub fn add_import(&mut self, name: &'static str) {
+        self.imports.add(name);
     }
 
-    /// Generate the source code for the shader.
-    pub fn gen_source(&self) -> Result<String, Error> {
-        let mut out = String::new();
-        self.prelude(&mut out)?;
-        self.imports(&mut out)?;
-        // let attribs = self.attribs();
-        // let uniforms = self.uniforms();
-        // let main = self.main();
-        self.fragment(&mut out)?;
-
-        // [prelude, imports, attribs, uniforms, main].join("\n")
-        Ok(out)
+    /// Set the expression that represents the return value of the fragment shader.
+    pub fn set_fragment_value(&mut self, value: Arc<Expr>) {
+        self.fragment_value = value;
     }
 
-    /// Get the prelude for the shader.
-    fn prelude(&self, out: &mut String) -> Result<(), Error> {
-        out.write_str("#import bevy_ui::ui_vertex_output::UiVertexOutput\n")?;
-        // [
-        //     "#version 300 es",
-        //     "precision mediump float;",
-        //     "",
-        //     "// Shader for node",
-        //     "",
-        // ]
-        // .join("\n")
-        Ok(())
+    /// Return the source code for the shader.
+    pub fn source(&self) -> &str {
+        self.source.as_str()
     }
 
-    /// Get the imports for the shader.
-    fn imports(&self, out: &mut String) -> Result<(), Error> {
-        let mut result = String::new();
-        for name in &self.imports {
-            out.write_str(name)?;
-            out.write_char('\n')?;
-            // let chunk = by_name(name);
-            // if chunk.is_none() {
-            //     panic!("Invalid shader fragment: {}", name);
-            // }
+    /// Run transpilation passes
+    pub fn run_passes(&mut self) -> Result<(), Error> {
+        let mut source = String::new();
+        source.write_fmt(format_args!("// Shader for {}\n\n", self.name))?;
 
-            // result.push_str(&format!("// Imported from {}.glsl\n", name));
-            // result.push_str(&chunk.unwrap());
+        // Write imports
+        self.imports.write(&mut source)?;
+        source.write_str("\n")?;
+
+        // Write vertex input format
+        source.write_str("struct Vertex {\n")?;
+        source.write_str("    @builtin(instance_index) instance_index: u32,\n")?;
+        source.write_str("    @location(0) position: vec3<f32>,\n")?;
+        if self.needs_normal {
+            source.write_str("    @location(1) normal: vec3<f32>,\n")?;
+        }
+        if self.needs_uv {
+            source.write_str("    @location(2) uv: vec2<f32>,\n")?;
+        }
+        source.write_str("};\n\n")?;
+
+        // Write vertex output format
+        source.write_str("struct VertexOutput {\n")?;
+        source.write_str("    @builtin(position) position: vec4<f32>,\n")?;
+        source.write_str("    @location(0) world_position: vec4<f32>,\n")?;
+        if self.needs_normal {
+            source.write_str("    @location(1) world_normal: vec3<f32>,\n")?;
+        }
+        if self.needs_uv {
+            source.write_str("    @location(2) uv: vec2<f32>,\n")?;
+        }
+        source.write_str("};\n\n")?;
+
+        // Write vertex shader
+        source.write_str("@vertex\n")?;
+        source.write_str("fn vertex(vertex: Vertex) -> VertexOutput {\n")?;
+        source.write_str("    var out: VertexOutput;\n")?;
+        source.write_str("    var world_from_local = mesh_functions::get_world_from_local(vertex.instance_index);\n")?;
+        source.write_str("    out.world_position = mesh_functions::mesh_position_local_to_world(world_from_local, vec4(vertex.position, 1.0));\n")?;
+        source.write_str("    out.position = position_world_to_clip(out.world_position.xyz);\n")?;
+        if self.needs_normal {
+            source.write_str(
+                "    out.world_normal = mesh_functions::mesh_normal_local_to_world(\n",
+            )?;
+            source.write_str("        vertex.normal,\n")?;
+            source.write_str("        vertex.instance_index\n")?;
+            source.write_str("    );\n")?;
+        }
+        if self.needs_uv {
+            source.write_str("    out.uv = vertex.uv;\n")?;
+        }
+        source.write_str("    return out;\n")?;
+        source.write_str("}\n\n")?;
+
+        // Write fragment shader
+        source.write_str("@fragment\n")?;
+        source.write_str("fn fragment(\n")?;
+        source.write_str("    @builtin(front_facing) is_front: bool,\n")?;
+        source.write_str("    mesh: VertexOutput,\n")?;
+        source.write_str(") -> @location(0) vec4<f32> {\n")?;
+
+        let out = OutputChunk::Ret(Box::new(codegen(
+            lower_typecasts(Arc::new(Expr::TypeCast(
+                super::DataType::LinearRgba,
+                self.fragment_value.clone(),
+            )))
+            .as_ref(),
+        )));
+        let mut wrap = LineWrapping::new(100);
+        wrap.indent();
+        wrap.write_indent(&mut source)?;
+        out.format(&mut source, &mut wrap)?;
+        source.write_str("\n")?;
+        source.write_str("}\n")?;
+
+        // Add includes
+        for include in &self.includes {
+            source.write_char('\n')?;
+            source.write_str(include)?;
         }
 
+        println!("Shader source:\n{}", source);
+        self.source = source;
         Ok(())
     }
 
-    /// Get the attributes for the shader.
-    // fn attribs(&self) -> String {
-    //     ["in highp vec2 vTextureCoord;", "out vec4 fragColor;", ""].join("\n")
-    // }
-
-    /// Get the uniforms for the shader.
+    // / Get the uniforms for the shader.
     // fn uniforms(&self) -> String {
     //     let mut result = String::new();
     //     // let mut visited_nodes = HashSet::default();
@@ -89,87 +180,7 @@ impl ShaderAssembly {
     //     // result.push_str(&self.node.uniforms());
     //     result
     // }
-
-    /// Get the main function for the shader.
-    // fn fragment(&self) -> String {
-    //     ["void fragment() {", self.body(), "}"].join("\n")
-    // }
-
-    // / Get the body of the shader.
-    fn fragment(&self, out: &mut String) -> Result<(), Error> {
-        out.write_str(
-            "\
-@vertex
-fn vertex(vertex: Vertex) -> VertexOutput {
-    var out: VertexOutput;
-    var world_from_local = mesh_functions::get_world_from_local(vertex.instance_index);
-    out.world_position = mesh_functions::mesh_position_local_to_world(world_from_local, vec4(vertex.position, 1.0));
-    out.position = position_world_to_clip(out.world_position.xyz);
-    return vertex_output;
-}\n\n",
-        )?;
-        out.write_str("@fragment\n")?;
-        out.write_str("fn fragment(\n")?;
-        out.write_str("    @builtin(front_facing) is_front: bool,\n")?;
-        out.write_str("    mesh: VertexOutput,\n")?;
-        out.write_str(") -> @location(0) vec4<f32> {\n")?;
-        out.write_str("    return vec4<f32>(1.0, 0.0, 0.0, 1.0);\n")?;
-        out.write_str("}\n")?;
-        Ok(())
-    }
-
-    //     let mut stmts = Vec::new();
-    //     let result = self.node.read_output_value(self.node.outputs[]
 }
-
-// import { DataType } from '../operators';
-// import { Expr, assign, refLocal } from './Expr';
-// import { GraphNode } from '../graph';
-// import { byName } from '../operators/library/shaders';
-// import { lowerExprs } from './pass/transform';
-// import { generate } from './pass/generate';
-// import { printToString } from './codefmt/print';
-
-// /** Observer that regenerates a shader when the inputs change. */
-// export class ShaderAssembly {
-//   constructor(private node: GraphNode) {}
-
-//   public dispose() {}
-
-//   public get source(): string {
-//     return [...this.prelude, ...this.imports, ...this.attribs, ...this.uniforms, ...this.main].join(
-//       '\n'
-//     );
-//   }
-
-//   private get prelude(): string[] {
-//     return [
-//       '#version 300 es',
-//       'precision mediump float;',
-//       '',
-//       `// Shader for ${this.node.operator.name}`,
-//       '',
-//     ];
-//   }
-
-//   private get imports(): string[] {
-//     const result: string[] = [];
-//     this.node.transitiveImports.forEach(name => {
-//       const chunk = byName[name];
-//       if (!chunk) {
-//         throw Error(`Invalid shader fragment: ${name}`);
-//       }
-
-//       result.push(`// Imported from ${name}.glsl`);
-//       result.push(chunk);
-//     });
-
-//     return result;
-//   }
-
-//   private get attribs(): string[] {
-//     return ['in highp vec2 vTextureCoord;', 'out vec4 fragColor;', ''];
-//   }
 
 //   /** List of uniform declarations. */
 //   private get uniforms(): string[] {
@@ -182,10 +193,6 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 //       }
 //     });
 //     return ([] as string[]).concat(...result, this.node.uniforms);
-//   }
-
-//   private get main(): string[] {
-//     return ['void main() {', this.body, '}'];
 //   }
 
 //   private get body(): string {

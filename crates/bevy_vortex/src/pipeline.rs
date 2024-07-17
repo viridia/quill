@@ -17,9 +17,8 @@ use bevy::{
             BlendState, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
             DepthStencilState, Face, FragmentState, FrontFace, MultisampleState, PipelineCache,
             PolygonMode, PrimitiveState, RenderPipelineDescriptor, SpecializedMeshPipeline,
-            SpecializedMeshPipelineError, SpecializedMeshPipelines, SpecializedRenderPipeline,
-            SpecializedRenderPipelines, StencilState, TextureFormat, VertexBufferLayout,
-            VertexFormat, VertexState, VertexStepMode,
+            SpecializedMeshPipelineError, SpecializedMeshPipelines, StencilState, TextureFormat,
+            VertexState,
         },
         texture::BevyDefault,
         view::{self, ExtractedView, ViewTarget, VisibilitySystems, VisibleEntities},
@@ -74,10 +73,18 @@ impl SpecializedMeshPipeline for NodeShaderMesh3dPipeline {
             // Make sure this matches the shader location
             vertex_attributes.push(Mesh::ATTRIBUTE_POSITION.at_shader_location(0));
         }
-        if layout.0.contains(Mesh::ATTRIBUTE_COLOR) {
+        if layout.0.contains(Mesh::ATTRIBUTE_NORMAL) {
             // Make sure this matches the shader location
-            vertex_attributes.push(Mesh::ATTRIBUTE_COLOR.at_shader_location(1));
+            vertex_attributes.push(Mesh::ATTRIBUTE_NORMAL.at_shader_location(1));
         }
+        if layout.0.contains(Mesh::ATTRIBUTE_UV_0) {
+            // Make sure this matches the shader location
+            vertex_attributes.push(Mesh::ATTRIBUTE_UV_0.at_shader_location(2));
+        }
+        // if layout.0.contains(Mesh::ATTRIBUTE_COLOR) {
+        //     // Make sure this matches the shader location
+        //     vertex_attributes.push(Mesh::ATTRIBUTE_COLOR.at_shader_location(1));
+        // }
         let vertex_buffer_layout = layout.0.get_layout(&vertex_attributes)?;
 
         let format = match key.mesh_key.contains(MeshPipelineKey::HDR) {
