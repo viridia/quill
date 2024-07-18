@@ -1,6 +1,6 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-use crate::graph::{Connection, GraphNode, Terminal};
+use crate::graph::{Connection, GraphNode, GraphNodeId, Terminal};
 
 use super::{Expr, ShaderAssembly};
 
@@ -55,5 +55,9 @@ impl<'w, 's> TerminalReader<'w, 's> {
         } else {
             None
         }
+    }
+
+    pub fn get_node_index(&self, node_id: Entity) -> GraphNodeId {
+        self.nodes.get(node_id).unwrap().index
     }
 }

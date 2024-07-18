@@ -45,7 +45,7 @@ impl Operator for Geometry {
         match out_id {
             "position" => {
                 assembly.needs_position = true;
-                Expr::RefLocal(DataType::Vec3, "mesh.position.xyz".to_string())
+                Expr::RefLocal(DataType::Vec3, "mesh.position_local.xyz".to_string())
             }
             "normal" => {
                 assembly.needs_normal = true;

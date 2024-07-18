@@ -12,6 +12,13 @@ use super::{
     Expr,
 };
 
+struct ShaderLocalVar {
+    name: String,
+    data_type: super::DataType,
+    mutable: bool,
+    init: Arc<Expr>,
+}
+
 /// Structure which contains all of the parts of a shader source.
 pub struct ShaderAssembly {
     /// Name of this shader.
@@ -28,6 +35,9 @@ pub struct ShaderAssembly {
 
     /// Code snippets that are included in the shader module.
     includes: Vec<&'static str>,
+
+    /// Local variable definitions. Note we use a vector here so we can preserve declaration order.
+    locals: Vec<ShaderLocalVar>,
 
     /// Whether the fragment shader needs position information.
     pub(crate) needs_position: bool,
@@ -48,6 +58,7 @@ impl ShaderAssembly {
             source: String::new(),
             imports: ShaderImports::default(),
             includes: Vec::new(),
+            locals: Vec::new(),
             needs_position: false,
             needs_normal: false,
             needs_uv: false,
@@ -74,6 +85,30 @@ impl ShaderAssembly {
     /// Set the expression that represents the return value of the fragment shader.
     pub fn set_fragment_value(&mut self, value: Arc<Expr>) {
         self.fragment_value = value;
+    }
+
+    /// Declare a local variable in the shader.
+    /// Need to return:
+    /// Whether the var already exists
+    /// a way to initialize it.
+    pub fn declare_local(
+        &mut self,
+        name: String,
+        data_type: super::DataType,
+        mutable: bool,
+        init: Arc<Expr>,
+    ) {
+        self.locals.push(ShaderLocalVar {
+            name,
+            data_type,
+            mutable,
+            init,
+        });
+    }
+
+    /// Return true if the given local variable has already been declared.
+    pub fn local_exists(&self, name: &String) -> bool {
+        self.locals.iter().any(|var| var.name == *name)
     }
 
     /// Return the source code for the shader.
@@ -112,6 +147,9 @@ impl ShaderAssembly {
         if self.needs_uv {
             source.write_str("    @location(2) uv: vec2<f32>,\n")?;
         }
+        if self.needs_position {
+            source.write_str("    @location(3) position_local: vec3<f32>,\n")?;
+        }
         source.write_str("};\n\n")?;
 
         // Write vertex shader
@@ -132,6 +170,9 @@ impl ShaderAssembly {
         if self.needs_uv {
             source.write_str("    out.uv = vertex.uv;\n")?;
         }
+        if self.needs_position {
+            source.write_str("    out.position_local = vertex.position;\n")?;
+        }
         source.write_str("    return out;\n")?;
         source.write_str("}\n\n")?;
 
@@ -142,6 +183,26 @@ impl ShaderAssembly {
         source.write_str("    mesh: VertexOutput,\n")?;
         source.write_str(") -> @location(0) vec4<f32> {\n")?;
 
+        let mut wrap = LineWrapping::new(100);
+        wrap.indent();
+
+        // Write local variables
+        for local in &self.locals {
+            wrap.write_indent(&mut source)?;
+            let init = lower_typecasts(Arc::new(Expr::TypeCast(
+                local.data_type,
+                local.init.clone(),
+            )));
+            let chunk = OutputChunk::Stmt(vec![
+                OutputChunk::Str(if local.mutable { "var" } else { "let" }),
+                OutputChunk::Literal(local.name.clone()),
+                OutputChunk::Str("="),
+                codegen(init.as_ref()),
+            ]);
+            chunk.format(&mut source, &mut wrap)?;
+        }
+
+        // Write return result
         let out = OutputChunk::Ret(Box::new(codegen(
             lower_typecasts(Arc::new(Expr::TypeCast(
                 super::DataType::LinearRgba,
@@ -149,8 +210,7 @@ impl ShaderAssembly {
             )))
             .as_ref(),
         )));
-        let mut wrap = LineWrapping::new(100);
-        wrap.indent();
+
         wrap.write_indent(&mut source)?;
         out.format(&mut source, &mut wrap)?;
         source.write_str("\n")?;
@@ -194,18 +254,3 @@ impl ShaderAssembly {
 //     });
 //     return ([] as string[]).concat(...result, this.node.uniforms);
 //   }
-
-//   private get body(): string {
-//     // Get expressions
-//     const stmts: Expr[] = [];
-//     const result = this.node.readOutputValue(this.node.outputs[0], stmts);
-
-//     // Transform expessions
-//     lowerExprs(assign(refLocal('fragColor', DataType.VEC4), result), stmts);
-
-//     return printToString(stmts.map(generate), {
-//       maxWidth: 100,
-//       initialIndent: 1,
-//     });
-//   }
-// }

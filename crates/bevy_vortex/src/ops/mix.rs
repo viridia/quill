@@ -65,7 +65,7 @@ impl Operator for Mix {
 
         Expr::FnCall(
             DataType::LinearRgba,
-            "mix".to_string(),
+            "mix",
             vec![Arc::new(src_a), Arc::new(src_b), Arc::new(factor)],
         )
     }

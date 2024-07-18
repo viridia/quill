@@ -6,6 +6,7 @@ mod geometry;
 mod grayscale;
 mod mix;
 mod output;
+mod simplex_noise;
 mod wgsl;
 
 use bricks::Bricks;
@@ -14,6 +15,7 @@ use geometry::Geometry;
 use grayscale::Grayscale;
 use mix::Mix;
 use output::Output;
+use simplex_noise::SimplexNoise;
 
 pub struct OperatorsPlugin;
 
@@ -26,6 +28,7 @@ impl Plugin for OperatorsPlugin {
             .register_type::<Geometry>()
             .register_type::<Grayscale>()
             .register_type::<Mix>()
-            .register_type::<Output>();
+            .register_type::<Output>()
+            .register_type::<SimplexNoise>();
     }
 }

@@ -27,7 +27,7 @@ pub use terminal_reader::TerminalReader;
 #[derive(Component)]
 pub struct RebuildTask(Task<BuildShaderResult>);
 
-pub struct BuildShaderResult(String);
+pub struct BuildShaderResult(Shader);
 
 #[derive(Component)]
 pub struct NodeOutput {
@@ -50,9 +50,8 @@ pub(crate) fn finish_build_shaders(
         if let Some(result) = status {
             let mut entt = commands.entity(node_id);
             entt.remove::<RebuildTask>();
-            let source = result.0;
+            let shader = result.0;
             // println!("Shader built:\n{}", source);
-            let shader = Shader::from_wgsl(source, "".to_string());
             if let Ok(output) = q_output.get(node_id) {
                 // Update shader asset in-place.
                 shaders.insert(output.shader.id(), shader);
@@ -96,7 +95,8 @@ pub(crate) fn begin_build_shaders(
                 // println!("Task spawned");
                 // let assembly = ShaderAssembly::new(modified);
                 assembly.run_passes().unwrap();
-                BuildShaderResult(assembly.source().to_owned())
+                let shader = Shader::from_wgsl(assembly.source().to_owned(), "".to_string());
+                BuildShaderResult(shader)
             });
             entt.insert(RebuildTask(task));
         }

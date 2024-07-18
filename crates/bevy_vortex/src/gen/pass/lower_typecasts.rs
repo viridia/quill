@@ -32,36 +32,32 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
                 (_, DataType::Void) => panic!("Cannot cast expression from void type"),
 
                 (DataType::I32, DataType::F32) => {
-                    Arc::new(Expr::FnCall(DataType::I32, "i32".to_string(), vec![expr]))
+                    Arc::new(Expr::FnCall(DataType::I32, "i32", vec![expr]))
                 }
 
                 // Use only x, then cast to i32
                 (DataType::I32, DataType::Vec2 | DataType::Vec3 | DataType::Vec4) => {
                     Arc::new(Expr::FnCall(
                         DataType::I32,
-                        "i32".to_string(),
-                        vec![Arc::new(Expr::GetAttr(
-                            DataType::Vec3,
-                            expr,
-                            "x".to_string(),
-                        ))],
+                        "i32",
+                        vec![Arc::new(Expr::GetAttr(DataType::Vec3, expr, "x"))],
                     ))
                 }
 
                 // Extract luminance, convert to i32
                 (DataType::I32, DataType::LinearRgba) => Arc::new(Expr::FnCall(
                     DataType::I32,
-                    "i32".to_string(),
+                    "i32",
                     vec![Arc::new(Expr::GetAttr(
                         DataType::Vec3,
                         Arc::new(Expr::FnCall(
                             DataType::F32,
-                            "dot".to_string(),
+                            "dot",
                             vec![
                                 expr,
                                 Arc::new(Expr::FnCall(
                                     DataType::Vec3,
-                                    "vec3<f32>".to_string(),
+                                    "vec3f",
                                     vec![
                                         Arc::new(Expr::ConstF32(0.2126)),
                                         Arc::new(Expr::ConstF32(0.7152)),
@@ -71,29 +67,29 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
                                 )),
                             ],
                         )),
-                        "x".to_string(),
+                        "x",
                     ))],
                 )),
 
                 // Simple numeric cast
                 (DataType::F32, DataType::I32) => {
-                    Arc::new(Expr::FnCall(DataType::F32, "f32".to_string(), vec![expr]))
+                    Arc::new(Expr::FnCall(DataType::F32, "f32", vec![expr]))
                 }
 
                 // Use only x
                 (DataType::F32, DataType::Vec2 | DataType::Vec3 | DataType::Vec4) => {
-                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xyz".to_string()))
+                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xyz"))
                 }
 
                 // For color to f32, extract luminance
                 (DataType::F32, DataType::LinearRgba) => Arc::new(Expr::FnCall(
                     DataType::F32,
-                    "dot".to_string(),
+                    "dot",
                     vec![
                         expr,
                         Arc::new(Expr::FnCall(
                             DataType::Vec3,
-                            "vec3<f32>".to_string(),
+                            "vec3f",
                             vec![
                                 Arc::new(Expr::ConstF32(0.2126)),
                                 Arc::new(Expr::ConstF32(0.7152)),
@@ -107,93 +103,75 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
                 // Splat constructor with f32 conversion
                 (DataType::Vec2, DataType::I32) => Arc::new(Expr::FnCall(
                     DataType::Vec2,
-                    "vec2<f32>".to_string(),
-                    vec![Arc::new(Expr::FnCall(
-                        DataType::F32,
-                        "f32".to_string(),
-                        vec![expr],
-                    ))],
+                    "vec2<f32>",
+                    vec![Arc::new(Expr::FnCall(DataType::F32, "f32", vec![expr]))],
                 )),
 
                 // Splat constructor
-                (DataType::Vec2, DataType::F32) => Arc::new(Expr::FnCall(
-                    DataType::Vec3,
-                    "vec2<f32>".to_string(),
-                    vec![expr],
-                )),
+                (DataType::Vec2, DataType::F32) => {
+                    Arc::new(Expr::FnCall(DataType::Vec3, "vec2<f32>", vec![expr]))
+                }
 
                 // Use only xy
                 (DataType::Vec2, DataType::Vec3) => {
-                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xy".to_string()))
+                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xy"))
                 }
 
                 // Use only xy
                 (DataType::Vec2, DataType::Vec4) => {
-                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xy".to_string()))
+                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xy"))
                 }
 
                 // Use only rg
                 (DataType::Vec2, DataType::LinearRgba) => {
-                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "rg".to_string()))
+                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "rg"))
                 }
 
                 // Splat constructor with f32 conversion
                 (DataType::Vec3, DataType::I32) => Arc::new(Expr::FnCall(
                     DataType::Vec3,
-                    "vec3<f32>".to_string(),
-                    vec![Arc::new(Expr::FnCall(
-                        DataType::F32,
-                        "f32".to_string(),
-                        vec![expr],
-                    ))],
+                    "vec3f",
+                    vec![Arc::new(Expr::FnCall(DataType::F32, "f32", vec![expr]))],
                 )),
 
                 // Splat constructor
-                (DataType::Vec3, DataType::F32) => Arc::new(Expr::FnCall(
-                    DataType::Vec3,
-                    "vec3<f32>".to_string(),
-                    vec![expr],
-                )),
+                (DataType::Vec3, DataType::F32) => {
+                    Arc::new(Expr::FnCall(DataType::Vec3, "vec3f", vec![expr]))
+                }
 
                 // Spread constructor with z=0
                 (DataType::Vec3, DataType::Vec2) => Arc::new(Expr::FnCall(
                     DataType::Vec3,
-                    "vec3<f32>".to_string(),
+                    "vec3f",
                     vec![expr, Arc::new(Expr::ConstF32(0.0))],
                 )),
 
                 // Use only xyz
                 (DataType::Vec3, DataType::Vec4) => {
-                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xyz".to_string()))
+                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "xyz"))
                 }
 
                 // Drop alpha
                 (DataType::Vec3, DataType::LinearRgba) => {
-                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "rgb".to_string()))
+                    Arc::new(Expr::GetAttr(DataType::Vec3, expr, "rgb"))
                 }
 
                 // Splat constructor with f32 conversion
                 (DataType::Vec4, DataType::I32) => Arc::new(Expr::FnCall(
                     DataType::Vec4,
-                    "vec4<f32>".to_string(),
-                    vec![Arc::new(Expr::FnCall(
-                        DataType::F32,
-                        "f32".to_string(),
-                        vec![expr],
-                    ))],
+                    "vec4f",
+                    vec![Arc::new(Expr::FnCall(DataType::F32, "f32", vec![expr]))],
                 )),
 
                 // Splat constructor
-                (DataType::Vec4, DataType::F32) => Arc::new(Expr::FnCall(
-                    DataType::Vec3,
-                    "vec4<f32>".to_string(),
-                    vec![expr],
-                )),
+                (DataType::Vec4, DataType::F32) => {
+                    Arc::new(Expr::FnCall(DataType::Vec3, "vec4f", vec![expr]))
+                }
 
                 // Spread constructor with zw=0
                 (DataType::Vec4, DataType::Vec2) => Arc::new(Expr::FnCall(
                     DataType::Vec4,
-                    "vec3<f32>".to_string(),
+                    "vec3f",
                     vec![
                         expr,
                         Arc::new(Expr::ConstF32(0.0)),
@@ -204,31 +182,27 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
                 // Spread constructor with w=0
                 (DataType::Vec4, DataType::Vec3) => Arc::new(Expr::FnCall(
                     DataType::Vec4,
-                    "vec3<f32>".to_string(),
+                    "vec3f",
                     vec![expr, Arc::new(Expr::ConstF32(0.0))],
                 )),
                 (DataType::Vec4, DataType::LinearRgba) => expr,
 
                 (DataType::LinearRgba, DataType::I32) => todo!("cast i32 to rgba"),
 
-                // Splat constructor with alpha: `vec4<f32>(vec3<f32>(expr), 1.0)`
+                // Splat constructor with alpha: `vec4f(vec3f(expr), 1.0)`
                 (DataType::LinearRgba, DataType::F32) => Arc::new(Expr::FnCall(
                     DataType::LinearRgba,
-                    "vec4<f32>".to_string(),
+                    "vec4f",
                     vec![
-                        Arc::new(Expr::FnCall(
-                            DataType::Vec3,
-                            "vec3<f32>".to_string(),
-                            vec![expr],
-                        )),
+                        Arc::new(Expr::FnCall(DataType::Vec3, "vec3f", vec![expr])),
                         Arc::new(Expr::ConstF32(1.0)),
                     ],
                 )),
 
-                // Assign to RG, default BA: `vec4<f32>(expr, 0.0, 1.0)`
+                // Assign to RG, default BA: `vec4f(expr, 0.0, 1.0)`
                 (DataType::LinearRgba, DataType::Vec2) => Arc::new(Expr::FnCall(
                     DataType::LinearRgba,
-                    "vec4<f32>".to_string(),
+                    "vec4f",
                     vec![
                         expr,
                         Arc::new(Expr::ConstF32(0.0)),
@@ -236,10 +210,10 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
                     ],
                 )),
 
-                // Assign to RGB, default A: `vec4<f32>(expr, 1.0)`
+                // Assign to RGB, default A: `vec4f(expr, 1.0)`
                 (DataType::LinearRgba, DataType::Vec3) => Arc::new(Expr::FnCall(
                     DataType::LinearRgba,
-                    "vec4<f32>".to_string(),
+                    "vec4f",
                     vec![expr, Arc::new(Expr::ConstF32(1.0))],
                 )),
 
@@ -250,11 +224,9 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
             }
         }
 
-        Expr::GetAttr(dt, base, fieldname) => Arc::new(Expr::GetAttr(
-            *dt,
-            lower_typecasts(base.clone()),
-            fieldname.clone(),
-        )),
+        Expr::GetAttr(dt, base, fieldname) => {
+            Arc::new(Expr::GetAttr(*dt, lower_typecasts(base.clone()), fieldname))
+        }
 
         Expr::BinOp(_, _, _, _) => todo!(),
 
@@ -263,7 +235,7 @@ pub fn lower_typecasts(expr: Arc<Expr>) -> Arc<Expr> {
                 .iter()
                 .map(|arg| lower_typecasts(arg.clone()))
                 .collect();
-            Arc::new(Expr::FnCall(expr.typ(), f.clone(), args))
+            Arc::new(Expr::FnCall(expr.typ(), f, args))
         }
         Expr::OvCall(_, _, _args) => todo!(),
     }

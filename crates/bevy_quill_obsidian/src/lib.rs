@@ -88,8 +88,6 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             UiMaterialPlugin::<SliderRectMaterial>::default(),
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
-            // UiMaterialPlugin::<DotGridMaterial>::default(),
-            // UiMaterialPlugin::<DrawPathMaterial>::default(),
             hooks::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
             focus::KeyboardInputPlugin,

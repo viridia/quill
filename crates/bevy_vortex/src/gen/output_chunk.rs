@@ -34,6 +34,7 @@ impl LineWrapping {
     pub fn write_indent<W: Write>(&mut self, out: &mut W) -> Result<(), Error> {
         for _ in 0..(self.current_line_indent * INDENT_SIZE) {
             out.write_char(' ')?;
+            self.line_length += 1;
         }
         Ok(())
     }
@@ -42,7 +43,6 @@ impl LineWrapping {
         out.write_char('\n')?;
         self.current_line_indent = self.next_line_indent;
         self.write_indent(out)?;
-        self.line_length = self.current_line_indent * INDENT_SIZE;
         Ok(())
     }
 
@@ -75,7 +75,7 @@ pub enum OutputChunk {
     },
     /// A function call.
     FCall {
-        func: String,
+        func: &'static str,
         args: Vec<OutputChunk>,
     },
 }
@@ -108,7 +108,7 @@ impl OutputChunk {
             }
             OutputChunk::Stmt(chunks) => {
                 if chunks.is_empty() {
-                    1
+                    1 // Semicolon
                 } else {
                     1 + (chunks.len() - 1) + chunks.iter().map(|c| c.length()).sum::<usize>()
                 }
@@ -327,6 +327,8 @@ impl OutputChunk {
                     }
                     chunk.format(out, wrap)?;
                 }
+                out.write_char(';')?;
+                wrap.break_line(out)?;
                 wrap.current_line_indent = saved_indent;
                 Ok(())
             }
@@ -471,7 +473,7 @@ mod tests {
     #[test]
     fn test_head_length_fcall() {
         let chunk = OutputChunk::FCall {
-            func: String::from("println"),
+            func: "println",
             args: vec![
                 OutputChunk::Literal(String::from("Hello")),
                 OutputChunk::Literal(String::from("world!")),
@@ -577,7 +579,7 @@ mod tests {
     #[test]
     fn test_flatten_fcall() {
         let chunk = OutputChunk::FCall {
-            func: String::from("println"),
+            func: "println",
             args: vec![
                 OutputChunk::Literal(String::from("Hello")),
                 OutputChunk::Literal(String::from("world!")),

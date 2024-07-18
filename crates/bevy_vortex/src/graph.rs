@@ -26,18 +26,6 @@ pub struct NodeObserver {
     pub(crate) node: Option<Entity>,
 }
 
-/// Defines whether the material output of a node has changed, and whether it's being rebuilt.
-#[derive(PartialEq, Clone, Copy, Default)]
-pub enum NodeOutputState {
-    /// Material handle is up to date.
-    Ready,
-    /// Material has changed, but is not rebuilding.
-    #[default]
-    Modified,
-    /// Material is being rebuilt in an async task.
-    Building,
-}
-
 /// A Vortex node graph.
 #[derive(Default)]
 pub struct Graph {

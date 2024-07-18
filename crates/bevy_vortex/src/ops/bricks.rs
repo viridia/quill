@@ -104,7 +104,7 @@ impl Operator for Bricks {
 
         Expr::FnCall(
             DataType::F32,
-            "bricks".to_string(),
+            "bricks",
             vec![
                 Arc::new(uv),
                 Arc::new(Expr::ConstI32(self.x_count)),

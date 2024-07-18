@@ -66,11 +66,11 @@ pub enum Expr {
     RefInput(DataType, String),
     RefUniform(DataType, String),
     TypeCast(DataType, Arc<Expr>),
-    GetAttr(DataType, Arc<Expr>, String),
+    GetAttr(DataType, Arc<Expr>, &'static str),
     BinOp(DataType, BinOp, Arc<Expr>, Arc<Expr>),
 
     // Function call
-    FnCall(DataType, String, Vec<Arc<Expr>>),
+    FnCall(DataType, &'static str, Vec<Arc<Expr>>),
 
     // Overloaded call, meaning we don't know which overload to use yet.
     OvCall(DataType, String, Vec<Arc<Expr>>),

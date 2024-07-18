@@ -93,7 +93,7 @@ pub(crate) fn position_floating(
     let wh = window.resolution.physical_height() as f32;
     let sf = window.resolution.scale_factor();
 
-    let window_rect = Rect::new(0., 0., ww / sf, wh / sf).inflate(8.);
+    let window_rect = Rect::new(0., 0., ww / sf, wh / sf).inflate(-8.);
 
     for (mut style, target_node, floating, floating_transform) in query.iter_mut() {
         let Ok((anchor, anchor_transform)) = anchor_query.get(floating.anchor) else {
@@ -189,9 +189,9 @@ pub(crate) fn position_floating(
             }
 
             // Clip to window and see how much of the floating element is occluded.
-            let clipped_rect = floating_rect.intersect(window_rect);
-            let occlusion = floating_rect.width() * floating_rect.height()
-                - clipped_rect.width() * clipped_rect.height();
+            let clipped_rect = rect.intersect(window_rect);
+            let occlusion =
+                rect.width() * rect.height() - clipped_rect.width() * clipped_rect.height();
 
             // Find the position that has the least occlusion.
             if occlusion < best_occluded {
@@ -202,6 +202,22 @@ pub(crate) fn position_floating(
         }
 
         if best_occluded < f32::MAX {
+            if best_rect.min.x < window_rect.min.x {
+                best_rect.min.x += window_rect.min.x - best_rect.min.x;
+                best_rect.max.x += window_rect.min.x - best_rect.min.x;
+            } else if best_rect.max.x > window_rect.max.x {
+                best_rect.min.x += window_rect.max.x - best_rect.max.x;
+                best_rect.max.x += window_rect.max.x - best_rect.max.x;
+            }
+
+            if best_rect.min.y < window_rect.min.y {
+                best_rect.min.y += window_rect.min.y - best_rect.min.y;
+                best_rect.max.y += window_rect.min.y - best_rect.min.y;
+            } else if best_rect.max.y > window_rect.max.y {
+                best_rect.min.y += window_rect.max.y - best_rect.max.y;
+                best_rect.max.y += window_rect.max.y - best_rect.max.y;
+            }
+
             style.left = ui::Val::Px(best_rect.min.x);
             style.top = ui::Val::Px(best_rect.min.y);
             if best_position.stretch {

@@ -13,11 +13,11 @@ pub fn codegen(expr: &Expr) -> OutputChunk {
             }
         }
         Expr::ConstVec2(v) => OutputChunk::FCall {
-            func: "vec2f".to_string(),
+            func: "vec2f",
             args: vec![codegen(&Expr::ConstF32(v.x)), codegen(&Expr::ConstF32(v.y))],
         },
         Expr::ConstVec3(v) => OutputChunk::FCall {
-            func: "vec3f".to_string(),
+            func: "vec3f",
             args: vec![
                 codegen(&Expr::ConstF32(v.x)),
                 codegen(&Expr::ConstF32(v.y)),
@@ -25,7 +25,7 @@ pub fn codegen(expr: &Expr) -> OutputChunk {
             ],
         },
         Expr::ConstVec4(v) => OutputChunk::FCall {
-            func: "vec4f".to_string(),
+            func: "vec4f",
             args: vec![
                 codegen(&Expr::ConstF32(v.x)),
                 codegen(&Expr::ConstF32(v.y)),
@@ -34,7 +34,7 @@ pub fn codegen(expr: &Expr) -> OutputChunk {
             ],
         },
         Expr::ConstColor(color) => OutputChunk::FCall {
-            func: "vec4f".to_string(),
+            func: "vec4f",
             args: vec![
                 codegen(&Expr::ConstF32(color.red)),
                 codegen(&Expr::ConstF32(color.green)),
@@ -51,7 +51,7 @@ pub fn codegen(expr: &Expr) -> OutputChunk {
         Expr::GetAttr(_, expr, fieldname) => OutputChunk::Infix {
             oper: ".".to_string(),
             precedence: 1,
-            args: vec![codegen(expr), OutputChunk::Literal(fieldname.clone())],
+            args: vec![codegen(expr), OutputChunk::Str(fieldname)],
         },
         Expr::BinOp(_, _, _, _) => todo!(),
         Expr::FnCall(_, f, args) => OutputChunk::FCall {
