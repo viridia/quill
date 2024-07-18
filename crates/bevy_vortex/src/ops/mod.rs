@@ -5,8 +5,8 @@ mod color;
 mod geometry;
 mod grayscale;
 mod mix;
+mod noise;
 mod output;
-mod simplex_noise;
 mod wgsl;
 
 use bricks::Bricks;
@@ -14,8 +14,8 @@ use color::ConstColor;
 use geometry::Geometry;
 use grayscale::Grayscale;
 use mix::Mix;
+use noise::Noise;
 use output::Output;
-use simplex_noise::SimplexNoise;
 
 pub struct OperatorsPlugin;
 
@@ -29,6 +29,6 @@ impl Plugin for OperatorsPlugin {
             .register_type::<Grayscale>()
             .register_type::<Mix>()
             .register_type::<Output>()
-            .register_type::<SimplexNoise>();
+            .register_type::<Noise>();
     }
 }

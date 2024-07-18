@@ -16,12 +16,11 @@ use super::wgsl::NOISED;
 #[reflect(
     Operator,
     Default,
-    @DisplayName("Simplex Noise"),
     @OperatorClass(OperatorCategory::Generator),
     @OperatorDescription("
 Simplex Noise.
 "))]
-pub struct SimplexNoise {
+pub struct Noise {
     /// Output color
     #[reflect(@OperatorOutput, @DisplayName("Out"))]
     pub output: f32,
@@ -65,7 +64,7 @@ pub struct SimplexNoise {
     pub distortion: f32,
 }
 
-impl Operator for SimplexNoise {
+impl Operator for Noise {
     fn to_boxed_clone(&self) -> Box<dyn Operator> {
         Box::new(self.clone())
     }
@@ -133,9 +132,9 @@ impl Operator for SimplexNoise {
     }
 }
 
-impl Default for SimplexNoise {
+impl Default for Noise {
     fn default() -> Self {
-        SimplexNoise {
+        Noise {
             output: 0.0,
             d_output: Vec3::ZERO,
             vector: Vec3::ZERO,
