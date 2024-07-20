@@ -20,11 +20,11 @@ pub struct Mix {
     pub output: LinearRgba,
 
     /// Input color A
-    #[reflect(@OperatorInput, @DisplayName("In"))]
+    #[reflect(@OperatorInput, @DisplayName("A"))]
     pub input_a: LinearRgba,
 
     /// Input color B
-    #[reflect(@OperatorInput, @DisplayName("A"))]
+    #[reflect(@OperatorInput, @DisplayName("B"))]
     pub input_b: LinearRgba,
 
     /// Mix factor, from 0 to 1.

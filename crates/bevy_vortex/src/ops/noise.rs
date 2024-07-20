@@ -18,7 +18,7 @@ use super::wgsl::NOISED;
     Default,
     @OperatorClass(OperatorCategory::Generator),
     @OperatorDescription("
-Simplex Noise.
+Fractal Noise.
 "))]
 pub struct Noise {
     /// Output color

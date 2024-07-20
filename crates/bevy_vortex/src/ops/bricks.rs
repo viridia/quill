@@ -117,52 +117,7 @@ impl Operator for Bricks {
                 Arc::new(Expr::ConstI32(0)),
             ],
         )
-
-        // assembly.add_import("embedded://bevy_vortex/ops/wgsl/smootherstep.wgsl".to_string());
-        // assembly.add_import("embedded://bevy_vortex/ops/wgsl/bricks.wgsl".to_string());
-        // let uv = node.read_input::<Vec2>("uv");
-        // if uv.is_none() {
-        //     uv = "in.uv";
-        // }
-
-        // let x_count = node.prop_value::<i32>("x_count");
-
-        // f32 bricks(
-        //     uv: vec2<f32>,
-        //     x_count: i32,
-        //     y_count: i32,
-        //     x_spacing: f32,
-        //     y_spacing: f32,
-        //     x_blur: f32,
-        //     y_blur: f32,
-        //     stagger: f32,
-        //     corner: i32) {
-        //   let y = uv.y * float(y_count);
-        //   let yr = floor(y);
-        //   let yi = floor(y + 0.5);
-        //   let yf = smootherstep(y_spacing, y_spacing + y_blur, abs(y - yi));
-        //   let x = uv.x * float(x_count) + (floor(yr * 0.5) * 2.0 == yr ? stagger : 0.0);
-        //   let xi = floor(x + 0.5);
-        //   let xf = smootherstep(x_spacing, x_spacing + x_blur, abs(x - xi));
-        //   var value: f32;
-        //   if corner == 1 { // Mitered
-        //     value = max(0., (xf + yf) - 1.0);
-        //   } else if corner == 2 { // Rounded
-        //     value = max(0., 1. - sqrt((1.-xf) * (1.-xf) + (1.-yf) * (1.-yf)));
-        //   } else { // Square
-        //     value = min(xf, yf);
-        //   }
-        //   return value;
-        // }
-
-        // todo!()
-        // Expr::ConstF32(self.x_spacing)
     }
-
-    // fn get_deps(&self, assembly: &mut ShaderAssembly) {
-    //     assembly.add_import("embedded://bevy_vortex/ops/wgsl/smootherstep.wgsl".to_string());
-    //     assembly.add_import("embedded://bevy_vortex/ops/wgsl/bricks.wgsl".to_string());
-    // }
 }
 
 impl Default for Bricks {
@@ -172,8 +127,8 @@ impl Default for Bricks {
             uv: Vec2::default(),
             x_count: 2,
             y_count: 4,
-            x_spacing: 0.25,
-            y_spacing: 0.25,
+            x_spacing: 0.05,
+            y_spacing: 0.1,
             x_blur: 0.0,
             y_blur: 0.0,
             stagger: 0.5,
