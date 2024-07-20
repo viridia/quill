@@ -224,6 +224,24 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
 #[derive(Component)]
 pub struct ViewThunk(pub(crate) &'static dyn AnyViewAdapter);
 
+impl ViewThunk {
+    pub fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan {
+        self.0.nodes(world, entity)
+    }
+
+    pub fn rebuild(&self, world: &mut World, entity: Entity, scope: &mut TrackingScope) -> bool {
+        self.0.rebuild(world, entity, scope)
+    }
+
+    pub fn raze(&self, world: &mut World, entity: Entity) {
+        self.0.raze(world, entity)
+    }
+
+    pub fn attach_children(&self, world: &mut World, entity: Entity) -> bool {
+        self.0.attach_children(world, entity)
+    }
+}
+
 /// An ECS component which marks a view entity as being the root of a view hierarchy. This is
 /// used as a starting point for top-down traversals.
 #[derive(Component)]
