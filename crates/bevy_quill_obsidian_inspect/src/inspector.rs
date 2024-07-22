@@ -1,9 +1,11 @@
 use std::sync::Arc;
-
+use bevy::prelude::{In, World};
 use bevy::reflect::{ParsedPath, ReflectKind};
 use bevy_quill_core::*;
-use bevy_quill_obsidian::controls::Spacer;
-
+use bevy_quill_obsidian::{
+    controls::{Spacer, DisclosureToggle},
+    size::Size
+};
 use crate::{
     inspectors::{
         r#struct::{StructFieldList, StructInspectorHeaderControls},
@@ -58,8 +60,15 @@ impl ViewTemplate for Inspector {
             can_remove: true,
             attributes: None,
         });
+        let expanded = cx.create_mutable(true);
         InspectorPanel::new()
             .title((
+                DisclosureToggle::new()
+                    .size(Size::Xs)
+                    .expanded(expanded.get(cx))
+                    .on_change(cx.create_callback(move |value: In<bool>, world: &mut World| {
+                        expanded.set(world, *value);
+                    })),
                 self.target.name(cx),
                 Spacer,
                 StructInspectorHeaderControls {
@@ -67,6 +76,6 @@ impl ViewTemplate for Inspector {
                 },
             ))
             .body(self.create_fields(cx, inspectable))
-            .expanded(true)
+            .expanded(expanded.get(cx))
     }
 }
