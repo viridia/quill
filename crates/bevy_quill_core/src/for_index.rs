@@ -1,4 +1,4 @@
-use bevy::ecs::world::World;
+use bevy::ecs::world::{DeferredWorld, World};
 
 use crate::View;
 
@@ -113,7 +113,10 @@ where
             prev_len -= 1;
             let child_state = &mut state.0[prev_len];
             if let Some(ref view) = child_state.view {
-                view.raze(cx.world_mut(), &mut child_state.state);
+                view.raze(
+                    &mut DeferredWorld::from(cx.world_mut()),
+                    &mut child_state.state,
+                );
             }
             state.0.pop();
             changed = true;
@@ -124,7 +127,7 @@ where
             match state.1 {
                 // If there are > 0 items, destroy fallback if present.
                 Some(ref mut fb_ent) if next_len > 0 => {
-                    fallback.raze(cx.world_mut(), fb_ent);
+                    fallback.raze(&mut DeferredWorld::from(cx.world_mut()), fb_ent);
                     state.1 = None;
                     changed = true;
                 }
@@ -143,7 +146,7 @@ where
         changed
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         let prev_len = state.0.len();
 
         let mut i = 0usize;

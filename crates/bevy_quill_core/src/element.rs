@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
+use bevy::{ecs::world::DeferredWorld, prelude::*};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 
 use crate::{
@@ -242,18 +242,18 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
         false
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         #[cfg(feature = "verbose")]
         info!("Razing element: {}", state.0);
 
         // Delete the display node.
-        world.entity_mut(state.0).remove_parent();
+        world.commands().entity(state.0).remove_parent();
         if self.display.is_none() {
             // Only despawn the display entity if we created it. If we got it from the outside,
             // then it's the responsibility of the caller to clean it up.
-            world.entity_mut(state.0).despawn();
+            world.commands().entity(state.0).despawn();
         } else {
-            world.entity_mut(state.0).remove::<B>();
+            world.commands().entity(state.0).remove::<B>();
         }
         self.children.raze(world, &mut state.1);
     }

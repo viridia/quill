@@ -59,7 +59,7 @@ pub trait View: Sync + Send + 'static {
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
-    fn raze(&self, world: &mut World, state: &mut Self::State);
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State);
 
     // / Build a ViewRoot from this view.
     fn to_root(self) -> (ViewStateCell<Self>, ViewThunk, ViewRoot)
@@ -100,7 +100,7 @@ impl<V: View> ViewState<V> {
         }
     }
 
-    fn raze(&mut self, world: &mut World) {
+    fn raze(&mut self, world: &mut DeferredWorld) {
         if let Some(state) = self.state.as_mut() {
             self.view.raze(world, state);
         }
@@ -167,7 +167,7 @@ pub trait AnyViewAdapter: Sync + Send + 'static {
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
-    fn raze(&self, world: &mut World, entity: Entity);
+    fn raze(&self, world: &mut DeferredWorld, entity: Entity);
 
     /// Instructs the view to attach any child entities to the parent entity. This is called
     /// whenever we know that one or more child entities have changed.
@@ -203,9 +203,10 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
         }
     }
 
-    fn raze(&self, world: &mut World, entity: Entity) {
-        if let Some(vsh) = world.entity_mut(entity).take::<ViewStateCell<V>>() {
-            vsh.0.lock().unwrap().raze(world);
+    fn raze(&self, world: &mut DeferredWorld, entity: Entity) {
+        if let Some(vsh) = world.entity(entity).get::<ViewStateCell<V>>() {
+            let inner = vsh.0.clone();
+            inner.lock().unwrap().raze(world);
         }
     }
 
@@ -233,7 +234,7 @@ impl ViewThunk {
         self.0.rebuild(world, entity, scope)
     }
 
-    pub fn raze(&self, world: &mut World, entity: Entity) {
+    pub fn raze(&self, world: &mut DeferredWorld, entity: Entity) {
         self.0.raze(world, entity)
     }
 
@@ -261,7 +262,7 @@ impl View for () {
         false
     }
 
-    fn raze(&self, _world: &mut World, _state: &mut Self::State) {}
+    fn raze(&self, _world: &mut DeferredWorld, _state: &mut Self::State) {}
 }
 
 impl<V: View> View for (V,) {
@@ -279,7 +280,7 @@ impl<V: View> View for (V,) {
         self.0.rebuild(cx, state)
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         self.0.raze(world, state)
     }
 }
@@ -311,7 +312,7 @@ impl View for Tuple {
         changed
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         for_tuples!(#( self.Tuple.raze(world, &mut state.Tuple); )*)
     }
 
@@ -354,7 +355,7 @@ impl<V: View> View for Option<V> {
         }
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         match (self, state) {
             (Some(view), Some(state)) => view.raze(world, state),
             (None, None) => {}
@@ -379,7 +380,7 @@ pub trait AnyView: Sync + Send + 'static {
     fn rebuild(&self, cx: &mut Cx, state: &mut BoxedState) -> bool;
     #[allow(unused)]
     fn attach_children(&self, world: &mut World, state: &mut BoxedState) -> bool;
-    fn raze(&self, world: &mut World, state: &mut BoxedState);
+    fn raze(&self, world: &mut DeferredWorld, state: &mut BoxedState);
     fn view_type_id(&self) -> std::any::TypeId;
 }
 
@@ -409,7 +410,7 @@ impl<V: View> AnyView for V {
         View::attach_children(self, world, state.downcast_mut::<V::State>().unwrap())
     }
 
-    fn raze(&self, world: &mut World, state: &mut BoxedState) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut BoxedState) {
         if let Some(state) = state.downcast_mut::<V::State>() {
             View::raze(self, world, state);
         } else {
@@ -581,4 +582,26 @@ pub(crate) fn reattach_children(world: &mut World) {
             break;
         }
     }
+}
+
+/// Observer which is called when a view root is despawned.
+// pub(crate) fn cleanup_view_roots(
+//     trigger: Trigger<OnRemove, ViewRoot>,
+//     q_roots: Query<&ViewThunk>,
+//     mut commands: Commands,
+// ) {
+//     let entity = trigger.entity();
+//     if let Ok(thunk) = q_roots.get(entity) {
+//         println!("cleanup_view_roots");
+//         thunk.0.raze(&mut commands, entity);
+//     }
+// }
+
+pub(crate) fn cleanup_view_roots(world: &mut World) {
+    world
+        .register_component_hooks::<ViewRoot>()
+        .on_remove(|mut world, entity, _component| {
+            let thunk = world.get_mut::<ViewThunk>(entity).unwrap();
+            thunk.0.raze(&mut world, entity);
+        });
 }

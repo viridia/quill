@@ -1,4 +1,4 @@
-use bevy::ecs::world::World;
+use bevy::ecs::world::{DeferredWorld, World};
 
 use crate::{Cx, View};
 
@@ -54,7 +54,7 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(cx.world_mut(), state);
+                    self.raze(&mut DeferredWorld::from(cx.world_mut()), state);
                     *state = Self::State::True(self.pos.build(cx));
                     true
                 }
@@ -68,7 +68,7 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(cx.world_mut(), state);
+                    self.raze(&mut DeferredWorld::from(cx.world_mut()), state);
                     *state = Self::State::False(self.neg.build(cx));
                     true
                 }
@@ -83,7 +83,7 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
         }
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         match state {
             Self::State::True(ref mut true_state) => self.pos.raze(world, true_state),
             Self::State::False(ref mut false_state) => self.neg.raze(world, false_state),

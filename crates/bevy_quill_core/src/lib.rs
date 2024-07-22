@@ -65,7 +65,7 @@ pub struct QuillPlugin;
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(StyleBuilderPlugin)
-            .add_systems(Startup, cleanup_tracking_scopes)
+            .add_systems(Startup, (cleanup_tracking_scopes, cleanup_view_roots))
             .add_systems(
                 Update,
                 (build_views, reaction_control_system, reattach_children)

@@ -6,7 +6,7 @@ mod common;
 
 use bevy::prelude::*;
 use bevy_mod_picking::{debug::DebugPickingMode, DefaultPickingPlugins};
-use bevy_quill::{Cx, Element, QuillPlugin, View, ViewTemplate, ViewThunk};
+use bevy_quill::{Cx, Element, QuillPlugin, View, ViewTemplate};
 use bevy_quill_obsidian::ObsidianUiPlugin;
 use common::*;
 
@@ -45,8 +45,6 @@ fn enter_paused_state(mut commands: Commands) {
 fn exit_paused_state(world: &mut World) {
     let mut q_ui_root = world.query_filtered::<Entity, With<PauseUiMarker>>();
     let ui_root = q_ui_root.single(world);
-    let thunk = world.entity_mut(ui_root).take::<ViewThunk>().unwrap();
-    thunk.raze(world, ui_root);
     world.entity_mut(ui_root).despawn();
 }
 

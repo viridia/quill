@@ -1,4 +1,4 @@
-use bevy::ecs::world::World;
+use bevy::ecs::world::{DeferredWorld, World};
 use bevy::prelude::Entity;
 use bevy::ui::TargetCamera;
 
@@ -38,7 +38,7 @@ impl<A: View> View for Portal<A> {
         self.children.rebuild(cx, &mut state.0)
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         self.children.raze(world, &mut state.0)
     }
 

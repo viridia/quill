@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::node_span::NodeSpan;
 use crate::{AnyView, Cx, View};
-use bevy::ecs::world::World;
+use bevy::ecs::world::{DeferredWorld, World};
 use bevy::prelude::Entity;
 
 type BoxedState = Box<dyn Any + Send + Sync>;
@@ -36,7 +36,7 @@ impl View for ViewChild {
         AnyView::attach_children(self.0.as_ref(), world, state)
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         AnyView::raze(self.0.as_ref(), world, state)
     }
 
@@ -109,7 +109,7 @@ impl View for Vec<ViewChild> {
         changed
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         for (view, state) in self.iter().zip(state.iter_mut()) {
             View::raze(view, world, state);
         }

@@ -1,7 +1,8 @@
 use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, NodeSpan, View, ViewThunk};
 use bevy::{
     core::Name,
-    hierarchy::BuildWorldChildren,
+    ecs::world::DeferredWorld,
+    hierarchy::{BuildChildren, BuildWorldChildren},
     prelude::{Component, Entity, World},
 };
 use std::sync::{Arc, Mutex};
@@ -110,18 +111,17 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         }
     }
 
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
+    fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
         let entity = state.0;
 
         #[cfg(feature = "verbose")]
         info!("raze() {}", entity);
 
-        let mut entt = world.entity_mut(entity);
-        let cell = entt.take::<ViewTemplateStateCell<VT>>().unwrap();
-        let mut inner = cell.0.lock().unwrap();
+        let entt = world.entity_mut(entity);
+        let cell = entt.get::<ViewTemplateStateCell<VT>>().unwrap().0.clone();
+        let mut inner = cell.lock().unwrap();
         inner.raze(world);
-        world.entity_mut(entity).remove_parent();
-        world.entity_mut(entity).despawn();
+        world.commands().entity(entity).remove_parent().despawn();
     }
 }
 
@@ -149,7 +149,7 @@ impl<VT: ViewTemplate> ViewTemplateState<VT> {
         self.view.rebuild(cx, &mut self.state)
     }
 
-    fn raze(&mut self, world: &mut World) {
+    fn raze(&mut self, world: &mut DeferredWorld) {
         // println!("Razing View Template: {}", std::any::type_name::<VT>());
         self.view.raze(world, &mut self.state);
     }
@@ -173,7 +173,7 @@ impl<VT: ViewTemplate> ViewTemplateStateCell<VT> {
         self.0.lock().unwrap().nodes(world)
     }
 
-    pub fn raze(&self, world: &mut World) {
+    pub fn raze(&self, world: &mut DeferredWorld) {
         self.0.lock().unwrap().raze(world);
     }
 
@@ -219,9 +219,10 @@ impl<VF: ViewTemplate> AnyViewAdapter for ViewTemplateAdapter<VF> {
         }
     }
 
-    fn raze(&self, world: &mut World, entity: Entity) {
-        if let Some(view_cell) = world.entity_mut(entity).take::<ViewTemplateStateCell<VF>>() {
-            view_cell.raze(world);
+    fn raze(&self, world: &mut DeferredWorld, entity: Entity) {
+        if let Some(view_cell) = world.entity_mut(entity).get::<ViewTemplateStateCell<VF>>() {
+            let inner = view_cell.0.clone();
+            inner.lock().unwrap().raze(world);
         }
     }
 }
