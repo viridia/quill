@@ -21,6 +21,7 @@ pub enum DataType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(unused)]
 pub enum BinOp {
     Add,
     Sub,
@@ -39,6 +40,7 @@ impl BinOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(unused)]
 pub enum Precedence {
     Group,
     AddSub,
@@ -52,6 +54,7 @@ pub enum Precedence {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(unused)]
 pub enum Expr {
     LiteralStr(String),
     ConstI32(i32),

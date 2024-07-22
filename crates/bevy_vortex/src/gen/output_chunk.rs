@@ -52,6 +52,7 @@ impl LineWrapping {
 }
 
 /// Represents a chunk of output code with predifined locations for line-breaking / wrapping.
+#[allow(unused)]
 pub enum OutputChunk {
     /// A literal string.
     Literal(String),

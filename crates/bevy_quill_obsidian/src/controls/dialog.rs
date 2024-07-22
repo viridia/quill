@@ -1,4 +1,5 @@
 use bevy::{
+    a11y::Focus,
     color::{Alpha, Luminance},
     prelude::*,
     ui,
@@ -121,8 +122,26 @@ impl ViewTemplate for Dialog {
         let state = cx.create_bistable_transition(self.open, TRANSITION_DURATION);
         let children = self.children.clone();
         let width = self.width;
+        let save_focus = cx.create_mutable::<Option<Entity>>(None);
+
+        cx.create_effect(
+            |world, (open, save_focus)| {
+                if open {
+                    let focus = world.get_resource::<Focus>().unwrap();
+                    save_focus.set(world, focus.0);
+                }
+            },
+            (self.open, save_focus),
+        );
 
         if state == BistableTransitionState::Exited {
+            let saved_focus = save_focus
+                .get(cx.world())
+                .filter(|&focus| cx.world().get_entity(focus).is_some());
+            let mut focus = cx.world_mut().get_resource_mut::<Focus>().unwrap();
+            if focus.0 != saved_focus {
+                focus.0 = saved_focus;
+            }
             if let Some(on_exited) = on_exited {
                 cx.run_callback(on_exited, ());
             }
