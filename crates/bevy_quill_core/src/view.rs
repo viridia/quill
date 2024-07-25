@@ -1,7 +1,6 @@
 use crate::{
     cx::Cx,
     tracking_scope::{TrackingScope, TrackingScopeTracing},
-    NodeSpan,
 };
 use bevy::{
     // core::{DebugName, Name},
@@ -32,7 +31,7 @@ pub trait View: Sync + Send + 'static {
     type State: Send + Sync;
 
     /// Return the span of entities produced by this View.
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan;
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>);
 
     /// Construct and patch the tree of UiNodes produced by this view.
     /// This may also spawn child entities representing nested components.
@@ -78,7 +77,7 @@ pub trait View: Sync + Send + 'static {
     }
 }
 
-/// Marker on a [`View`] entity to indicate that it's output [`NodeSpan`] has changed, and that
+/// Marker on a [`View`] entity to indicate that it's output [`Vec<Entity>`] has changed, and that
 /// the parent needs to re-attach it's children.
 #[derive(Component)]
 pub struct OutputChanged;
@@ -158,7 +157,7 @@ pub struct ViewAdapter<V: View> {
 /// The dynamic trait used by [`ViewAdapter`]. See also [`ViewThunk`].
 pub trait AnyViewAdapter: Sync + Send + 'static {
     /// Return the span of entities produced by this View.
-    fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan;
+    fn nodes(&self, world: &mut World, entity: Entity, out: &mut Vec<Entity>);
 
     /// Update the internal state of this view, re-creating any UiNodes. Returns true if the output
     /// changed, that is, if `nodes()` would return a different value than it did before the
@@ -175,16 +174,13 @@ pub trait AnyViewAdapter: Sync + Send + 'static {
 }
 
 impl<V: View> AnyViewAdapter for ViewAdapter<V> {
-    fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan {
-        match world.entity(entity).get::<ViewStateCell<V>>() {
-            Some(view_cell) => {
-                let vstate = view_cell.0.lock().unwrap();
-                match &vstate.state {
-                    Some(state) => vstate.view.nodes(world, state),
-                    None => NodeSpan::Empty,
-                }
+    fn nodes(&self, world: &mut World, entity: Entity, out: &mut Vec<Entity>) {
+        if let Some(view_cell) = world.entity(entity).get::<ViewStateCell<V>>() {
+            let vstate = view_cell.0.lock().unwrap();
+            match &vstate.state {
+                Some(state) => vstate.view.nodes(world, state, out),
+                None => {}
             }
-            None => NodeSpan::Empty,
         }
     }
 
@@ -226,8 +222,8 @@ impl<V: View> AnyViewAdapter for ViewAdapter<V> {
 pub struct ViewThunk(pub(crate) &'static dyn AnyViewAdapter);
 
 impl ViewThunk {
-    pub fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan {
-        self.0.nodes(world, entity)
+    pub fn nodes(&self, world: &mut World, entity: Entity, out: &mut Vec<Entity>) {
+        self.0.nodes(world, entity, out);
     }
 
     pub fn rebuild(&self, world: &mut World, entity: Entity, scope: &mut TrackingScope) -> bool {
@@ -252,9 +248,7 @@ pub struct ViewRoot;
 impl View for () {
     type State = ();
 
-    fn nodes(&self, _world: &World, _state: &Self::State) -> NodeSpan {
-        NodeSpan::Empty
-    }
+    fn nodes(&self, _world: &World, _state: &Self::State, _out: &mut Vec<Entity>) {}
 
     fn build(&self, _cx: &mut Cx) -> Self::State {}
 
@@ -268,8 +262,8 @@ impl View for () {
 impl<V: View> View for (V,) {
     type State = V::State;
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        self.0.nodes(world, state)
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        self.0.nodes(world, state, out);
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
@@ -296,10 +290,8 @@ impl View for Tuple {
     // }
 
     #[rustfmt::skip]
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        NodeSpan::Fragment(Box::new([
-            for_tuples!(#( self.Tuple.nodes(world, &state.Tuple) ),*)
-        ]))
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        for_tuples!(#( self.Tuple.nodes(world, &state.Tuple, out); )*);
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
@@ -328,10 +320,9 @@ impl View for Tuple {
 impl<V: View> View for Option<V> {
     type State = Option<V::State>;
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        match (self, state) {
-            (Some(view), Some(state)) => view.nodes(world, state),
-            _ => NodeSpan::Empty,
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        if let (Some(view), Some(state)) = (self, state) {
+            view.nodes(world, state, out)
         }
     }
 
@@ -375,7 +366,7 @@ pub(crate) type BoxedState = Box<dyn Any + Send + Sync>;
 
 /// A type-erased [`ViewTuple`].
 pub trait AnyView: Sync + Send + 'static {
-    fn nodes(&self, world: &World, state: &BoxedState) -> NodeSpan;
+    fn nodes(&self, world: &World, state: &BoxedState, out: &mut Vec<Entity>);
     fn build(&self, cx: &mut Cx) -> BoxedState;
     fn rebuild(&self, cx: &mut Cx, state: &mut BoxedState) -> bool;
     #[allow(unused)]
@@ -385,10 +376,9 @@ pub trait AnyView: Sync + Send + 'static {
 }
 
 impl<V: View> AnyView for V {
-    fn nodes(&self, world: &World, state: &BoxedState) -> NodeSpan {
-        match state.downcast_ref::<V::State>() {
-            Some(state) => View::nodes(self, world, state),
-            None => NodeSpan::Empty,
+    fn nodes(&self, world: &World, state: &BoxedState, out: &mut Vec<Entity>) {
+        if let Some(state) = state.downcast_ref::<V::State>() {
+            View::nodes(self, world, state, out)
         }
     }
 

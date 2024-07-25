@@ -4,8 +4,6 @@ use bevy::ui::TargetCamera;
 
 use crate::View;
 
-use crate::node_span::NodeSpan;
-
 /// A `Portal` represents a UI node that is displayed with no parent node, causing it's location to
 /// be relative to the window rather than any parent node. This only affects the display hierarchy,
 /// the [`View`] hierarchy is unaffected.
@@ -23,9 +21,7 @@ impl<A: View> Portal<A> {
 impl<A: View> View for Portal<A> {
     type State = (A::State, Option<Entity>);
 
-    fn nodes(&self, _world: &World, _state: &Self::State) -> NodeSpan {
-        NodeSpan::Empty
-    }
+    fn nodes(&self, _world: &World, _state: &Self::State, _out: &mut Vec<Entity>) {}
 
     fn build(&self, cx: &mut crate::Cx) -> Self::State {
         let camera = cx
@@ -46,7 +42,8 @@ impl<A: View> View for Portal<A> {
         self.children.attach_children(world, &mut state.0);
         // Make sure all children are on the correct camera.
         if let Some(camera) = state.1 {
-            let nodes = self.children.nodes(world, &state.0);
+            let mut nodes: Vec<Entity> = Vec::new();
+            self.children.nodes(world, &state.0, &mut nodes);
             for node in nodes.to_vec().iter() {
                 world.entity_mut(*node).insert(TargetCamera(camera));
             }

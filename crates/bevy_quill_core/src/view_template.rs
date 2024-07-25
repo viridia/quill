@@ -1,4 +1,4 @@
-use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, NodeSpan, View, ViewThunk};
+use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, View, ViewThunk};
 use bevy::{
     core::Name,
     ecs::world::DeferredWorld,
@@ -26,9 +26,9 @@ pub trait ViewTemplate: Send + Sync + 'static {
 }
 
 impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
-    type State = (Entity, NodeSpan);
+    type State = (Entity, Vec<Entity>);
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
         #[cfg(feature = "verbose")]
         info!("nodes() {}", state.0);
 
@@ -40,7 +40,7 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         let entt = world.entity(entity);
         let cell = entt.get::<ViewTemplateStateCell<VT>>().unwrap();
         let inner = cell.0.lock().unwrap();
-        inner.nodes(world)
+        inner.nodes(world, out);
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
@@ -60,7 +60,8 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         let mut cx_inner = Cx::new(cx.world_mut(), child_entity, &mut scope);
         let view = self.create(&mut cx_inner);
         let state = view.build(&mut cx_inner);
-        let nodes = view.nodes(cx.world(), &state);
+        let mut nodes: Vec<Entity> = Vec::new();
+        view.nodes(cx.world(), &state, &mut nodes);
         let cell = ViewTemplateState::new(self.clone(), view, state);
         let thunk = cell.create_thunk();
         cx.world_mut().entity_mut(child_entity).insert((
@@ -102,7 +103,8 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         let entt = world.entity_mut(entity);
         let cell = entt.get::<ViewTemplateStateCell<VT>>().unwrap();
         let inner = cell.0.clone();
-        let nodes = inner.lock().unwrap().nodes(world);
+        let mut nodes: Vec<Entity> = Vec::new();
+        inner.lock().unwrap().nodes(world, &mut nodes);
         if state.1 != nodes {
             state.1 = nodes;
             true
@@ -140,8 +142,8 @@ impl<VT: ViewTemplate> ViewTemplateState<VT> {
         }
     }
 
-    fn nodes(&self, world: &World) -> NodeSpan {
-        self.view.nodes(world, &self.state)
+    fn nodes(&self, world: &World, out: &mut Vec<Entity>) {
+        self.view.nodes(world, &self.state, out);
     }
 
     fn rebuild(&mut self, cx: &mut Cx) -> bool {
@@ -169,8 +171,8 @@ impl<VT: ViewTemplate> ViewTemplateState<VT> {
 pub struct ViewTemplateStateCell<VF: ViewTemplate>(Arc<Mutex<ViewTemplateState<VF>>>);
 
 impl<VT: ViewTemplate> ViewTemplateStateCell<VT> {
-    fn nodes(&self, world: &World) -> NodeSpan {
-        self.0.lock().unwrap().nodes(world)
+    fn nodes(&self, world: &World, out: &mut Vec<Entity>) {
+        self.0.lock().unwrap().nodes(world, out);
     }
 
     pub fn raze(&self, world: &mut DeferredWorld) {
@@ -187,10 +189,9 @@ pub struct ViewTemplateAdapter<VF: ViewTemplate> {
 }
 
 impl<VF: ViewTemplate> AnyViewAdapter for ViewTemplateAdapter<VF> {
-    fn nodes(&self, world: &mut World, entity: Entity) -> NodeSpan {
-        match world.entity(entity).get::<ViewTemplateStateCell<VF>>() {
-            Some(view_cell) => view_cell.nodes(world),
-            None => NodeSpan::Empty,
+    fn nodes(&self, world: &mut World, entity: Entity, out: &mut Vec<Entity>) {
+        if let Some(view_cell) = world.entity(entity).get::<ViewTemplateStateCell<VF>>() {
+            view_cell.nodes(world, out)
         }
     }
 

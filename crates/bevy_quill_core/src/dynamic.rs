@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use bevy::ecs::world::{DeferredWorld, World};
+use bevy::prelude::Entity;
 
 use crate::{AnyView, BoxedState, View, ViewChild};
-
-use crate::node_span::NodeSpan;
 
 /// A view which understands that it's children may change type. When this happens,
 /// the old children are razed and the new children are built.
@@ -26,8 +25,8 @@ impl Dynamic {
 impl View for Dynamic {
     type State = (Arc<dyn AnyView>, BoxedState);
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        state.0.nodes(world, &state.1)
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        state.0.nodes(world, &state.1, out);
     }
 
     fn build(&self, cx: &mut crate::Cx) -> Self::State {

@@ -7,7 +7,6 @@ use crate::{
     cx::Cx,
     effects::{self, AppendEffect, CallbackEffect, EffectTuple, EntityEffect},
     insert::{ConditionalInsertComponentEffect, InsertBundleEffect, StaticInsertBundleEffect},
-    node_span::NodeSpan,
     style::{ApplyDynamicStylesEffect, ApplyStaticStylesEffect},
     view::View,
 };
@@ -191,8 +190,8 @@ impl<B: Bundle + Default, C: View, E: EffectTuple> Element<B, C, E> {
 impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B, C, E> {
     type State = (Entity, C::State, E::State);
 
-    fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
-        NodeSpan::Node(state.0)
+    fn nodes(&self, _world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        out.push(state.0);
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
@@ -226,7 +225,8 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
 
         // Build child nodes.
         let children = self.children.build(cx);
-        let nodes = self.children.nodes(cx.world(), &children);
+        let mut nodes: Vec<Entity> = Vec::new();
+        self.children.nodes(cx.world(), &children, &mut nodes);
         cx.world_mut()
             .entity_mut(display)
             .replace_children(&nodes.to_vec());
@@ -261,7 +261,8 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
         assert!(world.get_entity(state.0).is_some());
         self.children.attach_children(world, &mut state.1);
-        let nodes = self.children.nodes(world, &state.1);
+        let mut nodes: Vec<Entity> = Vec::new();
+        self.children.nodes(world, &state.1, &mut nodes);
         world.entity_mut(state.0).replace_children(&nodes.to_vec());
         false
     }

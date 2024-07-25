@@ -1,7 +1,6 @@
 use std::any::Any;
 use std::sync::Arc;
 
-use crate::node_span::NodeSpan;
 use crate::{AnyView, Cx, View};
 use bevy::ecs::world::{DeferredWorld, World};
 use bevy::prelude::Entity;
@@ -20,8 +19,8 @@ impl ViewChild {
 impl View for ViewChild {
     type State = Box<dyn Any + Send + Sync + 'static>;
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        AnyView::nodes(self.0.as_ref(), world, state)
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        AnyView::nodes(self.0.as_ref(), world, state, out);
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
@@ -84,17 +83,10 @@ impl<V: View> IntoViewChild for V {
 impl View for Vec<ViewChild> {
     type State = Vec<BoxedState>;
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        let mut flat: Vec<Entity> = Vec::new();
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
         for (view, state) in self.iter().zip(state.iter()) {
-            View::nodes(view, world, state).flatten(&mut flat);
+            View::nodes(view, world, state, out);
         }
-        NodeSpan::Fragment(
-            flat.into_iter()
-                .map(NodeSpan::Node)
-                .collect::<Vec<NodeSpan>>()
-                .into_boxed_slice(),
-        )
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {

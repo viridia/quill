@@ -1,8 +1,7 @@
 use bevy::ecs::world::{DeferredWorld, World};
+use bevy::prelude::Entity;
 
 use crate::{Cx, View};
-
-use crate::node_span::NodeSpan;
 
 // Cond
 
@@ -29,10 +28,10 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     /// Union of true and false states.
     type State = CondState<Pos::State, Neg::State>;
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
         match state {
-            Self::State::True(ref true_state) => self.pos.nodes(world, true_state),
-            Self::State::False(ref false_state) => self.neg.nodes(world, false_state),
+            Self::State::True(ref true_state) => self.pos.nodes(world, true_state, out),
+            Self::State::False(ref false_state) => self.neg.nodes(world, false_state, out),
         }
     }
 

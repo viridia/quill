@@ -497,29 +497,6 @@ appropriate.
 Finally, there is `.each()`, which doesn't require a comparator function, since it requires the
 array elements to implement both `Clone` and `PartialEq`.
 
-## Deep-Dive: NodeSpans
-
-Even though the view state graph is frequently reconstructed, it's "shape" is relatively stable,
-unlike the display graph. For example, a `For` element may generate varying numbers of children
-in the display graph, but each new iteration of the view state graph will have a `For` node in
-the same location relative to other view nodes. The output of a view, however, can vary in number
-and shape depending on the state of the UI. This presents a challenge when you want to update
-just some children and not others, since the children may have different relative positions
-within their parent.
-
-A helper class which is used by views is `NodeSpan`, which is kind of like a "rope" for Bevy
-Entities. The `.build()` method of each `View` produces exactly one `NodeSpan`, however that span
-may contain zero, one, or a varying number of entities that represent child nodes in the display
-tree. `NodeSpan`s are also stored along with the view State in ECS components. This list of entities
-is flattened before it is attached to the parent entity.
-
-To illustrate how this works, consider the following example: Say a presenter produces a sequence
-of three elements, where the second element is a "For" element. This means that the output of
-`.build()` will produce three `NodeSpans`, but the middle `NodeSpan` will contain a varying number
-of entities based on the data passed to the `For`. For a list of n items passed to `For`, the total
-number of entities for the presenter will be n + 2. As the for loop reacts to changes in the length
-of the array, it will always know where in the flat list of entities those changes will go.
-
 # Bibliography
 
 - [Xilem: an architecture for UI in Rust](https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html)

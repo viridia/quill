@@ -10,13 +10,13 @@ use bevy::{
 use bevy::log::info;
 use bevy_mod_stylebuilder::UseInheritedTextStyles;
 
-use crate::{cx::Cx, NodeSpan, View};
+use crate::{cx::Cx, View};
 
 impl View for String {
     type State = Entity;
 
-    fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
-        NodeSpan::Node(*state)
+    fn nodes(&self, _world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        out.push(*state)
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
@@ -39,8 +39,8 @@ impl View for String {
 impl<'a: 'static> View for &'a str {
     type State = Entity;
 
-    fn nodes(&self, _world: &World, state: &Self::State) -> NodeSpan {
-        NodeSpan::Node(*state)
+    fn nodes(&self, _world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        out.push(*state);
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {

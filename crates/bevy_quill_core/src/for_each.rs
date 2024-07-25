@@ -1,8 +1,11 @@
 use std::ops::Range;
 
-use bevy::ecs::world::{DeferredWorld, World};
+use bevy::{
+    ecs::world::{DeferredWorld, World},
+    prelude::Entity,
+};
 
-use crate::{lcs::lcs, node_span::NodeSpan, Cx, View};
+use crate::{lcs::lcs, Cx, View};
 
 pub struct ListItem<Value: Clone, V: View> {
     value: Value,
@@ -11,11 +14,11 @@ pub struct ListItem<Value: Clone, V: View> {
 }
 
 impl<Value: Clone, V: View> ListItem<Value, V> {
-    fn nodes(&self, world: &World) -> NodeSpan {
+    fn nodes(&self, world: &World, out: &mut Vec<Entity>) {
         self.view
             .as_ref()
             .unwrap()
-            .nodes(world, self.state.as_ref().unwrap())
+            .nodes(world, self.state.as_ref().unwrap(), out);
     }
 
     fn raze(&mut self, world: &mut DeferredWorld) {
@@ -231,14 +234,13 @@ where
 {
     type State = (Vec<ListItem<Item, V>>, Option<FB::State>);
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        let mut child_spans: Vec<NodeSpan> = state.0.iter().map(|item| item.nodes(world)).collect();
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        state.0.iter().for_each(|item| item.nodes(world, out));
         if let Some(ref fallback) = self.fallback {
             if let Some(ref fbstate) = state.1 {
-                child_spans.push(fallback.nodes(world, fbstate));
+                fallback.nodes(world, fbstate, out);
             }
         }
-        NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {

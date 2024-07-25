@@ -1,8 +1,7 @@
 use bevy::ecs::world::{DeferredWorld, World};
+use bevy::prelude::Entity;
 
 use crate::View;
-
-use crate::node_span::NodeSpan;
 
 pub struct IndexedListItem<V: View> {
     view: Option<V>,
@@ -10,8 +9,8 @@ pub struct IndexedListItem<V: View> {
 }
 
 impl<V: View> IndexedListItem<V> {
-    fn nodes(&self, world: &World) -> NodeSpan {
-        self.view.as_ref().unwrap().nodes(world, &self.state)
+    fn nodes(&self, world: &World, out: &mut Vec<Entity>) {
+        self.view.as_ref().unwrap().nodes(world, &self.state, out);
     }
 }
 
@@ -55,14 +54,13 @@ where
 {
     type State = (Vec<IndexedListItem<V>>, Option<FB::State>);
 
-    fn nodes(&self, world: &World, state: &Self::State) -> NodeSpan {
-        let mut child_spans: Vec<NodeSpan> = state.0.iter().map(|item| item.nodes(world)).collect();
+    fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        state.0.iter().for_each(|item| item.nodes(world, out));
         if let Some(ref fallback) = self.fallback {
             if let Some(ref fbstate) = state.1 {
-                child_spans.push(fallback.nodes(world, fbstate));
+                fallback.nodes(world, fbstate, out);
             }
         }
-        NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
     fn build(&self, cx: &mut crate::Cx) -> Self::State {
@@ -74,8 +72,6 @@ where
     fn rebuild(&self, cx: &mut crate::Cx, state: &mut Self::State) -> bool {
         let next_len = self.items.len();
         let mut prev_len = state.0.len();
-        // let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
-        // child_spans.resize(next_len, NodeSpan::Empty);
 
         // Overwrite existing items.
         // TODO: Blind overwriting might be a problem here if, for example, we overwrite
