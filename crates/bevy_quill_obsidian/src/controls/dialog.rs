@@ -159,6 +159,10 @@ impl ViewTemplate for Dialog {
                                 // Click on backdrop sends close signal.
                                 On::<Pointer<Click>>::run(move |world: &mut World| {
                                     // println!("Click on backdrop");
+                                    let mut event = world
+                                        .get_resource_mut::<ListenerInput<Pointer<Click>>>()
+                                        .unwrap();
+                                    event.stop_propagation();
                                     if let Some(on_close) = on_close {
                                         world.run_callback(on_close, ());
                                     }
@@ -212,6 +216,18 @@ impl ViewTemplate for Dialog {
                                 scale: Vec3::splat(0.1),
                                 ..default()
                             })
+                            .insert_dyn(
+                                move |_| {
+                                    On::<Pointer<Click>>::run(move |world: &mut World| {
+                                        // println!("Click on backdrop");
+                                        let mut event = world
+                                            .get_resource_mut::<ListenerInput<Pointer<Click>>>()
+                                            .unwrap();
+                                        event.stop_propagation();
+                                    })
+                                },
+                                (),
+                            )
                             .effect(
                                 move |cx, ent, state| {
                                     let mut entt = cx.world_mut().entity_mut(ent);

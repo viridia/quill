@@ -27,7 +27,7 @@ pub use disclosure_toggle::*;
 pub use gradient_slider::*;
 pub use icon::*;
 pub use icon_button::*;
-pub use listview::ListView;
+pub use listview::{ListRow, ListView};
 pub use menu::*;
 pub use scrollview::*;
 pub use slider::*;
