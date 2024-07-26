@@ -4,18 +4,18 @@ use bevy::{
     ui::{self, UiImage},
 };
 
-use super::builder::{AssetPathParam, ColorParam, StyleBuilder};
+use super::builder::{ColorParam, MaybeHandleOrPath, StyleBuilder};
 
 #[allow(missing_docs)]
 pub trait StyleBuilderBackground {
     /// Set the background image of the target entity.
-    fn background_image<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self;
+    fn background_image<'p>(&mut self, path: impl Into<MaybeHandleOrPath<'p, Image>>) -> &mut Self;
 
     /// Set the background image of the target entity, and also explicitly configure the
     /// horizontal and vertical flip.
     fn background_image_flipped<'p>(
         &mut self,
-        path: impl AssetPathParam<'p>,
+        path: impl Into<MaybeHandleOrPath<'p, Image>>,
         flip_x: bool,
         flip_y: bool,
     ) -> &mut Self;
@@ -28,33 +28,21 @@ pub trait StyleBuilderBackground {
 }
 
 impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
-    fn background_image<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self {
-        let texture = path.to_path().map(|p| self.load_asset::<Image>(p));
-        match (texture, self.target.get_mut::<UiImage>()) {
-            (Some(texture), Some(mut uii)) => {
-                uii.texture = texture;
-            }
-            (Some(texture), None) => {
-                self.target.insert(UiImage {
-                    texture,
-                    ..default()
-                });
-            }
-            (None, Some(_)) => {
-                self.target.remove::<UiImage>();
-            }
-            _ => (),
-        };
-        self
+    fn background_image<'p>(&mut self, path: impl Into<MaybeHandleOrPath<'p, Image>>) -> &mut Self {
+        self.background_image_flipped(path, false, false)
     }
 
     fn background_image_flipped<'p>(
         &mut self,
-        path: impl AssetPathParam<'p>,
+        path: impl Into<MaybeHandleOrPath<'p, Image>>,
         flip_x: bool,
         flip_y: bool,
     ) -> &mut Self {
-        let texture = path.to_path().map(|p| self.load_asset::<Image>(p));
+        let texture = match path.into() {
+            MaybeHandleOrPath::Handle(h) => Some(h),
+            MaybeHandleOrPath::Path(p) => Some(self.load_asset::<Image>(p)),
+            MaybeHandleOrPath::None => None,
+        };
         match (texture, self.target.get_mut::<UiImage>()) {
             (Some(texture), Some(mut uii)) => {
                 uii.texture = texture;

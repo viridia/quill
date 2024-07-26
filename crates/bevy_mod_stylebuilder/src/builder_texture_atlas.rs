@@ -1,11 +1,11 @@
 use bevy::{sprite::TextureAtlas, ui::UiTextureAtlasImage};
 
-use super::builder::{AssetPathParam, StyleBuilder};
+use super::builder::{MaybeHandleOrPath, StyleBuilder};
 
 #[allow(missing_docs)]
 pub trait StyleBuilderTextureAtlas {
     /// Set the background image of the target entity.
-    fn texture_atlas<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self;
+    fn texture_atlas<'p>(&mut self, path: impl Into<MaybeHandleOrPath<'p, TextureAtlas>>) -> &mut Self;
 
     /// Set the index of which tile is being used in the texture atlas
     fn texture_atlas_tile(&mut self, index: usize) -> &mut Self;
@@ -21,7 +21,7 @@ pub trait StyleBuilderTextureAtlas {
 }
 
 impl<'a, 'w> StyleBuilderTextureAtlas for StyleBuilder<'a, 'w> {
-    fn texture_atlas<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self {
+    fn texture_atlas<'p>(&mut self, path: impl Into<MaybeHandleOrPath<'p, TextureAtlas>>) -> &mut Self {
         todo!("Implement texture atlas loading");
         // let texture = path
         //     .to_path()

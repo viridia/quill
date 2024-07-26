@@ -225,7 +225,7 @@ impl ViewTemplate for ToolButton {
 #[derive(Clone, PartialEq)]
 pub struct ToolIconButton {
     /// Icon to display as the button content.
-    pub(crate) icon: String,
+    pub(crate) icon: HandleOrOwnedPath<Image>,
 
     /// Size of the icon in pixels.
     pub(crate) size: Vec2,
@@ -257,9 +257,9 @@ pub struct ToolIconButton {
 
 impl ToolIconButton {
     /// Create a new [`ToolIconButton`].
-    pub fn new(icon: &str) -> Self {
+    pub fn new(icon: impl Into<HandleOrOwnedPath<Image>>) -> Self {
         Self {
-            icon: icon.to_string(),
+            icon: icon.into(),
             variant: Default::default(),
             disabled: Default::default(),
             style: StyleHandle::default(),
