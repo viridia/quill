@@ -229,6 +229,12 @@ pub enum HandleOrOwnedPath<T: Asset> {
     Path(String),
 }
 
+impl<T: Asset> Default for HandleOrOwnedPath<T> {
+    fn default() -> Self {
+        Self::Path("".to_string())
+    }
+}
+
 // Necessary because we don't want to require T: PartialEq
 impl<T: Asset> PartialEq for HandleOrOwnedPath<T> {
     fn eq(&self, other: &Self) -> bool {
@@ -237,6 +243,36 @@ impl<T: Asset> PartialEq for HandleOrOwnedPath<T> {
             (HandleOrOwnedPath::Path(p1), HandleOrOwnedPath::Path(p2)) => p1 == p2,
             _ => false,
         }
+    }
+}
+
+impl<T: Asset> From<Handle<T>> for HandleOrOwnedPath<T> {
+    fn from(h: Handle<T>) -> Self {
+        HandleOrOwnedPath::Handle(h)
+    }
+}
+
+impl<T: Asset> From<&str> for HandleOrOwnedPath<T> {
+    fn from(p: &str) -> Self {
+        HandleOrOwnedPath::Path(p.to_string())
+    }
+}
+
+impl<T: Asset> From<String> for HandleOrOwnedPath<T> {
+    fn from(p: String) -> Self {
+        HandleOrOwnedPath::Path(p.clone())
+    }
+}
+
+impl<T: Asset> From<&String> for HandleOrOwnedPath<T> {
+    fn from(p: &String) -> Self {
+        HandleOrOwnedPath::Path(p.to_string())
+    }
+}
+
+impl<T: Asset> From<&HandleOrOwnedPath<T>> for HandleOrOwnedPath<T> {
+    fn from(p: &HandleOrOwnedPath<T>) -> Self {
+        p.to_owned().into()
     }
 }
 

@@ -8,7 +8,7 @@ use bevy_quill_core::*;
 #[derive(Default, Clone, PartialEq)]
 pub struct IconButton {
     /// Asset path for the icon
-    pub icon: String,
+    pub icon: HandleOrOwnedPath<Image>,
 
     /// Color variant - default, primary or danger.
     // pub variant: ButtonVariant,
@@ -39,10 +39,10 @@ pub struct IconButton {
 }
 
 impl IconButton {
-    /// Construct a new `IconButton`.
-    pub fn new(icon: &str) -> Self {
+    /// Construct a new `IconButton` from a `&str` or `Handle<Image>`.
+    pub fn new(icon: impl Into<HandleOrOwnedPath<Image>>) -> Self {
         Self {
-            icon: icon.to_string(),
+            icon: icon.into(),
             ..default()
         }
     }

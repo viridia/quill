@@ -21,17 +21,10 @@ pub struct Icon {
 }
 
 impl Icon {
-    /// Create a new icon.
-    pub fn new(icon: &str) -> Self {
+    /// Create a new `Icon` from a `&str` or `Handle<Image>`.
+    pub fn new(icon: impl Into<HandleOrOwnedPath<Image>>) -> Self {
         Self {
-            icon: HandleOrOwnedPath::Path(icon.to_string()),
-            ..default()
-        }
-    }
-
-    pub fn from_handle(icon: Handle<Image>) -> Self {
-        Self {
-            icon: HandleOrOwnedPath::Handle(icon),
+            icon: icon.into(),
             ..default()
         }
     }
@@ -58,7 +51,7 @@ impl Icon {
 impl Default for Icon {
     fn default() -> Self {
         Self {
-            icon: HandleOrOwnedPath::Path("".to_string()),
+            icon: HandleOrOwnedPath::default(),
             size: Vec2::splat(12.0),
             color: colors::FOREGROUND,
             style: StyleHandle::default(),
