@@ -69,7 +69,7 @@ impl Graph {
         node.create_terminals(commands, entity);
         commands
             .entity(entity)
-            .insert((node, NodeModified, NodeSelected(true)));
+            .insert((node, NodeModified, NodeSelected));
         action.mutations.push(UndoMutation::AddNode(id, entity));
         self.nodes.insert(id, entity);
         id
@@ -142,7 +142,7 @@ impl Graph {
 /// Note: this used to be a marker component, but currently we don't support reactions on markers,
 /// because we can't react to removals or additions. Maybe once we start using observers...?
 #[derive(Component)]
-pub struct NodeSelected(pub bool);
+pub struct NodeSelected;
 
 /// A node within a node graph. The behavior and attributes of the node are determined by the
 /// operator.

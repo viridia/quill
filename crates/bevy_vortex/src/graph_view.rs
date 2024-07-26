@@ -80,9 +80,7 @@ impl ViewTemplate for GraphNodeView {
 
         let relative_rect = Rect::from_center_size(node.position.as_vec2(), size);
         let drag_state = cx.use_inherited_component::<DragState>().unwrap();
-        let is_selected = cx
-            .use_component::<NodeSelected>(node_id)
-            .map_or_else(|| false, |s| s.0)
+        let is_selected = cx.use_component::<NodeSelected>(node_id).is_some()
             || drag_state.selection_rect.map_or_else(
                 || false,
                 |r| r.contains(relative_rect.min) && r.contains(relative_rect.max),

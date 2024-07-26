@@ -298,14 +298,14 @@ fn rotate_preview_shapes(mut query: Query<&mut Transform, With<PreviewShape>>, t
 /// Update the preview shader handle based on the selected node.
 fn update_preview_shader(
     mut commands: Commands,
-    q_selected: Query<(&NodeOutput, &NodeSelected)>,
+    q_selected: Query<(&NodeOutput, Option<&NodeSelected>)>,
     q_preview_shapes: Query<Entity, With<PreviewShape>>,
     mut resource: ResMut<PreviewShaderHandle>,
     placeholder: Res<PlaceholderShaderHandle>,
 ) {
     let mut shader: Option<Handle<Shader>> = None;
     for (output, selected) in q_selected.iter() {
-        if selected.0 {
+        if selected.is_some() {
             if shader.is_none() {
                 shader = Some(output.shader.clone());
             } else {

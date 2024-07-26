@@ -237,7 +237,7 @@ impl ViewTemplate for CenterPanel {
                          mut query_graph_nodes: Query<(
                             Entity,
                             &mut GraphNode,
-                            &mut NodeSelected,
+                            Option<&NodeSelected>,
                             Option<&NodeBasePosition>,
                         )>,
                          mut query_connections: Query<&mut Connection>| {
@@ -251,7 +251,7 @@ impl ViewTemplate for CenterPanel {
                                             for (ent, node, selected, _base) in
                                                 query_graph_nodes.iter_mut()
                                             {
-                                                if selected.0 {
+                                                if selected.is_some() {
                                                     commands
                                                         .entity(ent)
                                                         .insert(NodeBasePosition(node.position));
@@ -386,7 +386,7 @@ impl ViewTemplate for CenterPanel {
                                 // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
                                 Gesture::SelectRect(rect, action) => {
                                     if action == DragAction::Finish {
-                                        for (_, node, mut selected, _) in
+                                        for (node_entity, node, selected, _) in
                                             query_graph_nodes.iter_mut()
                                         {
                                             let node_rect = Rect::from_center_size(
@@ -396,7 +396,7 @@ impl ViewTemplate for CenterPanel {
                                             if rect.contains(node_rect.min)
                                                 && rect.contains(node_rect.max)
                                             {
-                                                selected.0 = true;
+                                                commands.entity(node_entity).insert(NodeSelected);
                                             }
                                         }
                                         drag_state.selection_rect = None;
@@ -409,14 +409,13 @@ impl ViewTemplate for CenterPanel {
                                     catalog_selection.0 = None;
                                     let is_selected = query_graph_nodes
                                         .get_mut(node)
-                                        .map_or(false, |(_, _, selected, _)| selected.0);
+                                        .map_or(false, |(_, _, selected, _)| selected.is_some());
                                     if !is_selected {
-                                        for (ent, _, mut selected, _) in
-                                            query_graph_nodes.iter_mut()
-                                        {
-                                            let select = ent == node;
-                                            if selected.0 != select {
-                                                selected.0 = select;
+                                        for (ent, _, selected, _) in query_graph_nodes.iter_mut() {
+                                            if ent == node {
+                                                commands.entity(node).insert(NodeSelected);
+                                            } else if selected.is_some() {
+                                                commands.entity(node).remove::<NodeSelected>();
                                             }
                                         }
                                     }
@@ -424,34 +423,29 @@ impl ViewTemplate for CenterPanel {
 
                                 Gesture::SelectAdd(node) => {
                                     catalog_selection.0 = None;
-                                    if let Ok((_, _, mut selected, _)) =
-                                        query_graph_nodes.get_mut(node)
-                                    {
-                                        selected.0 = true;
-                                    }
+                                    commands.entity(node).insert(NodeSelected);
                                 }
 
                                 Gesture::SelectRemove(node) => {
-                                    if let Ok((_, _, mut selected, _)) =
-                                        query_graph_nodes.get_mut(node)
-                                    {
-                                        selected.0 = false;
-                                    }
+                                    commands.entity(node).remove::<NodeSelected>();
                                 }
 
                                 Gesture::SelectToggle(node) => {
                                     catalog_selection.0 = None;
-                                    if let Ok((_, _, mut selected, _)) =
-                                        query_graph_nodes.get_mut(node)
+                                    if let Ok((_, _, selected, _)) = query_graph_nodes.get_mut(node)
                                     {
-                                        selected.0 = !selected.0;
+                                        if selected.is_some() {
+                                            commands.entity(node).remove::<NodeSelected>();
+                                        } else {
+                                            commands.entity(node).remove::<NodeSelected>();
+                                        }
                                     }
                                 }
 
                                 Gesture::SelectClear => {
-                                    for (_, _, mut selected, _) in query_graph_nodes.iter_mut() {
-                                        if selected.0 {
-                                            selected.0 = false;
+                                    for (node, _, selected, _) in query_graph_nodes.iter_mut() {
+                                        if selected.is_some() {
+                                            commands.entity(node).remove::<NodeSelected>();
                                         }
                                     }
                                 }

@@ -12,7 +12,7 @@ impl Command for DeleteSelectedCmd {
     fn apply(self, world: &mut World) {
         let mut st: SystemState<(
             Query<(Entity, &mut Connection)>,
-            Query<(Entity, &GraphNode, &NodeSelected)>,
+            Query<(Entity, &GraphNode, Option<&NodeSelected>)>,
         )> = SystemState::new(world);
         let (mut connections, nodes) = st.get_mut(world);
 
@@ -21,7 +21,7 @@ impl Command for DeleteSelectedCmd {
         for (ent, conn) in connections.iter_mut() {
             let (_, _, input_selected) = nodes.get(conn.input.node_id).unwrap();
             let (_, _, output_selected) = nodes.get(conn.output.node_id).unwrap();
-            if input_selected.0 || output_selected.0 {
+            if input_selected.is_some() || output_selected.is_some() {
                 connections_to_remove.insert(ent);
             }
         }
@@ -29,7 +29,7 @@ impl Command for DeleteSelectedCmd {
         let selected_nodes = nodes
             .iter()
             .filter_map(|(entity, node, selected)| {
-                if selected.0 {
+                if selected.is_some() {
                     Some((entity, node.index))
                 } else {
                     None

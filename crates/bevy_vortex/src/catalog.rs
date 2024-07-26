@@ -1,6 +1,7 @@
 use bevy::{
     prelude::*,
     reflect::TypeInfo,
+    transform::commands,
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_mod_picking::prelude::*;
@@ -109,13 +110,15 @@ impl ViewTemplate for CatalogRow {
                 move |_| {
                     On::<Pointer<Click>>::run(
                         move |mut selected: ResMut<SelectedCatalogEntry>,
-                        mut graph_nodes: Query<&mut NodeSelected, With<GraphNode>>| {
-                        // Clear node selection
-                        for mut selected in graph_nodes.iter_mut() {
-                            selected.0 = false;
-                        }
-                        selected.0 = Some(path);
-                    })
+                              graph_nodes: Query<Entity, With<NodeSelected>>,
+                              mut commands: Commands| {
+                            // Clear node selection
+                            for selected in graph_nodes.iter() {
+                                commands.entity(selected).remove::<NodeSelected>();
+                            }
+                            selected.0 = Some(path);
+                        },
+                    )
                 },
                 (),
             )

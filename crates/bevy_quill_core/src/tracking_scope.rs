@@ -34,7 +34,7 @@ pub struct TrackingScope {
     next_hook_index: usize,
 
     /// Set of components that we are currently subscribed to.
-    component_deps: HashSet<(Entity, ComponentId)>,
+    component_deps: HashSet<(Entity, ComponentId, bool)>,
 
     /// Set of resources that we are currently subscribed to.
     resource_deps: HashSet<ComponentId>,
@@ -117,18 +117,23 @@ impl TrackingScope {
     }
 
     /// Convenience method for adding a component dependency.
-    pub(crate) fn track_component<C: Component>(&mut self, entity: Entity, world: &World) {
-        self.track_component_id(
-            entity,
-            world.components().component_id::<C>().unwrap_or_else(|| {
-                panic!("Unknown component type: {}", std::any::type_name::<C>())
-            }),
-        );
-    }
+    // pub(crate) fn track_component<C: Component>(&mut self, entity: Entity, world: &World) {
+    //     self.track_component_id(
+    //         entity,
+    //         world.components().component_id::<C>().unwrap_or_else(|| {
+    //             panic!("Unknown component type: {}", std::any::type_name::<C>())
+    //         }),
+    //     );
+    // }
 
     /// Convenience method for adding a component dependency by component id.
-    pub(crate) fn track_component_id(&mut self, entity: Entity, component: ComponentId) {
-        self.component_deps.insert((entity, component));
+    pub(crate) fn track_component_id(
+        &mut self,
+        entity: Entity,
+        component: ComponentId,
+        exists: bool,
+    ) {
+        self.component_deps.insert((entity, component, exists));
     }
 
     /// Mark the scope as changed for reasons other than a component or resource dependency.
@@ -146,11 +151,12 @@ impl TrackingScope {
     }
 
     pub(crate) fn components_changed(&self, world: &World, tick: Tick) -> bool {
-        self.component_deps.iter().any(|(e, c)| {
+        self.component_deps.iter().any(|(e, c, exists)| {
             world.get_entity(*e).map_or(false, |e| {
                 e.get_change_ticks_by_id(*c)
                     .map(|ct| ct.is_changed(self.tick, tick))
                     .unwrap_or(false)
+                    || *exists && e.get_by_id(*c).is_none()
             })
         })
     }

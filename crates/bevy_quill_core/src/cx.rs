@@ -387,10 +387,18 @@ impl<'p, 'w> Cx<'p, 'w> {
     pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
         match self.world.get_entity(entity) {
             Some(c) => {
+                let cid = self
+                    .world
+                    .components()
+                    .component_id::<C>()
+                    .unwrap_or_else(|| {
+                        panic!("Unknown component type: {}", std::any::type_name::<C>())
+                    });
+                let result = c.get::<C>();
                 self.tracking
                     .borrow_mut()
-                    .track_component::<C>(entity, self.world);
-                c.get::<C>()
+                    .track_component_id(entity, cid, result.is_some());
+                result
             }
             None => None,
         }
@@ -438,7 +446,7 @@ impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell, mutable.component);
+            .track_component_id(mutable.cell, mutable.component, true);
         self.world.read_mutable(mutable)
     }
 
@@ -448,7 +456,7 @@ impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell, mutable.component);
+            .track_component_id(mutable.cell, mutable.component, true);
         self.world.read_mutable_clone(mutable)
     }
 
@@ -458,7 +466,7 @@ impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell, mutable.component);
+            .track_component_id(mutable.cell, mutable.component, true);
         self.world.read_mutable_as_ref(mutable)
     }
 
@@ -468,7 +476,7 @@ impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell, mutable.component);
+            .track_component_id(mutable.cell, mutable.component, true);
         self.world.read_mutable_map(mutable, f)
     }
 }
