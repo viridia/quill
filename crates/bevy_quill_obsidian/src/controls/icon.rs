@@ -1,4 +1,4 @@
-use bevy::{asset::AssetPath, prelude::*};
+use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
 
@@ -8,7 +8,7 @@ use crate::colors;
 #[derive(Clone, PartialEq)]
 pub struct Icon {
     /// Asset path for the icon
-    pub icon: String,
+    pub icon: HandleOrOwnedPath<Image>,
 
     /// Size of the icon in pixels.
     pub size: Vec2,
@@ -24,7 +24,14 @@ impl Icon {
     /// Create a new icon.
     pub fn new(icon: &str) -> Self {
         Self {
-            icon: icon.to_string(),
+            icon: HandleOrOwnedPath::Path(icon.to_string()),
+            ..default()
+        }
+    }
+
+    pub fn from_handle(icon: Handle<Image>) -> Self {
+        Self {
+            icon: HandleOrOwnedPath::Handle(icon),
             ..default()
         }
     }
@@ -51,7 +58,7 @@ impl Icon {
 impl Default for Icon {
     fn default() -> Self {
         Self {
-            icon: "".to_string(),
+            icon: HandleOrOwnedPath::Path("".to_string()),
             size: Vec2::splat(12.0),
             color: colors::FOREGROUND,
             style: StyleHandle::default(),
@@ -68,9 +75,7 @@ impl ViewTemplate for Icon {
         Element::<NodeBundle>::new()
             .style((
                 move |sb: &mut StyleBuilder| {
-                    sb.width(size.x)
-                        .height(size.y)
-                        .background_image(AssetPath::parse(&icon));
+                    sb.width(size.x).height(size.y).background_image(&icon);
                 },
                 self.style.clone(),
             ))

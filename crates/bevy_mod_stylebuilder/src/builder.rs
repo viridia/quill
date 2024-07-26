@@ -220,11 +220,45 @@ impl OptFloatParam for i32 {
     }
 }
 
+/// Enum that represents either a handle or an owned path.
+///
+/// This is useful for when you want to specify an asset, but also want it to be have lifetime 'static
+#[derive(Clone, Debug)]
+pub enum HandleOrOwnedPath<T: Asset> {
+    Handle(Handle<T>),
+    Path(String),
+}
+
+// Necessary because we don't want to require T: PartialEq
+impl<T: Asset> PartialEq for HandleOrOwnedPath<T> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (HandleOrOwnedPath::Handle(h1), HandleOrOwnedPath::Handle(h2)) => h1 == h2,
+            (HandleOrOwnedPath::Path(p1), HandleOrOwnedPath::Path(p2)) => p1 == p2,
+            _ => false,
+        }
+    }
+}
+
 /// Enum that represents either a handle or an asset path or nothing.
+#[derive(Clone, Default, Debug)]
 pub enum MaybeHandleOrPath<'a, T: Asset> {
+    #[default]
     None,
     Handle(Handle<T>),
     Path(AssetPath<'a>),
+}
+
+// Necessary because we don't want to require T: PartialEq
+impl<'a, T: Asset> PartialEq for MaybeHandleOrPath<'a, T> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (MaybeHandleOrPath::None, MaybeHandleOrPath::None) => true,
+            (MaybeHandleOrPath::Handle(h1), MaybeHandleOrPath::Handle(h2)) => h1 == h2,
+            (MaybeHandleOrPath::Path(p1), MaybeHandleOrPath::Path(p2)) => p1 == p2,
+            _ => false,
+        }
+    }
 }
 
 impl<T: Asset> From<Handle<T>> for MaybeHandleOrPath<'_, T> {
@@ -250,6 +284,15 @@ impl<'a, T: Asset> From<Option<AssetPath<'a>>> for MaybeHandleOrPath<'a, T> {
         match p {
             Some(p) => MaybeHandleOrPath::Path(p),
             None => MaybeHandleOrPath::None,
+        }
+    }
+}
+
+impl<'a, T: Asset> From<&'a HandleOrOwnedPath<T>> for MaybeHandleOrPath<'a, T> {
+    fn from(p: &'a HandleOrOwnedPath<T>) -> Self {
+        match p {
+            HandleOrOwnedPath::Handle(h) => MaybeHandleOrPath::Handle(h.clone()),
+            HandleOrOwnedPath::Path(p) => MaybeHandleOrPath::Path(AssetPath::parse(p)),
         }
     }
 }
