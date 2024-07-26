@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_picking::{focus::HoverMap, picking_core::Pickable, pointer::PointerId};
-use bevy_mod_stylebuilder::{AssetPathParam, StyleBuilder};
+use bevy_mod_stylebuilder::{MaybeHandleOrPath, StyleBuilder};
 
 /// A component which can be added to an entity to specify the cursor that should be used when
 /// the mouse is over the entity. Relies on bevy_mod_picking to determine which entity is being
@@ -24,7 +24,11 @@ pub(crate) struct CustomCursor;
 #[allow(missing_docs)]
 pub trait StyleBuilderCursor {
     fn cursor(&mut self, icon: CursorIcon) -> &mut Self;
-    fn cursor_image<'p>(&mut self, path: impl AssetPathParam<'p>, origin: Vec2) -> &mut Self;
+    fn cursor_image<'p>(
+        &mut self,
+        path: impl Into<MaybeHandleOrPath<'p, Image>>,
+        origin: Vec2,
+    ) -> &mut Self;
     fn cursor_hidden(&mut self) -> &mut Self;
 }
 
@@ -41,8 +45,16 @@ impl<'a, 'w> StyleBuilderCursor for StyleBuilder<'a, 'w> {
         self
     }
 
-    fn cursor_image<'p>(&mut self, path: impl AssetPathParam<'p>, origin: Vec2) -> &mut Self {
-        let image = path.to_path().map(|p| self.load_asset::<Image>(p));
+    fn cursor_image<'p>(
+        &mut self,
+        path: impl Into<MaybeHandleOrPath<'p, Image>>,
+        origin: Vec2,
+    ) -> &mut Self {
+        let image = match path.into() {
+            MaybeHandleOrPath::Handle(h) => Some(h),
+            MaybeHandleOrPath::Path(p) => Some(self.load_asset::<Image>(p)),
+            MaybeHandleOrPath::None => None,
+        };
         match (image, self.target.get_mut::<Cursor>()) {
             (Some(image), Some(mut cursor)) => {
                 *cursor = Cursor::Image(image, origin);

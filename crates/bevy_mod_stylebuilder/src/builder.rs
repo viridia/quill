@@ -220,25 +220,36 @@ impl OptFloatParam for i32 {
     }
 }
 
-/// Trait that represents an optional float
-pub trait AssetPathParam<'a> {
-    fn to_path(self) -> Option<AssetPath<'a>>;
+/// Enum that represents either a handle or an asset path or nothing.
+pub enum MaybeHandleOrPath<'a, T: Asset> {
+    None,
+    Handle(Handle<T>),
+    Path(AssetPath<'a>),
 }
 
-impl<'a> AssetPathParam<'a> for Option<AssetPath<'a>> {
-    fn to_path(self) -> Option<AssetPath<'a>> {
-        self
+impl<T: Asset> From<Handle<T>> for MaybeHandleOrPath<'_, T> {
+    fn from(h: Handle<T>) -> Self {
+        MaybeHandleOrPath::Handle(h)
     }
 }
 
-impl<'a> AssetPathParam<'a> for AssetPath<'a> {
-    fn to_path(self) -> Option<AssetPath<'a>> {
-        Some(self)
+impl<'a, T: Asset> From<AssetPath<'a>> for MaybeHandleOrPath<'a, T> {
+    fn from(p: AssetPath<'a>) -> Self {
+        MaybeHandleOrPath::Path(p)
     }
 }
 
-impl<'a> AssetPathParam<'a> for &'a str {
-    fn to_path(self) -> Option<AssetPath<'a>> {
-        Some(AssetPath::parse(self))
+impl<'a, T: Asset> From<&'a str> for MaybeHandleOrPath<'a, T> {
+    fn from(p: &'a str) -> Self {
+        MaybeHandleOrPath::Path(AssetPath::parse(p))
+    }
+}
+
+impl<'a, T: Asset> From<Option<AssetPath<'a>>> for MaybeHandleOrPath<'a, T> {
+    fn from(p: Option<AssetPath<'a>>) -> Self {
+        match p {
+            Some(p) => MaybeHandleOrPath::Path(p),
+            None => MaybeHandleOrPath::None,
+        }
     }
 }
