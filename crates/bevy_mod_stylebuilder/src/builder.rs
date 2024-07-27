@@ -270,7 +270,7 @@ impl<T: Asset> From<&String> for HandleOrOwnedPath<T> {
     }
 }
 
-impl<T: Asset> From<&HandleOrOwnedPath<T>> for HandleOrOwnedPath<T> {
+impl<T: Asset + Clone> From<&HandleOrOwnedPath<T>> for HandleOrOwnedPath<T> {
     fn from(p: &HandleOrOwnedPath<T>) -> Self {
         p.to_owned().into()
     }
