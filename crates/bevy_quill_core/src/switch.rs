@@ -21,67 +21,45 @@ impl<Value> CaseTuple<Value> for () {
     }
 }
 
-impl<Value: Send + Sync + PartialEq, V: View> CaseTuple<Value> for ((Value, V),) {
-    fn find(&self, value: &Value) -> Option<usize> {
-        if self.0 .0 == *value {
-            Some(0)
-        } else {
-            None
-        }
-    }
+macro_rules! impl_case_tuple {
+    ( $($view: ident, $idx: tt);+ ) => {
+        impl<Value: Send + Sync + PartialEq, $(
+            $view: View,
+        )+> CaseTuple<Value> for ( $( (Value, $view), )+ ) {
+            fn find(&self, value: &Value) -> Option<usize> {
+                match value {
+                    $( v if *v == self.$idx .0 => Some($idx), )+
+                    _ => None,
+                }
+            }
 
-    fn at(&self, index: usize) -> &dyn AnyView {
-        if index == 0 {
-            &self.0 .1
-        } else {
-            unreachable!();
+            fn at(&self, index: usize) -> &dyn AnyView {
+                match index {
+                    $( $idx => &self.$idx .1, )+
+                    _ => unreachable!(),
+                }
+            }
         }
-    }
+    };
 }
 
-impl<Value: Send + Sync + PartialEq, V1: View, V2: View> CaseTuple<Value>
-    for ((Value, V1), (Value, V2))
-{
-    fn find(&self, value: &Value) -> Option<usize> {
-        if self.0 .0 == *value {
-            Some(0)
-        } else if self.1 .0 == *value {
-            Some(1)
-        } else {
-            None
-        }
-    }
-
-    fn at(&self, index: usize) -> &dyn AnyView {
-        match index {
-            0 => &self.0 .1,
-            1 => &self.1 .1,
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl<Value: Send + Sync + PartialEq, V1: View, V2: View, V3: View> CaseTuple<Value>
-    for ((Value, V1), (Value, V2), (Value, V3))
-{
-    fn find(&self, value: &Value) -> Option<usize> {
-        match value {
-            v if *v == self.0 .0 => Some(0),
-            v if *v == self.1 .0 => Some(1),
-            v if *v == self.2 .0 => Some(2),
-            _ => None,
-        }
-    }
-
-    fn at(&self, index: usize) -> &dyn AnyView {
-        match index {
-            0 => &self.0 .1,
-            1 => &self.1 .1,
-            2 => &self.2 .1,
-            _ => unreachable!(),
-        }
-    }
-}
+impl_case_tuple!(V0, 0);
+impl_case_tuple!(V0, 0; V1, 1);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13; V14, 14);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13; V14, 14; V15, 15);
+impl_case_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13; V14, 14; V15, 15; V16, 16);
 
 #[doc(hidden)]
 pub trait AppendCase<V, T> {
@@ -100,25 +78,37 @@ impl<V: Send + Sync + PartialEq, T: View> AppendCase<V, T> for () {
     }
 }
 
-impl<V: Send + Sync + PartialEq, V1: View, T: View> AppendCase<V, T> for ((V, V1),) {
-    type Result = ((V, V1), (V, T));
+macro_rules! impl_case_append {
+    ( $($view: ident, $idx: tt);+ ) => {
+        impl<V: Send + Sync + PartialEq, $(
+            $view: View,
+        )+ T: View> AppendCase<V, T> for ( $( (V, $view), )+ ) {
+            type Result = ($( (V, $view), )+ (V, T));
 
-    #[inline(always)]
-    fn append(self, value: V, tail: T) -> Self::Result {
-        (self.0, (value, tail))
-    }
+            #[inline(always)]
+            fn append(self, value: V, tail: T) -> Self::Result {
+                ( $( self.$idx, )+ (value, tail))
+            }
+        }
+    };
 }
 
-impl<V: Send + Sync + PartialEq, V1: View, V2: View, T: View> AppendCase<V, T>
-    for ((V, V1), (V, V2))
-{
-    type Result = ((V, V1), (V, V2), (V, T));
-
-    #[inline(always)]
-    fn append(self, value: V, tail: T) -> Self::Result {
-        (self.0, self.1, (value, tail))
-    }
-}
+impl_case_append!(V0, 0);
+impl_case_append!(V0, 0; V1, 1);
+impl_case_append!(V0, 0; V1, 1; V2, 2);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13; V14, 14);
+impl_case_append!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; V9, 9; V10, 10; V11, 11; V12, 12; V13, 13; V14, 14; V15, 15);
 
 /// A conditional view which renders one of two children depending on the condition expression.
 pub struct Switch<Value, Cases: CaseTuple<Value>, Fallback: View> {

@@ -1,6 +1,5 @@
 use crate::Cx;
 use bevy::prelude::*;
-use impl_trait_for_tuples::impl_for_tuples;
 
 #[allow(unused)]
 /// A reactive effect that modifies a target entity.
@@ -43,62 +42,37 @@ impl<T: EntityEffect> AppendEffect<T> for () {
     }
 }
 
-impl<H1: EntityEffect, T: EntityEffect> AppendEffect<T> for (H1,) {
-    type Result = (H1, T);
+macro_rules! impl_append_effect {
+    ( $($view: ident, $idx: tt);+ ) => {
+        impl<$(
+            $view: EntityEffect,
+        )+ T: EntityEffect> AppendEffect<T> for ( $( $view, )+ ) {
+            type Result = ($( $view, )+ T);
 
-    #[inline(always)]
-    fn append(self, tail: T) -> Self::Result {
-        (self.0, tail)
-    }
+            #[inline(always)]
+            fn append(self, tail: T) -> Self::Result {
+                ( $( self.$idx, )+ tail)
+            }
+        }
+    };
 }
 
-impl<H1: EntityEffect, H2: EntityEffect, T: EntityEffect> AppendEffect<T> for (H1, H2) {
-    type Result = (H1, H2, T);
-
-    #[inline(always)]
-    fn append(self, tail: T) -> Self::Result {
-        (self.0, self.1, tail)
-    }
-}
-
-impl<H1: EntityEffect, H2: EntityEffect, H3: EntityEffect, T: EntityEffect> AppendEffect<T>
-    for (H1, H2, H3)
-{
-    type Result = (H1, H2, H3, T);
-
-    #[inline(always)]
-    fn append(self, tail: T) -> Self::Result {
-        (self.0, self.1, self.2, tail)
-    }
-}
-
-impl<H1: EntityEffect, H2: EntityEffect, H3: EntityEffect, H4: EntityEffect, T: EntityEffect>
-    AppendEffect<T> for (H1, H2, H3, H4)
-{
-    type Result = (H1, H2, H3, H4, T);
-
-    #[inline(always)]
-    fn append(self, tail: T) -> Self::Result {
-        (self.0, self.1, self.2, self.3, tail)
-    }
-}
-
-impl<
-        H1: EntityEffect,
-        H2: EntityEffect,
-        H3: EntityEffect,
-        H4: EntityEffect,
-        H5: EntityEffect,
-        T: EntityEffect,
-    > AppendEffect<T> for (H1, H2, H3, H4, H5)
-{
-    type Result = (H1, H2, H3, H4, H5, T);
-
-    #[inline(always)]
-    fn append(self, tail: T) -> Self::Result {
-        (self.0, self.1, self.2, self.3, self.4, tail)
-    }
-}
+impl_append_effect!(E0, 0);
+impl_append_effect!(E0, 0; E1, 1);
+impl_append_effect!(E0, 0; E1, 1; E2, 2);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14);
+impl_append_effect!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14; E15, 15);
 
 #[doc(hidden)]
 pub trait EffectTuple: Send + Sync {
@@ -145,19 +119,41 @@ impl EffectTuple for () {
     fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {}
 }
 
-#[impl_for_tuples(1, 16)]
-#[tuple_types_custom_trait_bound(EntityEffect)]
-impl EffectTuple for Tuple {
-    for_tuples!( type State = ( #( Tuple::State ),* ); );
+macro_rules! impl_effect_tuple {
+    ( $($effect: ident, $idx: tt);+ ) => {
+        impl<$(
+            $effect: EntityEffect,
+        )+> EffectTuple for ( $( $effect, )+ ) {
+            type State = ( $( $effect::State ),*, );
 
-    fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
-        for_tuples!((#( self.Tuple.apply(cx, target) ),*))
-    }
+            fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
+                ($( self.$idx.apply(cx, target) ),*,)
+            }
 
-    fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
-        for_tuples!(#( self.Tuple.reapply(cx, target, &mut state.Tuple);)*)
-    }
+            fn reapply(&self, cx: &mut Cx, target: Entity, state: &mut Self::State) {
+                $( self.$idx.reapply(cx, target, &mut state.$idx); )*
+            }
+        }
+    };
 }
+
+impl_effect_tuple!(E0, 0);
+impl_effect_tuple!(E0, 0; E1, 1);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14; E15, 15);
+impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14; E15, 15; E16, 16);
 
 /// A general-purpose effect that allows arbitrary mutations to the display entity.
 pub struct CallbackEffect<F: Fn(&mut Cx, Entity, D), D: PartialEq + Clone> {
