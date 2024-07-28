@@ -208,6 +208,10 @@ impl<
             }
 
             (None, Some(new_index)) => {
+                if let Some(st) = state.1.downcast_mut::<Fallback::State>() {
+                    self.fallback
+                        .raze(&mut DeferredWorld::from(cx.world_mut()), st)
+                }
                 state.0 = Some(new_index);
                 state.1 = self.cases.at(new_index).build(cx);
                 true
