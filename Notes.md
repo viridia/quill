@@ -1,6 +1,5 @@
 # Next
 
-- Use lifecycle hooks for view razing.
 - Think about separating styles from Quill.
   - Hard to do because text view uses the marker component.
 - impl_trait_for_tuples for effect tuples.
@@ -12,7 +11,7 @@
 ## Vortex nextish
 
 - Output-only nodes: allow output to be editable field.
-- Floating meny wasn't clipped.
+- Floating menu wasn't clipped.
 - Node title wrong for display name.
 - Flesh out undo/redo
 - Serialization

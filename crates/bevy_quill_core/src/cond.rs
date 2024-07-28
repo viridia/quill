@@ -18,7 +18,7 @@ pub struct Cond<Pos: View, Neg: View> {
 }
 
 impl<Pos: View, Neg: View> Cond<Pos, Neg> {
-    /// Construct a new If View.
+    /// Construct a new `Cond` View.
     pub fn new(test: bool, pos: Pos, neg: Neg) -> Self {
         Self { test, pos, neg }
     }
