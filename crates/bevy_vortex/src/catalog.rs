@@ -1,7 +1,6 @@
 use bevy::{
     prelude::*,
     reflect::TypeInfo,
-    transform::commands,
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_mod_picking::prelude::*;
@@ -10,7 +9,7 @@ use bevy_quill::*;
 use bevy_quill_obsidian::{colors, controls::ListView, typography::text_strong};
 
 use crate::{
-    graph::{GraphNode, NodeSelected},
+    graph::NodeSelected,
     operator::{DisplayName, OperatorCategory, OperatorClass, ReflectOperator},
 };
 

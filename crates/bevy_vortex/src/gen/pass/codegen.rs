@@ -55,7 +55,7 @@ pub fn codegen(expr: &Expr) -> OutputChunk {
         },
         Expr::BinOp(_, _, _, _) => todo!(),
         Expr::FnCall(_, f, args) => OutputChunk::FCall {
-            func: f.clone(),
+            func: f,
             args: args.iter().map(|arg| codegen(arg)).collect(),
         },
         Expr::OvCall(_, _, _) => todo!(),

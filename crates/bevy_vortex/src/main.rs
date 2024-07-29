@@ -386,7 +386,7 @@ impl ViewTemplate for CenterPanel {
                                 // bevy_quill_obsidian_graph::Gesture::Scroll(_) => todo!(),
                                 Gesture::SelectRect(rect, action) => {
                                     if action == DragAction::Finish {
-                                        for (node_entity, node, selected, _) in
+                                        for (node_entity, node, _, _) in
                                             query_graph_nodes.iter_mut()
                                         {
                                             let node_rect = Rect::from_center_size(
@@ -437,7 +437,7 @@ impl ViewTemplate for CenterPanel {
                                         if selected.is_some() {
                                             commands.entity(node).remove::<NodeSelected>();
                                         } else {
-                                            commands.entity(node).remove::<NodeSelected>();
+                                            commands.entity(node).insert(NodeSelected);
                                         }
                                     }
                                 }

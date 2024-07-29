@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderBorderRadius};
 
 /// Options for rendering rounded corners.
 #[allow(missing_docs)]
@@ -89,6 +90,13 @@ impl RoundedCorners {
                 bottom_right: zero,
                 bottom_left: radius,
             },
+        }
+    }
+
+    pub fn to_border_style(&self, radius: f32) -> impl Fn(&mut StyleBuilder) {
+        let radius = self.to_border_radius(radius);
+        move |sb: &mut StyleBuilder| {
+            sb.border_radius(radius);
         }
     }
 }

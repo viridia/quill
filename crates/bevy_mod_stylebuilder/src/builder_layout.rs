@@ -4,6 +4,13 @@ use bevy::ui;
 #[allow(missing_docs)]
 pub trait StyleBuilderLayout {
     fn display(&mut self, disp: ui::Display) -> &mut Self;
+
+    /// Set the display to flex and the flex direction to row.
+    fn flex_row(&mut self) -> &mut Self;
+
+    /// Set the display to flex and the flex direction to column.
+    fn flex_column(&mut self) -> &mut Self;
+
     fn position(&mut self, pos: ui::PositionType) -> &mut Self;
     fn overflow(&mut self, ov: ui::OverflowAxis) -> &mut Self;
     fn overflow_x(&mut self, ov: ui::OverflowAxis) -> &mut Self;
@@ -68,6 +75,20 @@ pub trait StyleBuilderLayout {
 impl<'a, 'w> StyleBuilderLayout for StyleBuilder<'a, 'w> {
     fn display(&mut self, disp: ui::Display) -> &mut Self {
         self.style.display = disp;
+        self.style_changed = true;
+        self
+    }
+
+    fn flex_row(&mut self) -> &mut Self {
+        self.style.display = ui::Display::Flex;
+        self.style.flex_direction = ui::FlexDirection::Row;
+        self.style_changed = true;
+        self
+    }
+
+    fn flex_column(&mut self) -> &mut Self {
+        self.style.display = ui::Display::Flex;
+        self.style.flex_direction = ui::FlexDirection::Column;
         self.style_changed = true;
         self
     }

@@ -8,7 +8,7 @@ use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
 
-use crate::{colors, hooks::UseIsHover};
+use crate::{colors, hooks::UseIsHover, typography};
 
 use super::{IsDisabled, ScrollView};
 
@@ -134,7 +134,7 @@ impl<K: PartialEq + Clone + Send + Sync + 'static> ViewTemplate for ListRow<K> {
 
         Element::<NodeBundle>::for_entity(id)
             .children(self.children.clone())
-            .style((style_listrow, self.style.clone()))
+            .style((typography::text_default, style_listrow, self.style.clone()))
             .style_dyn(
                 |(hovering, selected), sb| {
                     sb.background_color(row_bg_color(false, selected, hovering));
