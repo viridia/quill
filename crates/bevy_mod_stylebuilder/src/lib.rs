@@ -30,7 +30,6 @@ pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
 pub use builder_visibility::StyleBuilderVisibility;
 pub use builder_z_index::StyleBuilderZIndex;
-use impl_trait_for_tuples::*;
 use text_styles::update_text_styles;
 pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
@@ -78,18 +77,38 @@ impl StyleTuple for StyleHandle {
     }
 }
 
-#[impl_for_tuples(1, 16)]
-impl StyleTuple for Tuple {
-    for_tuples!( where #( Tuple: StyleTuple + 'static )* );
+macro_rules! impl_style_tuple {
+    ( $($style: ident, $idx: tt);+ ) => {
+        impl<$(
+            $style: StyleTuple + 'static,
+        )+> StyleTuple for ( $( $style, )* ) {
+            fn apply(&self, builder: &mut StyleBuilder) {
+                $( self.$idx.apply(builder); )*
+            }
 
-    fn apply(&self, ctx: &mut StyleBuilder) {
-        for_tuples!( #( self.Tuple.apply(ctx); )* );
-    }
-
-    fn into_handle(self) -> StyleHandle {
-        StyleHandle::new(self)
-    }
+            fn into_handle(self) -> StyleHandle {
+                StyleHandle::new(self)
+            }
+        }
+    };
 }
+
+impl_style_tuple!(E0, 0);
+impl_style_tuple!(E0, 0; E1, 1);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14);
+impl_style_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14; E15, 15);
 
 /// Wrapper type that allows [`StyleTuple`]s to be passed from parent to child views.
 #[derive(Default, Clone)]

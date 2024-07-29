@@ -36,6 +36,7 @@ pub mod prelude {
     pub use crate::for_index::ForIndex;
     pub use crate::mutable::*;
     pub use crate::r#for::For;
+    pub use crate::switch::Switch;
     pub use crate::view::*;
     pub use crate::view_template::ViewTemplate;
 }

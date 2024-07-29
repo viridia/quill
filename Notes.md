@@ -2,7 +2,7 @@
 
 - Think about separating styles from Quill.
   - Hard to do because text view uses the marker component.
-- impl_trait_for_tuples for effect tuples.
+- Remove impl_trait_for_tuples.
 - Recent colors in color edit.
   - Needs preferences API
 - Change window title.

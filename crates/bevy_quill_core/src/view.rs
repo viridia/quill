@@ -284,11 +284,6 @@ impl<V: View> View for (V,) {
 impl View for Tuple {
     for_tuples!( type State = ( #( Tuple::State ),* ); );
 
-    // #[inline(always)]
-    // fn len(&self) -> usize {
-    //     for_tuples!((#( 1 )+*))
-    // }
-
     #[rustfmt::skip]
     fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
         for_tuples!(#( self.Tuple.nodes(world, &state.Tuple, out); )*);
