@@ -343,7 +343,7 @@ impl OutputChunk {
 
             OutputChunk::Infix {
                 oper,
-                precedence,
+                precedence: _precedence,
                 args,
             } => {
                 // TODO: Precedence

@@ -8,7 +8,6 @@ mod terminal_reader;
 use std::sync::Arc;
 
 use crate::graph::NodeModified;
-use bevy::render::extract_component::ExtractComponent;
 use bevy::tasks::futures_lite::future;
 use bevy::{
     prelude::*,
@@ -34,9 +33,6 @@ pub struct NodeOutput {
     /// Shader handle
     pub shader: Handle<Shader>,
 }
-
-#[derive(Clone, Component, ExtractComponent)]
-struct NodeRenderedEntity;
 
 pub(crate) fn finish_build_shaders(
     mut commands: Commands,

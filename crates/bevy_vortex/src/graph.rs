@@ -22,6 +22,7 @@ pub struct GraphNodeId(pub(crate) usize);
 /// A component that indicates that a particular view is displaying the output of a node,
 /// which means that it needs the material handle generated from the node.
 #[derive(Component, Default)]
+#[allow(dead_code)]
 pub struct NodeObserver {
     pub(crate) node: Option<Entity>,
 }
@@ -324,6 +325,7 @@ pub enum ConnectionDataType {
 }
 
 /// Represents a user-level action which can be undone or redone.
+#[allow(dead_code)]
 pub struct UndoAction {
     label: &'static str,
     pub(crate) mutations: Vec<UndoMutation>,
@@ -339,6 +341,7 @@ impl UndoAction {
 }
 
 /// Represents a single mutation within an [`UndoAction`].
+#[allow(dead_code)]
 pub enum UndoMutation {
     AddNode(GraphNodeId, Entity),
     RemoveNode(GraphNodeId, GraphNode),
@@ -346,6 +349,7 @@ pub enum UndoMutation {
     RemoveConnection(Connection),
 }
 
+#[allow(dead_code)]
 pub(crate) struct ValidateConnectionCmd {
     pub(crate) input: Entity,
     pub(crate) output: Entity,
@@ -356,7 +360,7 @@ impl Command for ValidateConnectionCmd {
         let mut st: SystemState<(ResMut<GraphResource>, Query<&Terminal>, Query<&GraphNode>)> =
             SystemState::new(world);
         // TODO: Need to inject DragState here
-        let (_, terminals, _nodes) = st.get_mut(world);
+        let (_, _terminals, _nodes) = st.get_mut(world);
         // TODO: Validate connection:
         // - can't connect to self
         // - can't connect outputs to outputs

@@ -20,6 +20,11 @@
 
 - Removed dependency on impl_trait_for_tuples for styles.
 
+### ⚙️ Miscellaneous Tasks
+
+- Add changelog, git-cliff configuration.
+- Release
+
 ## [0.1.3] - 2024-07-25
 
 ### 🚀 Features
