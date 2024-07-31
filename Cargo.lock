@@ -936,7 +936,7 @@ checksum = "c115c97a5c8a263bd0aa7001b999772c744ac5ba797d07c86f25734ce381ea69"
 
 [[package]]
 name = "bevy_quill"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
