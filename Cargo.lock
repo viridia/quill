@@ -944,6 +944,7 @@ dependencies = [
  "bevy_quill_core",
  "bevy_quill_obsidian",
  "bevy_quill_obsidian_inspect",
+ "bevy_quill_overlays",
  "impl-trait-for-tuples",
  "smallvec",
 ]
@@ -988,6 +989,15 @@ dependencies = [
  "bevy_mod_stylebuilder",
  "bevy_quill_core",
  "bevy_quill_obsidian",
+]
+
+[[package]]
+name = "bevy_quill_overlays"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_picking",
+ "bevy_quill_core",
 ]
 
 [[package]]

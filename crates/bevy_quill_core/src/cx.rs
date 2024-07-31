@@ -37,7 +37,7 @@ pub struct Cx<'p, 'w> {
     world: &'w mut World,
 
     /// The entity that owns the tracking scope (or will own it).
-    pub(crate) owner: Entity,
+    owner: Entity,
 
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,

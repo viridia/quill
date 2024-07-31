@@ -331,8 +331,15 @@ impl ToolIconButton {
         self
     }
 
+    /// Set whether to tint the image based on the button state.
     pub fn no_tint(mut self, no_tint: bool) -> Self {
         self.no_tint = no_tint;
+        self
+    }
+
+    /// Set whether to tint the image based on the button state (default true).
+    pub fn tint(mut self, tint: bool) -> Self {
+        self.no_tint = !tint;
         self
     }
 }

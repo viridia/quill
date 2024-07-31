@@ -29,10 +29,10 @@ impl Size {
     /// Returns the height of the widget in pixels.
     pub fn border_radius(&self) -> f32 {
         match self {
-            Size::Xl => 4.5,
-            Size::Lg => 4.25,
-            Size::Md => 4.0,
-            Size::Sm => 3.5,
+            Size::Xl => 4.25,
+            Size::Lg => 4.0,
+            Size::Md => 3.5,
+            Size::Sm => 3.0,
             Size::Xs => 3.0,
             Size::Xxs => 3.0,
             Size::Xxxs => 3.0,

@@ -223,6 +223,21 @@ changes.
 Often the "false" branch of a `Cond` will be the empty view, `()`, which renders nothing and
 creates no entities.
 
+### Conditional rendering with `Switch`
+
+You can select from multiple views using `Switch`. This works great with Bevy game states!
+
+```rust
+let state = *cx.use_resource::<State<EditorState>>().get();
+
+Switch::new(state)
+    .case(EditorState::Realm, EditModeRealmControls)
+    .case(EditorState::Terrain, EditModeTerrainControls)
+    .case(EditorState::Scenery, EditModeSceneryControls)
+    .case(EditorState::Meta, EditModeMetadataControls)
+    .case(EditorState::Play, EditModePlayControls)
+```
+
 ### Rendering multiple items with `For`
 
 `For::each()` takes a list of items, and a callback which builds a `View` for each item:
@@ -269,6 +284,20 @@ use a tuple:
 ```
 
 This works because tuples of views are also views.
+
+## Despawning
+
+To despawn a Quill view hierarchy, simply call `.despawn()` on the root entity. Do not call
+`.despawn_recursive()` as this will panic. The reason is because the Quill view hierarchy is
+more complex than just simple parent/child relationships, and relies on Bevy component hooks
+to do it's internal cleanup.
+
+This also means that Quill UIs are not currently compatible with `StateScoped` (which always
+does a recursive despawn), although this is something which can hopefully be addressed in a future
+release.
+
+For removing subtrees, you should not despawn individual entities (which will confuse things),
+but rather rely on conditional constructs such as `Cond` and `Switch`.
 
 ## Mutables: Local state
 

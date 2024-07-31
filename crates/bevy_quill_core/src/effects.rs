@@ -157,8 +157,8 @@ impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8
 
 /// A general-purpose effect that allows arbitrary mutations to the display entity.
 pub struct CallbackEffect<F: Fn(&mut Cx, Entity, D), D: PartialEq + Clone> {
-    pub(crate) effect_fn: F,
-    pub(crate) deps: D,
+    pub effect_fn: F,
+    pub deps: D,
 }
 
 impl<F: Fn(&mut Cx, Entity, D) + Send + Sync, D: PartialEq + Clone + Send + Sync> EntityEffect

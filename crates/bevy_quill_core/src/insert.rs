@@ -5,8 +5,8 @@ use crate::{effects::EntityEffect, Cx};
 /// Inserts a bundle into the target. If the deps change, then the bundle will be recomputed
 /// and reinserted.
 pub struct InsertBundleEffect<B: Bundle, F: Fn(D) -> B, D: PartialEq + Clone> {
-    pub(crate) factory: F,
-    pub(crate) deps: D,
+    pub factory: F,
+    pub deps: D,
 }
 
 impl<B: Bundle, F: Fn(D) -> B + Send + Sync, D: PartialEq + Clone + Send + Sync> EntityEffect
@@ -29,8 +29,8 @@ impl<B: Bundle, F: Fn(D) -> B + Send + Sync, D: PartialEq + Clone + Send + Sync>
 /// Conditionally inserts a bundle into the target. If the condition is true, then the bundle
 /// will be inserted. If the condition later becomes false, the component will be removed.
 pub struct ConditionalInsertComponentEffect<B: Bundle, F: Fn() -> B> {
-    pub(crate) factory: F,
-    pub(crate) condition: bool,
+    pub factory: F,
+    pub condition: bool,
 }
 
 impl<C: Component, F: Fn() -> C + Send + Sync> EntityEffect
@@ -60,7 +60,7 @@ impl<C: Component, F: Fn() -> C + Send + Sync> EntityEffect
 
 /// Inserts a bundle into the target once and never updates it.
 pub struct StaticInsertBundleEffect<B: Bundle + Clone> {
-    pub(crate) bundle: B,
+    pub bundle: B,
 }
 
 impl<B: Bundle + Clone> EntityEffect for StaticInsertBundleEffect<B> {

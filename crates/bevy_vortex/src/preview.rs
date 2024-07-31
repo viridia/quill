@@ -107,7 +107,7 @@ impl ViewTemplate for PreviewModeButtons {
                 ),
             ToolIconButton::new("embedded://bevy_vortex/assets/icons/sphere.png")
                 .size(Vec2::splat(20.))
-                .no_tint(true)
+                .tint(false)
                 .corners(RoundedCorners::None)
                 .selected(mode == PreviewMode::Sphere)
                 .on_click(
@@ -117,7 +117,7 @@ impl ViewTemplate for PreviewModeButtons {
                 ),
             ToolIconButton::new("embedded://bevy_vortex/assets/icons/cuboid.png")
                 .size(Vec2::splat(20.))
-                .no_tint(true)
+                .tint(false)
                 .corners(RoundedCorners::None)
                 .selected(mode == PreviewMode::Cuboid)
                 .on_click(
@@ -127,7 +127,7 @@ impl ViewTemplate for PreviewModeButtons {
                 ),
             ToolIconButton::new("embedded://bevy_vortex/assets/icons/tetra.png")
                 .size(Vec2::splat(20.))
-                .no_tint(true)
+                .tint(false)
                 .corners(RoundedCorners::None)
                 .selected(mode == PreviewMode::Tetra)
                 .on_click(
@@ -137,7 +137,7 @@ impl ViewTemplate for PreviewModeButtons {
                 ),
             ToolIconButton::new("embedded://bevy_vortex/assets/icons/torus.png")
                 .size(Vec2::splat(20.))
-                .no_tint(true)
+                .tint(false)
                 .corners(RoundedCorners::Right)
                 .selected(mode == PreviewMode::Torus)
                 .on_click(

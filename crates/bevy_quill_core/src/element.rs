@@ -195,7 +195,7 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
-        let owner = cx.owner;
+        let owner = cx.owner();
         if self.debug_name.is_empty() {
             cx.world_mut()
                 .entity_mut(owner)

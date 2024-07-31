@@ -3,12 +3,12 @@ mod callback;
 mod cond;
 mod cx;
 mod dynamic;
-mod effects;
+pub mod effects;
 mod element;
 mod r#for;
 mod for_each;
 mod for_index;
-mod insert;
+pub mod insert;
 mod lcs;
 mod mutable;
 mod portal;
@@ -27,6 +27,7 @@ use bevy::{
 use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
 
 pub mod prelude {
+    pub use super::QuillPlugin;
     pub use crate::callback::*;
     pub use crate::cond::Cond;
     pub use crate::cx::Cx;

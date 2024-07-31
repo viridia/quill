@@ -46,58 +46,6 @@ fn setup_view_root(mut commands: Commands) {
             ))
             .to_root(),
     );
-    //     commands.spawn(ViewRoot::new(
-    //         Element::<NodeBundle>::new()
-    //             .style(style_test)
-    //             .insert(BorderColor(palettes::css::LIME.into()))
-    //             .insert_computed(|cx| {
-    //                 let counter = cx.use_resource::<Counter>();
-    //                 BackgroundColor(if counter.count & 1 == 0 {
-    //                     palettes::css::DARK_GRAY.into()
-    //                 } else {
-    //                     palettes::css::MAROON.into()
-    //                 })
-    //             })
-    //             .create_effect(|cx, ent| {
-    //                 let count = cx.use_resource::<Counter>().count;
-    //                 let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-    //                 border.0 = if count & 1 == 0 {
-    //                     palettes::css::LIME.into()
-    //                 } else {
-    //                     palettes::css::RED.into()
-    //                 };
-    //             })
-    //             .children((
-    //                 Element::<NodeBundle>::new(),
-    //                 text("Count: "),
-    //                 text_computed(|cx| {
-    //                     let counter = cx.use_resource::<Counter>();
-    //                     format!("{}", counter.count)
-    //                 }),
-    //                 ", ",
-    //                 NestedView,
-    //                 ": ",
-    //                 Cond::new(
-    //                     |cx: &Rcx| {
-    //                         let counter = cx.use_resource::<Counter>();
-    //                         counter.count & 1 == 0
-    //                     },
-    //                     || "[Even]",
-    //                     || "[Odd]",
-    //                 ),
-    //                 DynamicKeyed::new(
-    //                     |cx| cx.use_resource::<Counter>().count,
-    //                     |count| format!(":{}:", count),
-    //                 ),
-    //                 For::each(
-    //                     |cx| {
-    //                         let counter = cx.use_resource::<Counter>();
-    //                         [counter.count, counter.count + 1, counter.count + 2].into_iter()
-    //                     },
-    //                     |item| format!("item: {}", item),
-    //                 ),
-    //             )),
-    //     ));
 }
 
 /// Example of a view template that displays a string.
