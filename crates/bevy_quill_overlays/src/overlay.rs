@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
     render::{mesh::PrimitiveTopology, render_asset::RenderAssetUsages},
 };
-use bevy_mod_picking::{backends::raycast::RaycastPickable, picking_core::Pickable};
+use bevy_mod_picking::backends::raycast::RaycastPickable;
 use bevy_quill_core::{effects::*, insert::*, prelude::*};
 
 use crate::{
@@ -270,6 +270,53 @@ impl<C: View, E: EffectTuple> Overlay<C, E> {
             marker: std::marker::PhantomData,
         })
     }
+
+    /// Compute the mesh vertices of the overlay. This will be run once.
+    pub fn mesh<M: MeshBuilder + Default + Send + Sync + 'static, S: Fn(&mut M) + Send + Sync>(
+        self,
+        shape_fn: S,
+    ) -> Overlay<C, <E as AppendEffect<StaticMeshEffect<M, S>>>::Result>
+    where
+        E: AppendEffect<StaticMeshEffect<M, S>>,
+    {
+        Self {
+            topology: M::topology(),
+            ..self
+        }
+        .add_effect(StaticMeshEffect {
+            shape_fn,
+            marker: std::marker::PhantomData,
+        })
+    }
+
+    /// Compute the mesh vertices. This will be re-run whenever the
+    /// dependencies change.
+    ///
+    /// Arguments:
+    /// - shape_fn: A function which computes the mesh vertices.
+    /// - deps: The dependencies which trigger a recompute of the styles.
+    pub fn mesh_dyn<
+        M: MeshBuilder + Default + Send + Sync + 'static,
+        S: Fn(D, &mut M) + Send + Sync,
+        D: PartialEq + Clone + Send + Sync,
+    >(
+        self,
+        shape_fn: S,
+        deps: D,
+    ) -> Overlay<C, <E as AppendEffect<DynamicMeshEffect<M, S, D>>>::Result>
+    where
+        E: AppendEffect<DynamicMeshEffect<M, S, D>>,
+    {
+        Self {
+            topology: M::topology(),
+            ..self
+        }
+        .add_effect(DynamicMeshEffect {
+            shape_fn,
+            deps,
+            marker: std::marker::PhantomData,
+        })
+    }
 }
 
 impl Default for Overlay<(), ()> {
@@ -306,7 +353,6 @@ impl<C: View, E: EffectTuple + 'static> View for Overlay<C, E> {
         }
 
         let mesh = Mesh::new(self.topology, RenderAssetUsages::default());
-
         let mut meshes = cx.world_mut().get_resource_mut::<Assets<Mesh>>().unwrap();
         let mesh_handle = meshes.add(mesh);
 
@@ -364,14 +410,8 @@ impl<C: View, E: EffectTuple + 'static> View for Overlay<C, E> {
             .entity_mut(display)
             .insert(underlay_material.clone());
 
-        if self.pickable {
-            cx.world_mut().entity_mut(display).insert((
-                RaycastPickable,
-                Pickable {
-                    should_block_lower: true,
-                    is_hoverable: true,
-                },
-            ));
+        if self.pickable && self.topology == PrimitiveTopology::TriangleList {
+            cx.world_mut().entity_mut(display).insert(RaycastPickable);
         }
 
         // Run attached effects.
@@ -457,7 +497,6 @@ impl EntityEffect for OverlayColorEffect {
             underlay_material.color = self
                 .color
                 .with_alpha(self.color.alpha * mesh_state.underlay);
-            println!("Underlay color: {:?}", underlay_material.color);
         }
 
         self.color

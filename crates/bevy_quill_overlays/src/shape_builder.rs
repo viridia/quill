@@ -253,7 +253,7 @@ impl ShapeBuilder {
         self
     }
 
-    /// Draw a polygon from a list of points.
+    /// Draw a polygon from a list of 2d points.
     pub fn stroke_polygon(&mut self, vertices: &[Vec2], options: PolygonOptions) -> &mut Self {
         if vertices.len() < 2 {
             return self;
@@ -371,11 +371,142 @@ impl ShapeBuilder {
         self
     }
 
+    /// Draw a polygon from a list of 3d points.
+    // pub fn stroke_polygon_3d(
+    //     &mut self,
+    //     vertices: &[Vec3],
+    //     up: Vec3,
+    //     options: PolygonOptions,
+    // ) -> &mut Self {
+    //     if vertices.len() < 2 {
+    //         return self;
+    //     }
+    //     let closed = options.closed && vertices.len() > 2;
+    //     let lw = self.stroke_width * 0.5;
+    //     let count = vertices.len();
+
+    //     let mut dash_end = options.dash_length;
+
+    //     // Indices of the vertices at the start of the current dash.
+    //     let mut v0_index: u32 = 0;
+    //     let mut v1_index: u32 = 0;
+
+    //     for i in 0..count {
+    //         let vtx = vertices[i];
+    //         let vtx_next = vertices[(i + 1).rem_euclid(count)];
+
+    //         // Length and direction of line segment
+    //         let mut length = vtx.distance(vtx_next);
+    //         let v_dir = (vtx_next - vtx) / length;
+    //         let v_perp = Vec2::new(v_dir.y, -v_dir.x).normalize() * lw;
+
+    //         if i == 0 {
+    //             // Generate vertices for the start of first segment.
+    //             if closed {
+    //                 // Mitered starting point.
+    //                 let vtx_prev = *vertices.last().unwrap();
+    //                 let v_dir_prev = (vtx - vtx_prev).normalize();
+    //                 let dot = (v_dir + v_dir_prev).normalize().dot(v_dir_prev);
+    //                 let v_miter =
+    //                     Vec2::new(v_dir_prev.y + v_dir.y, -v_dir_prev.x - v_dir.x).normalize() * lw
+    //                         / dot;
+    //                 let v2_index = self.push_vec3_index(vtx + v_miter);
+    //                 let v3_index = self.push_vec3_index(vtx - v_miter);
+    //                 self.push_indices(&[
+    //                     v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
+    //                 ]);
+    //                 v0_index = v2_index;
+    //                 v1_index = v3_index;
+    //                 // todo!();
+    //             } else {
+    //                 // Draw start marker and update position.
+    //                 let marker_length = self.marker_length(options.start_marker).min(length * 0.4);
+    //                 self.fill_marker_3d(
+    //                     options.start_marker,
+    //                     vtx + v_dir * marker_length,
+    //                     -v_dir,
+    //                     marker_length,
+    //                 );
+    //                 v0_index = self.push_vec3_index(vtx + v_perp + v_dir * marker_length);
+    //                 v1_index = self.push_vec3_index(vtx - v_perp + v_dir * marker_length);
+    //                 dash_end += marker_length;
+    //             }
+    //         }
+
+    //         // If the segment ends in a marker, reduce the line segment length.
+    //         let marker_length = self.marker_length(options.end_marker).min(length * 0.4);
+    //         if i == count - 2 && !closed {
+    //             length -= marker_length;
+    //         }
+
+    //         while dash_end < length {
+    //             // Finish the previous dash.
+    //             let v_dash_end = vtx + v_dir * dash_end.min(length);
+    //             let v2_index = self.push_vec3_index(v_dash_end + v_perp);
+    //             let v3_index = self.push_vec3_index(v_dash_end - v_perp);
+    //             self.push_indices(&[v0_index, v2_index, v1_index, v1_index, v2_index, v3_index]);
+
+    //             // Start a new dash if there's room
+    //             if dash_end + options.gap_length < length {
+    //                 let v_dash_start = vtx + v_dir * (dash_end + options.gap_length);
+    //                 v0_index = self.push_vec3_index(v_dash_start + v_perp);
+    //                 v1_index = self.push_vec3_index(v_dash_start - v_perp);
+    //             }
+
+    //             // Prep for next dash
+    //             dash_end += options.dash_length + options.gap_length;
+    //         }
+
+    //         // Miter at end, if it's in the middle of a dash.
+    //         if dash_end - options.dash_length < length {
+    //             if i < count - 2 || options.closed {
+    //                 // Mitered angle.
+    //                 let vtx_next2 = vertices[(i + 2).rem_euclid(count)];
+    //                 let v_dir_next = (vtx_next2 - vtx_next).normalize();
+    //                 let dot = (v_dir_next + v_dir).normalize().dot(v_dir);
+    //                 let v_miter =
+    //                     Vec2::new(v_dir.y + v_dir_next.y, -v_dir.x - v_dir_next.x).normalize() * lw
+    //                         / dot;
+    //                 let v2_index = self.push_vec3_index(vtx_next + v_miter);
+    //                 let v3_index = self.push_vec3_index(vtx_next - v_miter);
+    //                 self.push_indices(&[
+    //                     v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
+    //                 ]);
+    //                 v0_index = v2_index;
+    //                 v1_index = v3_index;
+    //             } else {
+    //                 // Butt end
+    //                 let v_seg_end = vtx + v_dir * length;
+    //                 let v2 = v_seg_end + v_perp;
+    //                 let v3 = v_seg_end - v_perp;
+    //                 let v2_index = self.push_vec3_index(v2);
+    //                 let v3_index = self.push_vec3_index(v3);
+    //                 self.push_indices(&[
+    //                     v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
+    //                 ]);
+    //                 self.fill_marker_3d(options.end_marker, v_seg_end, v_dir, marker_length);
+    //                 break;
+    //             }
+    //         }
+
+    //         dash_end -= length;
+    //     }
+    //     self
+    // }
+
     /// Add a vertex to the shape, and return the index of that vertex.
     #[inline]
     fn push_vec2_index(&mut self, v: Vec2) -> u32 {
         let index = self.vertices.len() as u32;
         self.vertices.push(Vec3::new(v.x, v.y, 0.));
+        index
+    }
+
+    /// Add a vertex to the shape, and return the index of that vertex.
+    #[inline]
+    fn push_vec3_index(&mut self, v: Vec3) -> u32 {
+        let index = self.vertices.len() as u32;
+        self.vertices.push(v);
         index
     }
 
@@ -392,6 +523,26 @@ impl ShapeBuilder {
             _ => {}
         }
     }
+
+    // fn fill_marker_3d(
+    //     &mut self,
+    //     marker: StrokeMarker,
+    //     position: Vec3,
+    //     direction: Vec3,
+    //     length: f32,
+    // ) {
+    //     #[allow(clippy::single_match)]
+    //     match marker {
+    //         StrokeMarker::Arrowhead => {
+    //             let v_perp = Vec2::new(direction.y, -direction.x).normalize() * length;
+    //             let v0 = position + direction * length;
+    //             let v1 = position + v_perp;
+    //             let v2 = position - v_perp;
+    //             self.fill_triangle(v0, v2, v1);
+    //         }
+    //         _ => {}
+    //     }
+    // }
 
     /// Compute the length of the stroke marker, relative to the stroke width.
     fn marker_length(&self, marker: StrokeMarker) -> f32 {
