@@ -1,6 +1,6 @@
 [package]
 name = "bevy_vortex"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A Bevy-based application for building procedural WGSL shaders."
 license = "MIT OR Apache-2.0"

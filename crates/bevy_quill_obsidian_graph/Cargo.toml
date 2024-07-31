@@ -1,6 +1,6 @@
 [package]
 name = "bevy_quill_obsidian_graph"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A collection of widgets for implementing node-graph editors."
 license = "MIT OR Apache-2.0"

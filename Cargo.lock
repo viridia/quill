@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_stylebuilder"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -936,7 +936,7 @@ checksum = "c115c97a5c8a263bd0aa7001b999772c744ac5ba797d07c86f25734ce381ea69"
 
 [[package]]
 name = "bevy_quill"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -951,7 +951,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bevy",
  "bevy_mod_stylebuilder",
@@ -961,7 +961,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_obsidian"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -971,7 +971,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_obsidian_graph"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -982,7 +982,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_obsidian_inspect"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -993,7 +993,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_overlays"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -1287,7 +1287,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_vortex"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_mod_picking",

@@ -1,6 +1,6 @@
 [package]
 name = "bevy_quill_obsidian"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "An opinionated set of editor-focused widgets built on Bevy and Quill."
 license = "MIT OR Apache-2.0"
