@@ -532,13 +532,17 @@ impl<
 {
     type State = D;
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
-        let target = cx.world_mut().entity_mut(target);
+        let target_ent = cx.world_mut().entity_mut(target);
         let mut builder = M::default();
         (self.shape_fn)(self.deps.clone(), &mut builder);
-        let mesh_state = target.get::<OverlayMeshState>().unwrap().clone();
+        let mesh_state = target_ent.get::<OverlayMeshState>().unwrap().clone();
         let mut meshes = cx.world_mut().get_resource_mut::<Assets<Mesh>>().unwrap();
         let mesh = meshes.get_mut(mesh_state.mesh.id()).unwrap();
         builder.build(mesh);
+        if let Some(aabb) = mesh.compute_aabb() {
+            let mut target_ent = cx.world_mut().entity_mut(target);
+            target_ent.insert(aabb);
+        }
         self.deps.clone()
     }
 

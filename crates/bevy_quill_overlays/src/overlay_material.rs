@@ -36,6 +36,7 @@ impl Material for OverlayMaterial {
         layout: &MeshVertexBufferLayoutRef,
         key: MaterialPipelineKey<Self>,
     ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.primitive.cull_mode = None;
         if let Some(ref mut depth_stencil) = descriptor.depth_stencil {
             depth_stencil.depth_write_enabled = true;
             depth_stencil.depth_compare = CompareFunction::GreaterEqual;
@@ -67,6 +68,7 @@ impl Material for UnderlayMaterial {
         layout: &MeshVertexBufferLayoutRef,
         key: MaterialPipelineKey<Self>,
     ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.primitive.cull_mode = None;
         if let Some(ref mut depth_stencil) = descriptor.depth_stencil {
             depth_stencil.depth_write_enabled = true;
             depth_stencil.depth_compare = CompareFunction::Less;
