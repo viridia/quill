@@ -7,7 +7,7 @@ mod shape_builder;
 use bevy::{app::Plugin, asset::embedded_asset, pbr::MaterialPlugin};
 pub use lines_builder::LinesBuilder;
 pub use overlay::Overlay;
-pub use shape_builder::{PolygonOptions, ShapeBuilder, StrokeMarker};
+pub use shape_builder::{PolygonOptions, ShapeBuilder, ShapeOrientation, StrokeMarker};
 
 use crate::overlay_material::OverlayMaterial;
 
