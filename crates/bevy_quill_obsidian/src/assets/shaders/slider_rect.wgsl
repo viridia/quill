@@ -8,7 +8,7 @@ var<uniform> color_lo: vec4<f32>;
 var<uniform> color_hi: vec4<f32>;
 
 @group(1) @binding(2)
-var<uniform> value: f32;
+var<uniform> value: vec4<f32>;
 
 @group(1) @binding(3)
 var<uniform> radius: vec4<f32>;
@@ -17,7 +17,7 @@ var<uniform> radius: vec4<f32>;
 fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
     let uv = in.uv - 0.5;
     let size = vec2<f32>(in.size.x, in.size.y);
-    let color = select(color_lo, color_hi, in.uv.x <= value);
+    let color = select(color_lo, color_hi, in.uv.x <= value.x);
     let external_distance = sd_rounded_box((in.uv - 0.5) * size, size, vec4<f32>(radius));
     let alpha = smoothstep(0.5, -0.5, external_distance);
 
