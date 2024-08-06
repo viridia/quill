@@ -2,19 +2,19 @@
 #import bevy_ui::ui_vertex_output::UiVertexOutput
 
 @group(1) @binding(0)
-var<uniform> num_color_stops: i32;
+var<uniform> num_color_stops: vec4<i32>;
 
 @group(1) @binding(1)
 var<uniform> color_stops: array<vec4<f32>, 8>;
 
 @group(1) @binding(3)
-var<uniform> cap_size: f32;
+var<uniform> cap_size: vec4<f32>;
 
 @fragment
 fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
-    let t = (in.uv.x - 0.1) * 1.0 / 0.8 * f32(num_color_stops - 1);
-    let color_index_lo = clamp(i32(floor(t)), 0, num_color_stops - 1);
-    let color_index_hi = clamp(i32(ceil(t)), 0, num_color_stops - 1);
+    let t = (in.uv.x - 0.1) * 1.0 / 0.8 * f32(num_color_stops.x - 1);
+    let color_index_lo = clamp(i32(floor(t)), 0, num_color_stops.x - 1);
+    let color_index_hi = clamp(i32(ceil(t)), 0, num_color_stops.x - 1);
     let color_lo = color_stops[color_index_lo];
     let color_hi = color_stops[color_index_hi];
     let color = mix(color_lo, color_hi, t - f32(color_index_lo));
