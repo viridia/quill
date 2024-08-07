@@ -231,7 +231,7 @@ impl ViewTemplate for Checkbox {
                             if focused {
                                 sb.outline_color(colors::FOCUS)
                                     .outline_offset(1.0)
-                                    .width(2.0);
+                                    .outline_width(2.0);
                             } else {
                                 sb.outline_color(Option::<Color>::None);
                             }
