@@ -225,6 +225,21 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
         });
 }
 
+/// A command that triggers a reaction on a scope entity.
+pub struct TriggerReaction(pub Entity);
+
+impl Command for TriggerReaction {
+    fn apply(self, world: &mut World) {
+        if let Some(mut scope_ent) = world.get_entity_mut(self.0) {
+            if let Some(scope) = scope_ent.get_mut::<TrackingScope>() {
+                TrackingScope::set_changed(&scope);
+            } else {
+                warn!("No tracking scope found for entity {:?}", self.0);
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

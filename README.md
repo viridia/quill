@@ -395,6 +395,37 @@ with the following steps:
 - create an `Element` using the created id with `Element::for_entity(id)`.
 - in the builder methods for the `Element`, use `is_hovered` to conditionally apply styles.
 
+## Reactive contexts and Bevy observers
+
+While there's no explicit support yet for Observers, there is a way to trigger a reaction from
+an observer.
+
+You can create an observer for a Quill `View` by inserting an `Observer` component on the `owner`
+entity:
+
+```rust
+let owner = cx.owner();
+cx.create_effect(
+    |world, owner| {
+        world.entity_mut(owner).insert(Observer::new(callback));
+    },
+    owner
+);
+```
+
+Since the observer is attached to the owner entity, it will be despawned when the View is.
+
+To trigger a reaction, inject a `Commands` into the observer callback and invoke a
+`TriggerReaction` command. This command manually marks the tracking scope as changed, and will
+update during the next cycle.
+
+```rust
+commands.add(TriggerReaction(owner));
+```
+
+Note that you should not invoke `TriggerReaction` from within a reactive callback, as this will
+likely cause an infinite loop.
+
 ## Styling
 
 There are several different ways to approach styling in Bevy. One is "imperative styles", meaning

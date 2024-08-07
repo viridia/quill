@@ -38,7 +38,9 @@ pub mod prelude {
     pub use crate::mutable::*;
     pub use crate::r#for::For;
     pub use crate::switch::Switch;
+    pub use crate::tracking_scope::TriggerReaction;
     pub use crate::view::*;
+    pub use crate::view_child::{IntoViewChild, ViewChild};
     pub use crate::view_template::ViewTemplate;
 }
 
@@ -57,6 +59,7 @@ pub use switch::Switch;
 use tracking_scope::cleanup_tracking_scopes;
 pub use tracking_scope::TrackingScope;
 pub use tracking_scope::TrackingScopeTracing;
+pub use tracking_scope::TriggerReaction;
 pub use view::*;
 pub use view_child::IntoViewChild;
 pub use view_child::ViewChild;
