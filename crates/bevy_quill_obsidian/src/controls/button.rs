@@ -195,7 +195,9 @@ impl ViewTemplate for Button {
                 typography::text_default,
                 style_button,
                 move |ss: &mut StyleBuilder| {
-                    ss.min_height(size.height()).font_size(size.font_size());
+                    ss.min_height(size.height())
+                        .min_width(size.height())
+                        .font_size(size.font_size());
                     if minimal {
                         ss.padding(0);
                     } else {
