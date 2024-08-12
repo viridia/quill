@@ -11,7 +11,12 @@ use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
 
-use crate::{colors, hooks::UseIsHover, typography};
+use crate::{
+    colors,
+    focus::TabIndex,
+    hooks::{UseIsFocus, UseIsHover},
+    typography,
+};
 
 use super::{IsDisabled, ScrollView};
 
@@ -138,12 +143,15 @@ impl<K: PartialEq + Clone + Send + Sync + 'static> ViewTemplate for ListRow<K> {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let id = cx.create_entity();
         let hovering = cx.is_hovered(id);
+        let focused = cx.is_focused(id);
         let on_click = self.on_click;
         let key = self.key.clone();
 
-        // TODO: Disabled, Focused
+        // TODO: Disabled
 
         Element::<NodeBundle>::for_entity(id)
+            .named("ListRow")
+            .insert(TabIndex(0))
             .children(self.children.clone())
             .style((typography::text_default, style_listrow, self.style.clone()))
             .style_dyn(
@@ -151,6 +159,21 @@ impl<K: PartialEq + Clone + Send + Sync + 'static> ViewTemplate for ListRow<K> {
                     sb.background_color(row_bg_color(false, selected, hovering));
                 },
                 (hovering, self.selected),
+            )
+            .style_dyn(
+                move |focused, sb| {
+                    match focused {
+                        true => {
+                            sb.border_color(colors::FOCUS).border(1).padding((5, 2));
+                        }
+                        false => {
+                            sb.border_color(Option::<Color>::None)
+                                .border(0)
+                                .padding((6, 3));
+                        }
+                    };
+                },
+                focused,
             )
             .insert_dyn(
                 move |_| {

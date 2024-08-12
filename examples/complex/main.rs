@@ -18,6 +18,7 @@ use bevy_quill_obsidian::{
         Slider, Splitter, SplitterDirection, ToolButton, ToolPalette,
     },
     focus::TabGroup,
+    prelude::ListRow,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
 use bevy_quill_obsidian_inspect::InspectorPlugin;
@@ -440,7 +441,9 @@ impl ViewTemplate for LogList {
     fn create(&self, cx: &mut Cx) -> Self::View {
         let log = cx.use_resource::<ClickLog>();
         ListView::new()
-            .children(For::each(log.0.clone(), |msg| msg.clone()))
+            .children(For::each(log.0.clone(), |msg| {
+                ListRow::new(msg.clone()).children(msg.clone())
+            }))
             .style(style_scroll_area)
     }
 }
