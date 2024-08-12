@@ -48,7 +48,7 @@ impl<P> Clone for Callback<P> {
 }
 
 pub trait RunCallback {
-    fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P);
+    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P);
 }
 
 /// A mutable reactive context. This allows write access to reactive data sources.
@@ -64,8 +64,14 @@ impl RunCallback for World {
 }
 
 impl<'p, 'w> RunCallback for Cx<'p, 'w> {
-    fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
+    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
         self.world_mut().run_callback(callback, props);
+    }
+}
+
+impl<'w, 's> RunCallback for Commands<'w, 's> {
+    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
+        self.run_system_with_input(callback.id, props)
     }
 }
 
