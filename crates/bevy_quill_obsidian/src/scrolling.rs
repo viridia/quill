@@ -70,10 +70,6 @@ impl ScrollArea {
     }
 }
 
-/// Marker component indicating this entity is the scrolling content area.
-#[derive(Component, Clone, Default)]
-pub struct ScrollContent;
-
 /// Marker component indicating this entity is the scrollbar on the X-axis.
 #[derive(Component)]
 pub struct ScrollBar {
@@ -96,13 +92,10 @@ pub(crate) fn update_scroll_positions(
     mut query: Query<(&Node, &mut ScrollArea, &GlobalTransform, &Children)>,
     mut query_content: Query<
         (&Node, &mut Style, &GlobalTransform),
-        (With<ScrollContent>, Without<ScrollArea>),
+        (Without<ScrollArea>, Without<ScrollBarThumb>),
     >,
     query_scrollbar: Query<(&ScrollBar, &Children)>,
-    mut query_scrollbar_thumb: Query<
-        (&mut Style, &mut Visibility),
-        (With<ScrollBarThumb>, Without<ScrollContent>),
-    >,
+    mut query_scrollbar_thumb: Query<(&mut Style, &mut Visibility), With<ScrollBarThumb>>,
 ) {
     for (node, mut scrolling, gt, children) in query.iter_mut() {
         // Measure size and update scroll width and height
@@ -131,6 +124,7 @@ pub(crate) fn update_scroll_positions(
 
             style.left = ui::Val::Px(-scrolling.scroll_left);
             style.top = ui::Val::Px(-scrolling.scroll_top);
+            style.position_type = ui::PositionType::Absolute;
         } else {
             scrolling.content_size.x = 0.;
             scrolling.content_size.y = 0.;

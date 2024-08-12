@@ -11,7 +11,7 @@ use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
 
-use crate::{colors, hooks::UseIsHover, scrolling::ScrollContent, typography};
+use crate::{colors, hooks::UseIsHover, typography};
 
 use super::{IsDisabled, ScrollView};
 
@@ -23,7 +23,6 @@ fn style_listview(ss: &mut StyleBuilder) {
 
 fn style_listview_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
-        .position(ui::PositionType::Absolute)
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::Stretch)
         .align_self(ui::AlignSelf::Stretch)
@@ -68,10 +67,7 @@ impl ViewTemplate for ListView {
             .children(
                 Element::<NodeBundle>::new()
                     .named("ListView")
-                    .insert((
-                        ScrollContent,
-                        AccessibilityNode::from(NodeBuilder::new(Role::ListBox)),
-                    ))
+                    .insert(AccessibilityNode::from(NodeBuilder::new(Role::ListBox)))
                     .style(style_listview_inner)
                     .children(self.children.clone()),
             )

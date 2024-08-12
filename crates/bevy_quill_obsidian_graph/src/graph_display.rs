@@ -2,7 +2,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
-use bevy_quill_obsidian::{colors, controls::ScrollView, scrolling::ScrollContent};
+use bevy_quill_obsidian::{colors, controls::ScrollView};
 
 use crate::{materials::DotGridMaterial, DragAction, DragMode, Gesture, GestureState, GraphEvent};
 
@@ -11,8 +11,7 @@ fn style_node_graph(ss: &mut StyleBuilder) {
 }
 
 fn style_node_graph_scroll(ss: &mut StyleBuilder) {
-    ss.position(ui::PositionType::Absolute)
-        .min_width(ui::Val::Px(2000.0))
+    ss.min_width(ui::Val::Px(2000.0))
         .min_height(ui::Val::Percent(100.));
 }
 
@@ -78,7 +77,6 @@ impl ViewTemplate for GraphDisplay {
                     .insert_dyn(
                         move |_| {
                             (
-                                ScrollContent,
                                 On::<Pointer<Down>>::run(
                                     move |mut event: ListenerMut<Pointer<Down>>,
                                     mut writer: EventWriter<GraphEvent>| {
