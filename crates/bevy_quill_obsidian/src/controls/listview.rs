@@ -1,5 +1,8 @@
 use bevy::{
-    a11y::Focus,
+    a11y::{
+        accesskit::{NodeBuilder, Role},
+        AccessibilityNode, Focus,
+    },
     color::{Alpha, Srgba},
     prelude::*,
     ui::{self, node_bundles::NodeBundle},
@@ -8,7 +11,7 @@ use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
 
-use crate::{colors, hooks::UseIsHover, typography};
+use crate::{colors, hooks::UseIsHover, scrolling::ScrollContent, typography};
 
 use super::{IsDisabled, ScrollView};
 
@@ -20,10 +23,13 @@ fn style_listview(ss: &mut StyleBuilder) {
 
 fn style_listview_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
+        .position(ui::PositionType::Absolute)
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::Stretch)
         .align_self(ui::AlignSelf::Stretch)
-        .justify_self(ui::JustifySelf::Stretch);
+        .justify_self(ui::JustifySelf::Stretch)
+        .height(ui::Val::Auto)
+        .min_width(ui::Val::Percent(100.));
 }
 
 /// A scrollable list of items.
@@ -59,9 +65,18 @@ impl ViewTemplate for ListView {
     type View = ScrollView;
     fn create(&self, _cx: &mut Cx) -> Self::View {
         ScrollView::new()
-            .children(self.children.clone())
+            .children(
+                Element::<NodeBundle>::new()
+                    .named("ListView")
+                    .insert((
+                        ScrollContent,
+                        AccessibilityNode::from(NodeBuilder::new(Role::ListBox)),
+                    ))
+                    .style(style_listview_inner)
+                    .children(self.children.clone()),
+            )
             .style((style_listview, self.style.clone()))
-            .content_style(style_listview_inner)
+            // .content_style(style_listview_inner)
             .scroll_enable_y(true)
     }
 }

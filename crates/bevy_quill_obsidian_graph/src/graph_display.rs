@@ -2,7 +2,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_quill_core::*;
-use bevy_quill_obsidian::{colors, controls::ScrollView};
+use bevy_quill_obsidian::{colors, controls::ScrollView, scrolling::ScrollContent};
 
 use crate::{materials::DotGridMaterial, DragAction, DragMode, Gesture, GestureState, GraphEvent};
 
@@ -10,15 +10,10 @@ fn style_node_graph(ss: &mut StyleBuilder) {
     ss.background_color(colors::U1);
 }
 
-fn style_node_graph_content(ss: &mut StyleBuilder) {
-    ss.border(0)
-        // .border_color(colors::X_RED)
-        .min_width(ui::Val::Percent(100.))
-        .min_height(ui::Val::Percent(100.));
-}
-
 fn style_node_graph_scroll(ss: &mut StyleBuilder) {
-    ss.min_width(ui::Val::Px(2000.0));
+    ss.position(ui::PositionType::Absolute)
+        .min_width(ui::Val::Px(2000.0))
+        .min_height(ui::Val::Percent(100.));
 }
 
 /// An editable graph of nodes, connected by edges.
@@ -83,6 +78,7 @@ impl ViewTemplate for GraphDisplay {
                     .insert_dyn(
                         move |_| {
                             (
+                                ScrollContent,
                                 On::<Pointer<Down>>::run(
                                     move |mut event: ListenerMut<Pointer<Down>>,
                                     mut writer: EventWriter<GraphEvent>| {
@@ -149,7 +145,6 @@ impl ViewTemplate for GraphDisplay {
                     .children(self.children.clone()),
             )
             .style((style_node_graph, self.style.clone()))
-            .content_style(style_node_graph_content)
             .scroll_enable_x(true)
             .scroll_enable_y(true)
     }

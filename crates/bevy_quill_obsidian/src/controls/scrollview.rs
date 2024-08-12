@@ -5,7 +5,7 @@ use bevy_quill_core::*;
 
 use crate::{
     colors,
-    scrolling::{ScrollArea, ScrollBar, ScrollBarThumb, ScrollContent, ScrollWheel},
+    scrolling::{ScrollArea, ScrollBar, ScrollBarThumb, ScrollWheel},
 };
 
 // Style definitions for scrollview widget.
@@ -29,14 +29,6 @@ fn style_scroll_region(ss: &mut StyleBuilder) {
     ss.grid_column(ui::GridPlacement::start_span(1, 1))
         .grid_row(ui::GridPlacement::start_span(1, 1))
         .overflow(ui::OverflowAxis::Clip);
-}
-
-/// The scrolling content which is clipped.
-fn style_scroll_content(ss: &mut StyleBuilder) {
-    ss.position(ui::PositionType::Absolute)
-        .height(ui::Val::Auto)
-        .min_width(ui::Val::Percent(100.))
-        .border(1);
 }
 
 fn style_scrollbar_x(ss: &mut StyleBuilder) {
@@ -88,8 +80,6 @@ pub struct ScrollView {
     pub children: ViewChild,
     /// Style to be applied to the entire scroll view,
     pub style: StyleHandle,
-    /// Style to be applied to the content region,
-    pub content_style: StyleHandle,
     /// Whether to enable horizontal scrolling.
     pub scroll_enable_x: bool,
     /// Whether to enable vertical scrolling.
@@ -114,12 +104,6 @@ impl ScrollView {
     /// Set additional styles to be applied to the scroll view.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
         self.style = style.into_handle();
-        self
-    }
-
-    /// Set additional styles to be applied to the scroll content.
-    pub fn content_style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.content_style = style.into_handle();
         self
     }
 
@@ -191,13 +175,7 @@ impl ViewTemplate for ScrollView {
                         (),
                     )
                     .style(style_scroll_region)
-                    .children(
-                        Element::<NodeBundle>::new()
-                            .named("ScrollView::ScrollRegion")
-                            .insert(ScrollContent)
-                            .style((style_scroll_content, self.content_style.clone()))
-                            .children(self.children.clone()),
-                    ),
+                    .children(self.children.clone()),
                 // Horizontal scroll bar
                 Cond::new(
                     enable_x,

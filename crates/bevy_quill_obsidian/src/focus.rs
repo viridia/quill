@@ -293,46 +293,37 @@ fn handle_text_input(
     mut char_writer: EventWriter<KeyCharEvent>,
     default_listener: Query<Entity, With<DefaultKeyListener>>,
 ) {
-    if let Some(focus_elt) = focus.0 {
-        for ev in key_events.read() {
-            if ev.state == ButtonState::Pressed {
-                let press_event = KeyPressEvent {
-                    target: focus_elt,
-                    key_code: ev.key_code,
-                    repeat: !key.just_pressed(ev.key_code),
-                    shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
-                };
-                press_writer.send(press_event);
+    if key_events.is_empty() {
+        return;
+    }
 
-                if let bevy::input::keyboard::Key::Character(ref ch) = ev.logical_key {
-                    let ev = KeyCharEvent {
-                        target: focus_elt,
-                        key: ch.chars().next().unwrap(),
-                    };
-                    char_writer.send(ev);
-                }
+    let target = match focus.0 {
+        Some(entity) => entity,
+        None => match default_listener.iter().next() {
+            Some(entity) => entity,
+            None => {
+                warn!("No default key listener found");
+                return;
             }
-        }
-    } else {
-        for listener in default_listener.iter() {
-            for ev in key_events.read() {
-                if ev.state == ButtonState::Pressed {
-                    let press_event = KeyPressEvent {
-                        target: listener,
-                        key_code: ev.key_code,
-                        repeat: !key.just_pressed(ev.key_code),
-                        shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
-                    };
-                    press_writer.send(press_event);
+        },
+    };
 
-                    if let bevy::input::keyboard::Key::Character(ref ch) = ev.logical_key {
-                        let ev = KeyCharEvent {
-                            target: listener,
-                            key: ch.chars().next().unwrap(),
-                        };
-                        char_writer.send(ev);
-                    }
-                }
+    for ev in key_events.read() {
+        if ev.state == ButtonState::Pressed {
+            let press_event = KeyPressEvent {
+                target,
+                key_code: ev.key_code,
+                repeat: !key.just_pressed(ev.key_code),
+                shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
+            };
+            press_writer.send(press_event);
+
+            if let bevy::input::keyboard::Key::Character(ref ch) = ev.logical_key {
+                let ev = KeyCharEvent {
+                    target,
+                    key: ch.chars().next().unwrap(),
+                };
+                char_writer.send(ev);
             }
         }
     }
