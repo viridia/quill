@@ -8,7 +8,7 @@ repository = "https://github.com/viridia/quill"
 keywords = ["bevy", "ui", "reactive"]
 
 [dependencies]
-bevy = { workspace = true, features = ["bevy_state"] }
+bevy = { workspace = true }
 bevy_mod_picking = { workspace = true, features = ["debug", "backend_bevy_ui"] }
 bevy_mod_stylebuilder = { workspace = true }
 bevy_quill = { path = "../.." }
