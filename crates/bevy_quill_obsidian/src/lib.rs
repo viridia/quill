@@ -71,6 +71,7 @@ impl Plugin for ObsidianUiPlugin {
         embedded_asset!(app, "assets/icons/add.png");
         embedded_asset!(app, "assets/icons/checkmark.png");
         embedded_asset!(app, "assets/icons/chevron_down.png");
+        embedded_asset!(app, "assets/icons/chevron_up.png");
         embedded_asset!(app, "assets/icons/chevron_left.png");
         embedded_asset!(app, "assets/icons/chevron_right.png");
         embedded_asset!(app, "assets/icons/close.png");
