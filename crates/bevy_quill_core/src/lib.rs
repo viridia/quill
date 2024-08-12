@@ -21,7 +21,7 @@ mod view_child;
 mod view_template;
 
 use bevy::{
-    app::{App, Plugin, Startup, Update},
+    app::{App, Plugin, Update},
     prelude::IntoSystemConfigs,
 };
 use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
@@ -69,13 +69,14 @@ pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(StyleBuilderPlugin)
-            .add_systems(Startup, (cleanup_tracking_scopes, cleanup_view_roots))
-            .add_systems(
-                Update,
-                (build_views, reaction_control_system, reattach_children)
-                    .chain()
-                    .before(StyleBuilderSystemSet),
-            );
+        cleanup_tracking_scopes(app.world_mut());
+        cleanup_view_roots(app.world_mut());
+
+        app.add_plugins(StyleBuilderPlugin).add_systems(
+            Update,
+            (build_views, reaction_control_system, reattach_children)
+                .chain()
+                .before(StyleBuilderSystemSet),
+        );
     }
 }
