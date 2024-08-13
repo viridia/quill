@@ -14,6 +14,7 @@ use bevy::{
         ButtonInput, ButtonState,
     },
     log::*,
+    prelude::Commands,
     ui::Node,
 };
 use bevy_mod_picking::prelude::{EntityEvent, EventListenerPlugin};
@@ -263,6 +264,15 @@ fn handle_auto_focus(
     }
 }
 
+fn fix_focus(mut focus: ResMut<Focus>, mut commands: Commands) {
+    if let Some(entity) = focus.0 {
+        if commands.get_entity(entity).is_none() {
+            warn!("Focus entity {:?} no longer exists", entity);
+            focus.0 = None;
+        }
+    }
+}
+
 fn handle_tab(
     nav: TabNavigation,
     key: Res<ButtonInput<KeyCode>>,
@@ -341,6 +351,9 @@ impl Plugin for KeyboardInputPlugin {
         .init_resource::<FocusVisible>()
         .add_event::<KeyPressEvent>()
         .add_event::<KeyCharEvent>()
-        .add_systems(Update, (handle_auto_focus, handle_tab, handle_text_input));
+        .add_systems(
+            Update,
+            (fix_focus, handle_auto_focus, handle_tab, handle_text_input),
+        );
     }
 }
