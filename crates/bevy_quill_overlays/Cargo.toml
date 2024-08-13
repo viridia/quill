@@ -13,6 +13,6 @@ bevy_mod_picking = { workspace = true, features = [
   "backend_raycast",
   "backend_bevy_ui",
 ] }
-bevy = { workspace = true }
+bevy = { workspace = true, features = ["bevy_pbr"] }
 # bevy_mod_stylebuilder = { workspace = true }
 bevy_quill_core = { workspace = true }
