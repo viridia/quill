@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## [0.1.7] - 2024-08-13
 
 ### 🚀 Features
 
@@ -10,11 +10,24 @@
 - Replace all `String` typed `Icon`s with `HandleOrOwnedPath<Image>`.
 - Switch statement.
 - New crate: bevy_quill_overlays.
+- Overlay now supports line primitives via LineMaterial.
+- TriggerReaction command
+- Added chevron_down icon.
+- Display focus indicator for list rows.
 
 ### 🐛 Bug Fixes
 
 - Switch was missing a fallback raze in some cases.
 - Fix computation of AABBs for overlays.
+- Supress vortex warnings.
+- Fix bug in firefox wasm build
+- Fixed the `controls` example for wasm32
+- Fixes checkbox disappearing on focus
+- Button min_height is also used for min_width.
+- Button min_width needs to be integer.
+- Make Xl buttons a bit bigger.
+- Added warning when Focus points to non-existent entity.
+- Added version for vortex dependency.
 
 ### 🚜 Refactor
 
@@ -23,6 +36,8 @@
 ### ⚙️ Miscellaneous Tasks
 
 - Add changelog, git-cliff configuration.
+- Release
+- Release
 - Release
 
 ## [0.1.3] - 2024-07-25
