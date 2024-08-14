@@ -82,6 +82,8 @@ impl Plugin for ObsidianUiPlugin {
         embedded_asset!(app, "assets/icons/remove.png");
         embedded_asset!(app, "assets/icons/tune.png");
         embedded_asset!(app, "assets/icons/undo.png");
+        embedded_asset!(app, "assets/icons/zoom_in.png");
+        embedded_asset!(app, "assets/icons/zoom_out.png");
         embedded_asset!(app, "assets/shaders/gradient_rect.wgsl");
         embedded_asset!(app, "assets/shaders/swatch_rect.wgsl");
         embedded_asset!(app, "assets/shaders/slider_rect.wgsl");
