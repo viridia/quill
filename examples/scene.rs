@@ -64,11 +64,11 @@ impl ViewTemplate for RootWidget {
         let x_offset = (STEP_WIDTH * count as f32) / 2.;
 
         Element::<SpatialBundle>::new().children((
-            // Always show meshcube component
+            // Always show meshcube widget
             MeshCube {
                 position: Vec3::new(-1.5, 3., 2.),
             },
-            // Conditionally show MeshCube component.
+            // Conditionally show MeshCube widget.
             Cond::new(
                 count % 2 == 0,
                 MeshCube {
