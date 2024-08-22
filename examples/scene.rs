@@ -6,8 +6,9 @@ mod common;
 
 use bevy::{math::primitives, prelude::*};
 
+use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
-use bevy_quill::{Cond, Cx, Element, For, QuillPlugin, View, ViewTemplate};
+use bevy_quill_core::{Cond, Cx, Element, For, QuillPlugin, View, ViewTemplate};
 use common::*;
 
 fn main() {
@@ -15,6 +16,7 @@ fn main() {
         .init_resource::<Counter>()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
+            DefaultPickingPlugins,
             QuillPlugin,
         ))
         // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
@@ -27,7 +29,7 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn(
         Element::<SpatialBundle>::new()
             .insert(Name::from("view_root"))
-            .children(RootWidget)
+            .children(SceneRoot)
             .to_root(),
     );
 
@@ -51,9 +53,9 @@ fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) 
 }
 
 #[derive(Clone, PartialEq)]
-struct RootWidget;
+struct SceneRoot;
 
-impl ViewTemplate for RootWidget {
+impl ViewTemplate for SceneRoot {
     type View = impl View;
 
     fn create(&self, cx: &mut Cx) -> Self::View {
@@ -66,13 +68,13 @@ impl ViewTemplate for RootWidget {
         Element::<SpatialBundle>::new().children((
             // Always show meshcube widget
             MeshCube {
-                position: Vec3::new(-1.5, 3., 2.),
+                translation: Vec3::new(-1.5, 3., 2.),
             },
             // Conditionally show MeshCube widget.
             Cond::new(
                 count % 2 == 0,
                 MeshCube {
-                    position: Vec3::new(1.5, 3., 2.),
+                    translation: Vec3::new(1.5, 3., 2.),
                 },
                 (),
             ),
@@ -89,7 +91,7 @@ impl ViewTemplate for RootWidget {
                     // Loop over data, (in this case a simple range) and show
                     // a MeshCube for each element.
                     For::each(0..count, move |i| MeshCube {
-                        position: Vec3::new(STEP_WIDTH * *i as f32, 1., 0.),
+                        translation: Vec3::new(STEP_WIDTH * *i as f32, 1., 0.),
                     }),
                 ),
         ))
@@ -98,18 +100,16 @@ impl ViewTemplate for RootWidget {
 
 #[derive(Clone, PartialEq, Debug)]
 struct MeshCube {
-    position: Vec3,
+    translation: Vec3,
 }
 
 impl ViewTemplate for MeshCube {
     type View = impl View;
     fn create(&self, cx: &mut Cx) -> Self::View {
-        let scale = cx.create_mutable(Vec3::new(1., 1., 1.));
+        let is_hovered = cx.create_mutable(false);
 
-        // let handle_out = cx.create_callback(move || {
-        //     scale.set(cx, Vec3::new(1., 1., 1.));
-        // });
-
+        // Note: It's better to re-use the same material by sharing the handle in a resource or
+        // through props.
         let (mesh_handle, material_handle) = cx.create_memo(
             move |world, _| {
                 let mut meshes = world.resource_mut::<Assets<Mesh>>();
@@ -125,29 +125,43 @@ impl ViewTemplate for MeshCube {
 
         let counter = cx.use_resource::<Counter>();
         let count = counter.count;
+
         Element::<SpatialBundle>::new()
             .insert((mesh_handle, material_handle))
-            .insert_dyn(move |_| Name::from(format!("MeshCube {}", count)), count)
+            .named(format!("MeshCube {}", count).as_str())
             .insert_dyn(
-                move |(scale, position)| Transform {
-                    translation: position,
-                    scale,
-                    ..Default::default()
+                move |(is_hovered, translation)| {
+                    let scale = if is_hovered {
+                        Vec3::new(1.2, 1.2, 1.2)
+                    } else {
+                        Vec3::new(1., 1., 1.)
+                    };
+                    Transform {
+                        translation,
+                        scale,
+                        ..Default::default()
+                    }
                 },
-                (scale.get(cx), self.position),
+                (is_hovered.get(cx), self.translation),
             )
-        // .insert_dyn(
-        //     move |_| {
-        //         (On::<Pointer<Out>>::run(move |world: &mut World| {
-        //             world.run_callback(handle_out, ());
-        //         }),)
-        //     },
-        //     (),
-        // )
+            .insert(Pickable::default())
+            .insert(PickingInteraction::default())
+            .insert_dyn(
+                move |_| {
+                    (
+                        On::<Pointer<Over>>::run(move |world: &mut World| {
+                            is_hovered.set(world, true);
+                        }),
+                        On::<Pointer<Out>>::run(move |world: &mut World| {
+                            is_hovered.set(world, false);
+                        }),
+                    )
+                },
+                (),
+            )
     }
 }
 
-/// Hover test using conditional styles
 #[derive(Clone, PartialEq)]
 struct InstructionRoot;
 
@@ -157,8 +171,7 @@ impl InstructionRoot {
             .flex_direction(FlexDirection::Column)
             .border(3)
             .padding(3)
-            .font_size(16.)
-        ;
+            .font_size(16.);
     }
 }
 
@@ -168,18 +181,9 @@ impl ViewTemplate for InstructionRoot {
         let counter = cx.use_resource::<Counter>();
         let count = counter.count;
 
-        Element::<NodeBundle>::new()
-            .style(Self::style)
-            .children((
+        Element::<NodeBundle>::new().style(Self::style).children((
             "Scene (non-ui) example\n",
-            cx.create_memo(
-                |_, count| {
-                    format!(
-                        "This UI reacts to the `Counter` resource which has a count of '{count}'.\n"
-                    )
-                },
-                count,
-            ),
+            format!("This UI reacts to the `Counter` resource which has a count of '{count}'.\n"),
             "When then count is even the cube in the top right is visible.\n",
             "We also loop over the range of `0..count` to spawn `count` number of cubes.",
         ))
