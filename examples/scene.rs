@@ -6,7 +6,7 @@ mod common;
 
 use bevy::{math::primitives, prelude::*};
 
-use bevy_mod_picking::{events::PointerCancel, prelude::*};
+use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill_core::{Cond, Cx, Element, For, QuillPlugin, View, ViewTemplate};
 use common::*;
@@ -26,18 +26,8 @@ fn main() {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(
-        Element::<SpatialBundle>::new()
-            .insert(Name::from("view_root"))
-            .children(SceneRoot)
-            .to_root(),
-    );
-
-    commands.spawn(
-        Element::<NodeBundle>::new()
-            .children(InstructionRoot)
-            .to_root(),
-    );
+    commands.spawn(SceneRoot.to_root());
+    commands.spawn(InstructionRoot.to_root());
 }
 
 // Counter containing global state.
