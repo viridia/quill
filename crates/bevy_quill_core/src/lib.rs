@@ -22,7 +22,7 @@ mod view_template;
 
 use bevy::{
     app::{App, Plugin, Update},
-    prelude::IntoSystemConfigs,
+    prelude::{IntoSystemConfigs, IntoSystemSetConfigs, SystemSet},
 };
 use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
 
@@ -65,6 +65,11 @@ pub use view_child::IntoViewChild;
 pub use view_child::ViewChild;
 pub use view_template::ViewTemplate;
 
+/// SystemSet that contains the logic to update the quill within the world.
+/// This will run before StyleBuilderSystemSet.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct QuillUpdateSystemSet;
+
 pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
@@ -72,11 +77,13 @@ impl Plugin for QuillPlugin {
         cleanup_tracking_scopes(app.world_mut());
         cleanup_view_roots(app.world_mut());
 
-        app.add_plugins(StyleBuilderPlugin).add_systems(
-            Update,
-            (build_views, reaction_control_system, reattach_children)
-                .chain()
-                .before(StyleBuilderSystemSet),
-        );
+        app.add_plugins(StyleBuilderPlugin)
+            .add_systems(
+                Update,
+                (build_views, reaction_control_system, reattach_children)
+                    .chain()
+                    .in_set(QuillUpdateSystemSet),
+            )
+            .configure_sets(Update, QuillUpdateSystemSet.before(StyleBuilderSystemSet));
     }
 }
