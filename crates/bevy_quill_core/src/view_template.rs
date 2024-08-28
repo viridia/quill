@@ -190,12 +190,18 @@ pub struct ViewTemplateAdapter<VF: ViewTemplate> {
 
 impl<VF: ViewTemplate> AnyViewAdapter for ViewTemplateAdapter<VF> {
     fn nodes(&self, world: &mut World, entity: Entity, out: &mut Vec<Entity>) {
+        #[cfg(feature = "verbose")]
+        info!("nodes() {}", entity);
+
         if let Some(view_cell) = world.entity(entity).get::<ViewTemplateStateCell<VF>>() {
             view_cell.nodes(world, out)
         }
     }
 
     fn rebuild(&self, world: &mut World, entity: Entity, scope: &mut TrackingScope) -> bool {
+        #[cfg(feature = "verbose")]
+        info!("rebuild()");
+
         let mut cx = Cx::new(world, entity, scope);
         if let Some(view_cell) = cx
             .world_mut()
@@ -211,6 +217,9 @@ impl<VF: ViewTemplate> AnyViewAdapter for ViewTemplateAdapter<VF> {
     }
 
     fn attach_children(&self, world: &mut World, entity: Entity) -> bool {
+        #[cfg(feature = "verbose")]
+        info!("attach_children() {}", entity);
+
         if let Some(view_cell) = world.entity(entity).get::<ViewTemplateStateCell<VF>>() {
             let vs = view_cell.0.clone();
             let mut inner = vs.lock().unwrap();
@@ -221,6 +230,9 @@ impl<VF: ViewTemplate> AnyViewAdapter for ViewTemplateAdapter<VF> {
     }
 
     fn raze(&self, world: &mut DeferredWorld, entity: Entity) {
+        #[cfg(feature = "verbose")]
+        info!("raze() {}", entity);
+
         if let Some(view_cell) = world.entity_mut(entity).get::<ViewTemplateStateCell<VF>>() {
             let inner = view_cell.0.clone();
             inner.lock().unwrap().raze(world);
