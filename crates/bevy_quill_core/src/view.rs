@@ -472,7 +472,8 @@ pub(crate) fn reaction_control_system(world: &mut World) {
             all_reactions.extend(changed.clone());
         }
 
-        // println!("Reaction iteration: {}", iteration_ct);
+        #[cfg(feature = "verbose")]
+        info!("Reaction iteration: {}", iteration_ct);
 
         // Do all cleanups first.
         run_cleanups(world, &changed);
@@ -514,6 +515,8 @@ pub(crate) fn reaction_control_system(world: &mut World) {
             }
         }
         prev_change_ct = change_ct;
+
+        world.flush();
     }
 
     // Record the changed entities for diagnostic purposes.

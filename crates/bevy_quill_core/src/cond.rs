@@ -1,5 +1,5 @@
 use bevy::ecs::world::{DeferredWorld, World};
-use bevy::prelude::Entity;
+use bevy::prelude::*;
 
 use crate::{Cx, View};
 
@@ -29,6 +29,9 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     type State = CondState<Pos::State, Neg::State>;
 
     fn nodes(&self, world: &World, state: &Self::State, out: &mut Vec<Entity>) {
+        #[cfg(feature = "verbose")]
+        info!("nodes()");
+
         match state {
             Self::State::True(ref true_state) => self.pos.nodes(world, true_state, out),
             Self::State::False(ref false_state) => self.neg.nodes(world, false_state, out),
@@ -36,6 +39,9 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     }
 
     fn build(&self, cx: &mut Cx) -> Self::State {
+        #[cfg(feature = "verbose")]
+        info!("build()");
+
         if self.test {
             CondState::True(self.pos.build(cx))
         } else {
@@ -44,6 +50,9 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     }
 
     fn rebuild(&self, cx: &mut Cx, state: &mut Self::State) -> bool {
+        #[cfg(feature = "verbose")]
+        info!("rebuild()");
+
         if self.test {
             match state {
                 Self::State::True(ref mut true_state) => {
@@ -76,6 +85,9 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     }
 
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
+        #[cfg(feature = "verbose")]
+        info!("attach_children()",);
+
         match state {
             Self::State::True(ref mut true_state) => self.pos.attach_children(world, true_state),
             Self::State::False(ref mut false_state) => self.neg.attach_children(world, false_state),
@@ -83,6 +95,9 @@ impl<Pos: View, Neg: View> View for Cond<Pos, Neg> {
     }
 
     fn raze(&self, world: &mut DeferredWorld, state: &mut Self::State) {
+        #[cfg(feature = "verbose")]
+        info!("raze()");
+
         match state {
             Self::State::True(ref mut true_state) => self.pos.raze(world, true_state),
             Self::State::False(ref mut false_state) => self.neg.raze(world, false_state),
