@@ -515,6 +515,8 @@ pub(crate) fn reaction_control_system(world: &mut World) {
             }
         }
         prev_change_ct = change_ct;
+
+        world.flush();
     }
 
     // Record the changed entities for diagnostic purposes.
