@@ -1,5 +1,7 @@
 use bevy::prelude::*;
-use bevy_mod_picking::{focus::HoverMap, picking_core::Pickable, pointer::PointerId};
+use bevy_mod_picking::{
+    focus::HoverMap, picking_core::Pickable, pointer::PointerId, prelude::PointerLocation,
+};
 use bevy_mod_stylebuilder::{MaybeHandleOrPath, StyleBuilder};
 
 /// A component which can be added to an entity to specify the cursor that should be used when
@@ -88,6 +90,7 @@ pub(crate) fn update_cursor(
     hover_map: Option<Res<HoverMap>>,
     parent_query: Query<&Parent>,
     cursor_query: Query<&Cursor>,
+    pointer_query: Query<(&PointerId, &PointerLocation)>,
     mut custom_cursor_query: Query<(Entity, &mut CustomCursor, &mut UiImage, &mut Style)>,
     mut windows: Query<&mut Window>,
 ) {
@@ -123,9 +126,16 @@ pub(crate) fn update_cursor(
                 window.cursor.visible = false;
             });
             // TODO: Need to figure out which window the cursor is within and only show it on that window.
-            let cursor_pos = windows
+            let cursor_pos = pointer_query
                 .iter()
-                .find_map(|w| w.cursor_position())
+                .find(|&(id, _)| id == &PointerId::Mouse)
+                .map(|(_, location)| {
+                    location
+                        .location
+                        .as_ref()
+                        .map(|location| location.position)
+                        .unwrap_or(Vec2::default())
+                })
                 .unwrap_or(Vec2::default())
                 - *origin;
             if custom_cursor_query.is_empty() {
