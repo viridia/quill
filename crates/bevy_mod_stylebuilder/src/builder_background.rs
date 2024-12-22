@@ -1,8 +1,4 @@
-use bevy::{
-    prelude::*,
-    render::texture::Image,
-    ui::{self, UiImage},
-};
+use bevy::{prelude::*, ui};
 
 use super::builder::{ColorParam, MaybeHandleOrPath, StyleBuilder};
 
@@ -43,22 +39,22 @@ impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
             MaybeHandleOrPath::Path(p) => Some(self.load_asset::<Image>(p)),
             MaybeHandleOrPath::None => None,
         };
-        match (texture, self.target.get_mut::<UiImage>()) {
-            (Some(texture), Some(mut uii)) => {
-                uii.texture = texture;
+        match (texture, self.target.get_mut::<ImageNode>()) {
+            (Some(image), Some(mut uii)) => {
+                uii.image = image;
                 uii.flip_x = flip_x;
                 uii.flip_y = flip_y;
             }
-            (Some(texture), None) => {
-                self.target.insert(UiImage {
-                    texture,
+            (Some(image), None) => {
+                self.target.insert(ImageNode {
+                    image,
                     flip_x,
                     flip_y,
                     ..default()
                 });
             }
             (None, Some(_)) => {
-                self.target.remove::<UiImage>();
+                self.target.remove::<ImageNode>();
             }
             _ => (),
         };
@@ -75,15 +71,15 @@ impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
     }
 
     fn background_image_color(&mut self, color: impl ColorParam) -> &mut Self {
-        match (color.to_val(), self.target.get_mut::<UiImage>()) {
+        match (color.to_val(), self.target.get_mut::<ImageNode>()) {
             (Some(color), Some(mut uii)) => {
                 uii.color = color;
             }
             (Some(color), None) => {
-                self.target.insert(UiImage { color, ..default() });
+                self.target.insert(ImageNode { color, ..default() });
             }
             (None, Some(_)) => {
-                self.target.remove::<UiImage>();
+                self.target.remove::<ImageNode>();
             }
             _ => (),
         };

@@ -13,17 +13,17 @@ use bevy::{
 /// such as `Style` are cached in the builder and not applied until `finish` is called.
 pub struct StyleBuilder<'a, 'w> {
     pub target: &'a mut EntityWorldMut<'w>,
-    pub(crate) style: ui::Style,
-    pub(crate) style_changed: bool,
+    pub(crate) node: ui::Node,
+    pub(crate) node_changed: bool,
 }
 
 impl<'a, 'w> StyleBuilder<'a, 'w> {
     /// Construct a new StyleBuilder instance.
-    pub fn new(target: &'a mut EntityWorldMut<'w>, style: ui::Style) -> Self {
+    pub fn new(target: &'a mut EntityWorldMut<'w>, node: ui::Node) -> Self {
         Self {
             target,
-            style,
-            style_changed: false,
+            node,
+            node_changed: false,
         }
     }
 
@@ -37,8 +37,8 @@ impl<'a, 'w> StyleBuilder<'a, 'w> {
 
     /// Consumes the [`StyleBuilder`] and applies the style to the target entity.
     pub fn finish(self) {
-        if self.style_changed {
-            self.target.insert(self.style);
+        if self.node_changed {
+            self.target.insert(self.node);
         }
     }
 }
@@ -129,7 +129,7 @@ impl ZIndexParam for ZIndex {
 
 impl ZIndexParam for i32 {
     fn to_val(self) -> ZIndex {
-        ZIndex::Local(self)
+        ZIndex(self)
     }
 }
 

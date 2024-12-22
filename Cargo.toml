@@ -18,7 +18,7 @@ members = ["crates/*"]
 verbose = [] # Enable verbose logging
 
 [workspace.dependencies]
-bevy = "0.14.0"
+bevy = "0.15.0"
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder", version = "0.1.3" }
 bevy_mod_picking = { version = "0.20.1", default-features = false }
 bevy_quill_core = { path = "crates/bevy_quill_core", version = "0.1.3" }
