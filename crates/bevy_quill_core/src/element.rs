@@ -259,7 +259,7 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
     }
 
     fn attach_children(&self, world: &mut World, state: &mut Self::State) -> bool {
-        assert!(world.get_entity(state.0).is_some());
+        assert!(world.get_entity(state.0).is_ok());
         self.children.attach_children(world, &mut state.1);
         let mut nodes: Vec<Entity> = Vec::new();
         self.children.nodes(world, &state.1, &mut nodes);

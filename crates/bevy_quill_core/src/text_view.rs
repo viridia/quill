@@ -1,9 +1,7 @@
 use bevy::{
     ecs::world::DeferredWorld,
     hierarchy::BuildChildren,
-    prelude::{default, Entity, World},
-    text::{Text, TextSection, TextStyle},
-    ui::node_bundles::TextBundle,
+    prelude::{Entity, Text, World},
 };
 
 #[cfg(feature = "verbose")]
@@ -62,13 +60,7 @@ impl<'a: 'static> View for &'a str {
 
 fn build_text_view(world: &mut World, text: &str) -> Entity {
     world
-        .spawn((
-            TextBundle {
-                text: Text::from_section(text, TextStyle { ..default() }),
-                ..default()
-            },
-            UseInheritedTextStyles,
-        ))
+        .spawn((Text(text.to_string()), UseInheritedTextStyles))
         .id()
 }
 
@@ -77,15 +69,11 @@ fn rebuild_text_view(world: &mut World, text: &str, state: &mut Entity) -> bool 
     let mut entt = world.entity_mut(*state);
     if let Some(mut old_text) = entt.get_mut::<Text>() {
         // If the text didn't change, do nothing.
-        if old_text.sections.len() == 1 && old_text.sections[0].value == text {
+        if old_text.0 == text {
             return false;
         }
         // Replace the text sections in the `Text` component.
-        old_text.sections.clear();
-        old_text.sections.push(TextSection {
-            value: text.to_string(),
-            style: TextStyle { ..default() },
-        });
+        old_text.0 = text.to_string();
         false
     } else {
         entt.despawn();

@@ -2,7 +2,7 @@ use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, View, ViewThu
 use bevy::{
     core::Name,
     ecs::world::DeferredWorld,
-    hierarchy::{BuildChildren, BuildWorldChildren},
+    hierarchy::BuildChildren,
     prelude::{Component, Entity, World},
 };
 use std::sync::{Arc, Mutex};
@@ -98,7 +98,7 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
 
         #[cfg(feature = "verbose")]
         info!("attach_children() {}", entity);
-        assert!(world.get_entity(entity).is_some());
+        assert!(world.get_entity(entity).is_ok());
 
         let entt = world.entity_mut(entity);
         let cell = entt.get::<ViewTemplateStateCell<VT>>().unwrap();
