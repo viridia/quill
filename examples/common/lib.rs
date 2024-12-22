@@ -45,8 +45,8 @@ pub fn setup(
     for (i, shape) in shapes.into_iter().enumerate() {
         commands.spawn((
             PbrBundle {
-                mesh: shape,
-                material: debug_material.clone(),
+                mesh: Mesh3d(shape),
+                material: MeshMaterial3d(debug_material.clone()),
                 transform: Transform::from_xyz(
                     -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
                     2.0,
@@ -73,8 +73,8 @@ pub fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
-        material: materials.add(Color::from(palettes::css::SILVER)),
+        mesh: Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
+        material: MeshMaterial3d(materials.add(Color::from(palettes::css::SILVER))),
         ..default()
     });
 
@@ -90,7 +90,7 @@ pub fn setup(
 
 pub fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
     for mut transform in &mut query {
-        transform.rotate_y(time.delta_seconds() / 2.);
+        transform.rotate_y(time.delta_secs() / 2.);
     }
 }
 
