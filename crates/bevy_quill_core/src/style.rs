@@ -12,11 +12,11 @@ impl<S: StyleTuple> EntityEffect for ApplyStaticStylesEffect<S> {
     type State = ();
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
         let mut target = cx.world_mut().entity_mut(target);
-        let mut style = ui::Style::default();
-        if let Some(s) = target.get::<ui::Style>() {
-            style.clone_from(s);
+        let mut node = ui::Node::default();
+        if let Some(s) = target.get::<ui::Node>() {
+            node.clone_from(s);
         }
-        let mut sb = StyleBuilder::new(&mut target, style);
+        let mut sb = StyleBuilder::new(&mut target, node);
         self.styles.apply(&mut sb);
         sb.finish();
     }
@@ -36,11 +36,11 @@ impl<F: Fn(D, &mut StyleBuilder) + Send + Sync, D: PartialEq + Clone + Send + Sy
     type State = D;
     fn apply(&self, cx: &mut Cx, target: Entity) -> Self::State {
         let mut target = cx.world_mut().entity_mut(target);
-        let mut style = ui::Style::default();
-        if let Some(s) = target.get::<ui::Style>() {
-            style.clone_from(s);
+        let mut node = ui::Node::default();
+        if let Some(s) = target.get::<ui::Node>() {
+            node.clone_from(s);
         }
-        let mut sb = StyleBuilder::new(&mut target, style);
+        let mut sb = StyleBuilder::new(&mut target, node);
         (self.style_fn)(self.deps.clone(), &mut sb);
         sb.finish();
         self.deps.clone()

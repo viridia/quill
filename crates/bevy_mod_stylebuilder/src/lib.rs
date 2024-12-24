@@ -11,9 +11,6 @@ mod builder_z_index;
 mod text_styles;
 // mod builder_texture_atlas;
 
-#[cfg(feature = "mod_picking")]
-mod builder_pointer_events;
-
 use std::sync::Arc;
 
 use bevy::{
@@ -33,9 +30,6 @@ pub use builder_z_index::StyleBuilderZIndex;
 use text_styles::update_text_styles;
 pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
-
-#[cfg(feature = "mod_picking")]
-pub use builder_pointer_events::StyleBuilderPointerEvents;
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
 pub trait StyleTuple: Sync + Send {

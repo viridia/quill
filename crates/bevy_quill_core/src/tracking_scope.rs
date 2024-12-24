@@ -156,7 +156,7 @@ impl TrackingScope {
                 e.get_change_ticks_by_id(*c)
                     .map(|ct| ct.is_changed(self.tick, tick))
                     .unwrap_or(false)
-                    || *exists && e.get_by_id(*c).is_none()
+                    || *exists && e.get_by_id(*c).is_err()
             })
         })
     }
@@ -209,13 +209,13 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
             for hook in hooks.drain(..).rev() {
                 match hook {
                     HookState::Entity(ent) => {
-                        world.commands().add(DespawnEntityCmd(ent));
+                        world.commands().queue(DespawnEntityCmd(ent));
                     }
                     HookState::Mutable(mutable_ent, _) => {
-                        world.commands().add(DespawnEntityCmd(mutable_ent));
+                        world.commands().queue(DespawnEntityCmd(mutable_ent));
                     }
                     HookState::Callback(callback) => {
-                        world.commands().add(UnregisterCallbackCmd(callback));
+                        world.commands().queue(UnregisterCallbackCmd(callback));
                     }
                     HookState::Effect(_) | HookState::Memo(_) => {
                         // Nothing to do
@@ -230,7 +230,7 @@ pub struct TriggerReaction(pub Entity);
 
 impl Command for TriggerReaction {
     fn apply(self, world: &mut World) {
-        if let Some(mut scope_ent) = world.get_entity_mut(self.0) {
+        if let Ok(mut scope_ent) = world.get_entity_mut(self.0) {
             if let Some(scope) = scope_ent.get_mut::<TrackingScope>() {
                 TrackingScope::set_changed(&scope);
             } else {

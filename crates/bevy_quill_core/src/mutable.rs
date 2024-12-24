@@ -213,7 +213,7 @@ impl WriteMutable for World {
     where
         T: Send + Sync + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 
     /// Write the value of a mutable variable using Clone semantics. Does nothing if the
@@ -222,7 +222,7 @@ impl WriteMutable for World {
     where
         T: Send + Sync + Clone + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 
     /// Update a mutable value in place using a callback. The callback is passed a
@@ -278,7 +278,7 @@ impl<'w> WriteMutable for DeferredWorld<'w> {
     where
         T: Send + Sync + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 
     /// Write the value of a mutable variable using Clone semantics. Does nothing if the
@@ -287,7 +287,7 @@ impl<'w> WriteMutable for DeferredWorld<'w> {
     where
         T: Send + Sync + Clone + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 
     /// Update a mutable value in place using a callback. The callback is passed a
@@ -331,7 +331,7 @@ mod tests {
         assert_eq!(reader2.get(&cx), 0);
 
         // Now commit the changes
-        world.flush_commands();
+        world.flush();
 
         // Signals should have changed
         let cx = Cx::new(&mut world, owner, &mut scope);
@@ -362,7 +362,7 @@ mod tests {
         assert_eq!(reader2.get(&cx), 0);
 
         // Now commit the changes
-        world.flush_commands();
+        world.flush();
 
         // Signals should have changed
         let cx = Cx::new(&mut world, owner, &mut scope);

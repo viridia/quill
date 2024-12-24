@@ -2,8 +2,8 @@ use std::{cell::RefCell, marker::PhantomData, sync::Arc};
 
 use bevy::{
     ecs::world::DeferredWorld,
-    hierarchy::{BuildWorldChildren, Parent},
-    prelude::{Component, Entity, IntoSystem, Resource, World},
+    hierarchy::{BuildChildren, Parent},
+    prelude::{Component, Entity, IntoSystem, Resource, SystemInput, World},
 };
 
 use crate::{mutable::Mutable, tracking_scope::HookState, Callback, MutableCell, WriteMutable};
@@ -114,7 +114,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                     .spawn(MutableCell::<T>(init))
                     .set_parent(owner)
                     .id();
-                let component = self.world_mut().init_component::<MutableCell<T>>();
+                let component = self.world_mut().register_component::<MutableCell<T>>();
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Mutable(cell, component));
@@ -299,7 +299,11 @@ impl<'p, 'w> Cx<'p, 'w> {
     ///
     /// Note: This function takes no deps argument, the callback is only registered once the first
     /// time it is called. Subsequent calls will return the original callback.
-    pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+    pub fn create_callback<
+        P: Send + Sync + SystemInput + 'static,
+        M,
+        S: IntoSystem<P, (), M> + 'static,
+    >(
         &mut self,
         callback: S,
     ) -> Callback<P> {
@@ -350,7 +354,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                     .spawn(MutableCell::<T>(init))
                     .set_parent(owner)
                     .id();
-                let component = self.world_mut().init_component::<MutableCell<T>>();
+                let component = self.world_mut().register_component::<MutableCell<T>>();
                 self.tracking
                     .borrow_mut()
                     .push_hook(HookState::Mutable(cell, component));
@@ -386,7 +390,7 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// Return a reference to the Component `C` on the given entity.
     pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
         match self.world.get_entity(entity) {
-            Some(c) => {
+            Ok(c) => {
                 let cid = self
                     .world
                     .components()
@@ -400,7 +404,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                     .track_component_id(entity, cid, result.is_some());
                 result
             }
-            None => None,
+            Err(_) => None,
         }
     }
 
@@ -409,8 +413,8 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// frequently.
     pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
         match self.world.get_entity(entity) {
-            Some(c) => c.get::<C>(),
-            None => None,
+            Ok(c) => c.get::<C>(),
+            Err(_) => None,
         }
     }
 
