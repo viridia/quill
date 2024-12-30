@@ -1,7 +1,10 @@
 use std::{cell::RefCell, marker::PhantomData, sync::Arc};
 
 use bevy::{
-    ecs::world::DeferredWorld,
+    ecs::{
+        bundle::Bundle, event::Event, observer::Observer, system::IntoObserverSystem,
+        world::DeferredWorld,
+    },
     hierarchy::{BuildChildren, Parent},
     prelude::{Component, Entity, IntoSystem, Resource, SystemInput, World},
 };
@@ -236,6 +239,60 @@ impl<'p, 'w> Cx<'p, 'w> {
                         deps,
                     })));
                 result
+            }
+        }
+    }
+
+    pub fn create_observer<
+        E: Event,
+        B: Bundle,
+        M,
+        I: IntoObserverSystem<E, B, M>,
+        D: PartialEq + Clone + Send + Sync + 'static,
+    >(
+        &mut self,
+        system: I,
+        target: Entity,
+        deps: D,
+    ) -> Entity {
+        let hook = self.tracking.borrow_mut().next_hook();
+        match hook {
+            Some(HookState::Observer(prev_observer, prev_target, prev_deps)) => {
+                if prev_target == target
+                    && *prev_deps
+                        .downcast_ref::<D>()
+                        .expect("Observer dependencies type mismatch")
+                        == deps
+                {
+                    prev_observer
+                } else {
+                    self.world_mut().despawn(prev_observer);
+                    let observer = self
+                        .world_mut()
+                        .spawn(Observer::new(system).with_entity(target))
+                        .id();
+                    self.tracking.borrow_mut().replace_hook(HookState::Observer(
+                        observer,
+                        target,
+                        Arc::new(deps),
+                    ));
+                    observer
+                }
+            }
+            Some(_) => {
+                panic!("Expected create_observer() hook, found something else");
+            }
+            None => {
+                let observer = self
+                    .world_mut()
+                    .spawn(Observer::new(system).with_entity(target))
+                    .id();
+                self.tracking.borrow_mut().push_hook(HookState::Observer(
+                    observer,
+                    target,
+                    Arc::new(deps),
+                ));
+                observer
             }
         }
     }
