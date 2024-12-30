@@ -22,6 +22,7 @@ pub(crate) enum HookState {
     Callback(Arc<dyn AnyCallback + Send + Sync>),
     Effect(Arc<dyn Any + Send + Sync + 'static>),
     Memo(Arc<dyn Any + Send + Sync + 'static>),
+    Observer(Entity, Entity, Arc<dyn Any + Send + Sync + 'static>),
 }
 
 /// A component that tracks the dependencies of a reactive task.
@@ -213,6 +214,9 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
                     }
                     HookState::Mutable(mutable_ent, _) => {
                         world.commands().queue(DespawnEntityCmd(mutable_ent));
+                    }
+                    HookState::Observer(ent, _, _) => {
+                        world.commands().queue(DespawnEntityCmd(ent));
                     }
                     HookState::Callback(callback) => {
                         world.commands().queue(UnregisterCallbackCmd(callback));
