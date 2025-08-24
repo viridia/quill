@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 use bevy::{
     app::{Plugin, Update},
-    prelude::{IntoSystemConfigs, SystemSet},
+    prelude::{IntoScheduleConfigs, SystemSet},
 };
 // pub use atlas_loader::TextureAtlasLoader;
 pub use builder::*;

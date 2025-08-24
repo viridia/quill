@@ -6,10 +6,10 @@ use std::{
 use bevy::{
     ecs::{
         component::{ComponentId, Tick},
-        world::{Command, DeferredWorld},
+        world::DeferredWorld,
     },
+    platform::collections::HashSet,
     prelude::*,
-    utils::HashSet,
 };
 
 use crate::{AnyCallback, UnregisterCallbackCmd};
@@ -200,8 +200,8 @@ impl Command for DespawnEntityCmd {
 pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
     world
         .register_component_hooks::<TrackingScope>()
-        .on_remove(|mut world, entity, _component| {
-            let mut scope = world.get_mut::<TrackingScope>(entity).unwrap();
+        .on_remove(|mut world, context| {
+            let mut scope = world.get_mut::<TrackingScope>(context.entity).unwrap();
             let mut cleanups = std::mem::take(&mut scope.cleanups);
             let mut hooks = std::mem::take(&mut scope.hook_states);
             for cleanup_fn in cleanups.drain(..) {

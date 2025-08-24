@@ -1,6 +1,6 @@
 use bevy::ecs::world::{DeferredWorld, World};
 use bevy::prelude::Entity;
-use bevy::ui::TargetCamera;
+use bevy::ui::UiTargetCamera;
 
 use crate::View;
 
@@ -25,7 +25,7 @@ impl<A: View> View for Portal<A> {
 
     fn build(&self, cx: &mut crate::Cx) -> Self::State {
         let camera = cx
-            .use_inherited_component::<TargetCamera>()
+            .use_inherited_component::<UiTargetCamera>()
             .map(|c| c.entity());
         (self.children.build(cx), camera)
     }
@@ -45,7 +45,7 @@ impl<A: View> View for Portal<A> {
             let mut nodes: Vec<Entity> = Vec::new();
             self.children.nodes(world, &state.0, &mut nodes);
             for node in nodes.to_vec().iter() {
-                world.entity_mut(*node).insert(TargetCamera(camera));
+                world.entity_mut(*node).insert(UiTargetCamera(camera));
             }
         }
         false

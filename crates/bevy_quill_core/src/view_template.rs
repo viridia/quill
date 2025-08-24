@@ -1,9 +1,7 @@
 use crate::{cx::Cx, tracking_scope::TrackingScope, AnyViewAdapter, View, ViewThunk};
 use bevy::{
-    core::Name,
-    ecs::world::DeferredWorld,
-    hierarchy::BuildChildren,
-    prelude::{Component, Entity, World},
+    ecs::{name::Name, world::DeferredWorld},
+    prelude::{ChildOf, Children, Component, Entity, World},
 };
 use std::sync::{Arc, Mutex};
 
@@ -50,7 +48,7 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
             .world_mut()
             .spawn_empty()
             .insert(Name::new(std::any::type_name::<Self>()))
-            .set_parent(parent)
+            .insert(ChildOf(parent))
             .id();
 
         #[cfg(feature = "verbose")]
@@ -123,7 +121,12 @@ impl<VT: ViewTemplate + Clone + PartialEq> View for VT {
         let cell = entt.get::<ViewTemplateStateCell<VT>>().unwrap().0.clone();
         let mut inner = cell.lock().unwrap();
         inner.raze(world);
-        world.commands().entity(entity).remove_parent().despawn();
+        world
+            .commands()
+            .entity(entity)
+            .remove::<ChildOf>()
+            .remove::<Children>()
+            .despawn();
     }
 }
 

@@ -1,7 +1,6 @@
 use bevy::{
     ecs::world::DeferredWorld,
-    hierarchy::BuildChildren,
-    prelude::{Entity, Text, World},
+    prelude::{ChildOf, Entity, Text, World},
 };
 
 #[cfg(feature = "verbose")]
@@ -30,7 +29,11 @@ impl View for String {
         info!("Razing String View: {}", *state);
 
         // Delete the text node.
-        world.commands().entity(*state).remove_parent().despawn();
+        world
+            .commands()
+            .entity(*state)
+            .remove::<ChildOf>()
+            .despawn();
     }
 }
 
@@ -54,7 +57,11 @@ impl<'a: 'static> View for &'a str {
         info!("Razing &str View: {}", *state);
 
         // Delete the text node.
-        world.commands().entity(*state).remove_parent().despawn();
+        world
+            .commands()
+            .entity(*state)
+            .remove::<ChildOf>()
+            .despawn();
     }
 }
 

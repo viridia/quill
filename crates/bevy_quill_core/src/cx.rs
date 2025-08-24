@@ -5,8 +5,7 @@ use bevy::{
         bundle::Bundle, event::Event, observer::Observer, system::IntoObserverSystem,
         world::DeferredWorld,
     },
-    hierarchy::{BuildChildren, Parent},
-    prelude::{Component, Entity, IntoSystem, Resource, SystemInput, World},
+    prelude::{ChildOf, Component, Entity, IntoSystem, Resource, SystemInput, World},
 };
 
 use crate::{mutable::Mutable, tracking_scope::HookState, Callback, MutableCell, WriteMutable};
@@ -114,8 +113,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                 let owner = self.owner();
                 let cell = self
                     .world_mut()
-                    .spawn(MutableCell::<T>(init))
-                    .set_parent(owner)
+                    .spawn((MutableCell::<T>(init), ChildOf(owner)))
                     .id();
                 let component = self.world_mut().register_component::<MutableCell<T>>();
                 self.tracking
@@ -408,8 +406,7 @@ impl<'p, 'w> Cx<'p, 'w> {
                 let owner = self.owner();
                 let cell = self
                     .world_mut()
-                    .spawn(MutableCell::<T>(init))
-                    .set_parent(owner)
+                    .spawn((MutableCell::<T>(init), ChildOf(owner)))
                     .id();
                 let component = self.world_mut().register_component::<MutableCell<T>>();
                 self.tracking
@@ -486,8 +483,8 @@ impl<'p, 'w> Cx<'p, 'w> {
             if ec.is_some() {
                 return ec;
             }
-            match self.world.entity(entity).get::<Parent>() {
-                Some(parent) => entity = **parent,
+            match self.world.entity(entity).get::<ChildOf>() {
+                Some(child_of) => entity = child_of.parent(),
                 _ => return None,
             }
         }
