@@ -48,7 +48,7 @@ pub struct UseInheritedTextStyles;
 pub(crate) fn update_text_styles(
     query: Query<(Entity, Ref<Text>), With<UseInheritedTextStyles>>,
     inherited: Query<Ref<InheritableFontStyles>>,
-    parents: Query<&Parent>,
+    parents: Query<&ChildOf>,
     mut commands: Commands,
 ) {
     let inherited_changed = inherited.iter().any(|cmp| cmp.is_changed());
@@ -64,7 +64,7 @@ pub(crate) fn update_text_styles(
 fn compute_inherited_style(
     entity: Entity,
     inherited: &Query<Ref<InheritableFontStyles>, ()>,
-    parents: &Query<&Parent, ()>,
+    parents: &Query<&ChildOf, ()>,
 ) -> (TextFont, TextColor) {
     let mut styles = InheritableFontStyles::default();
     let mut ancestor = entity;
@@ -78,8 +78,8 @@ fn compute_inherited_style(
                 break;
             }
         }
-        if let Ok(parent) = parents.get(ancestor) {
-            ancestor = parent.get();
+        if let Ok(child_of) = parents.get(ancestor) {
+            ancestor = child_of.parent();
         } else {
             break;
         }
@@ -87,7 +87,7 @@ fn compute_inherited_style(
     let font = TextFont {
         font: styles.font.unwrap_or_default(),
         font_size: styles.font_size.unwrap_or(12.),
-        font_smoothing: default(),
+        ..default()
     };
     let color = TextColor(styles.color.unwrap_or(Color::WHITE));
     (font, color)

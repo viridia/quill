@@ -1,9 +1,6 @@
 use std::{any::TypeId, sync::Arc};
 
-use bevy::{
-    ecs::{system::SystemId, world::Command},
-    prelude::*,
-};
+use bevy::{ecs::system::SystemId, prelude::*};
 
 use crate::Cx;
 
@@ -66,7 +63,7 @@ impl RunCallback for World {
         P: SystemInput + 'static,
         P::Inner<'static>: Send,
     {
-        self.run_system_with_input(callback.id, props).unwrap();
+        self.run_system_with(callback.id, props).unwrap();
     }
 }
 
@@ -86,7 +83,7 @@ impl<'w, 's> RunCallback for Commands<'w, 's> {
         P: SystemInput + 'static,
         P::Inner<'static>: Send,
     {
-        self.run_system_with_input(callback.id, props)
+        self.run_system_with(callback.id, props)
     }
 }
 

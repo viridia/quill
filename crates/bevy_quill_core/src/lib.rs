@@ -22,7 +22,7 @@ mod view_template;
 
 use bevy::{
     app::{App, Plugin, Update},
-    prelude::{IntoSystemConfigs, IntoSystemSetConfigs, SystemSet},
+    prelude::{IntoScheduleConfigs, SystemSet},
 };
 use bevy_mod_stylebuilder::{StyleBuilderPlugin, StyleBuilderSystemSet};
 

@@ -1,8 +1,5 @@
 use bevy::{
-    ecs::{
-        component::ComponentId,
-        world::{Command, DeferredWorld},
-    },
+    ecs::{component::ComponentId, world::DeferredWorld},
     prelude::*,
 };
 

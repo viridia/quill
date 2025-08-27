@@ -5,10 +5,9 @@ use crate::{
 use bevy::{
     // core::{DebugName, Name},
     ecs::{system::SystemState, world::DeferredWorld},
-    hierarchy::{Children, HierarchyQueryExt, Parent},
     log::warn,
-    prelude::{Added, Component, Entity, Query, With, World},
-    utils::hashbrown::HashSet,
+    platform::collections::HashSet,
+    prelude::{Added, ChildOf, Children, Component, Entity, Query, With, World},
 };
 use impl_trait_for_tuples::*;
 use std::{
@@ -545,8 +544,8 @@ pub(crate) fn reattach_children(world: &mut World) {
     let mut changed_views_query = world.query_filtered::<Entity, With<OutputChanged>>();
     for view_entity in changed_views_query.iter(world) {
         changed_views.push(view_entity);
-        if let Some(parent) = world.entity(view_entity).get::<Parent>() {
-            work_queue.insert(parent.get());
+        if let Some(child_of) = world.entity(view_entity).get::<ChildOf>() {
+            work_queue.insert(child_of.parent());
         }
     }
 
@@ -560,8 +559,8 @@ pub(crate) fn reattach_children(world: &mut World) {
 
         if let Some(thunk) = world.entity(entity).get::<ViewThunk>() {
             if thunk.0.attach_children(world, entity) {
-                if let Some(parent) = world.entity(entity).get::<Parent>() {
-                    work_queue.insert(parent.get());
+                if let Some(child_of) = world.entity(entity).get::<ChildOf>() {
+                    work_queue.insert(child_of.parent());
                 }
             }
         }
@@ -588,8 +587,8 @@ pub(crate) fn reattach_children(world: &mut World) {
 pub(crate) fn cleanup_view_roots(world: &mut World) {
     world
         .register_component_hooks::<ViewRoot>()
-        .on_remove(|mut world, entity, _component| {
-            let thunk = world.get_mut::<ViewThunk>(entity).unwrap();
-            thunk.0.raze(&mut world, entity);
+        .on_remove(|mut world, context| {
+            let thunk = world.get_mut::<ViewThunk>(context.entity).unwrap();
+            thunk.0.raze(&mut world, context.entity);
         });
 }

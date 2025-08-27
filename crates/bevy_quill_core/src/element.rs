@@ -13,7 +13,7 @@ use crate::{
 
 /// A view which generates an entity bundle.
 #[derive(Default)]
-pub struct Element<B: Bundle + Default = NodeBundle, C: View = (), E: EffectTuple = ()> {
+pub struct Element<B: Bundle + Default = Node, C: View = (), E: EffectTuple = ()> {
     /// Debug name for this element.
     debug_name: String,
 
@@ -247,11 +247,15 @@ impl<B: Bundle + Default, C: View, E: EffectTuple + 'static> View for Element<B,
         info!("Razing element: {}", state.0);
 
         // Delete the display node.
-        world.commands().entity(state.0).remove_parent();
+        world.commands().entity(state.0).remove::<ChildOf>();
         if self.display.is_none() {
             // Only despawn the display entity if we created it. If we got it from the outside,
             // then it's the responsibility of the caller to clean it up.
-            world.commands().entity(state.0).despawn();
+            world
+                .commands()
+                .entity(state.0)
+                .remove::<Children>()
+                .despawn();
         } else {
             world.commands().entity(state.0).remove::<B>();
         }
